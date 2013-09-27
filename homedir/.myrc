@@ -1,0 +1,52 @@
+#!/bin/sh
+# ~/.myrc: executed by several scripts
+# (c) 2013 Markus Dangl <markus@q1cc.net>
+# This might be invoked by non-bash shells, so be careful
+
+# Debug
+# set -x
+# echo "(.myrc) BASH_SOURCE = ${BASH_SOURCE[0]} ${BASH_SOURCE[1]}"
+
+set -e
+
+# Did we already run?
+if [ -n "$MYRC_RAN" ] ; then
+    #[ -n "$INTERACTIVE" ] && echo "(.myrc) Already ran .myrc" 1>&2
+    return 0
+fi
+export MYRC_RAN=true
+
+# Bash?
+if [ -n "$BASH_VERSION" ] ; then
+    export MYRC_RAN_FROM="${BASH_SOURCE[1]}"
+fi
+
+###################################################################################################
+# In interactive mode: show a small greeter (and possibly debug info)
+if [ -n "$INTERACTIVE" ] ; then
+    echo "(.myrc) Welcome. This seems to be an interactive session." 1>&2
+    echo "(.myrc) BASH_SOURCE = ${BASH_SOURCE[0]} ${BASH_SOURCE[1]}"
+fi
+
+### From .profile: umask? #########################################################################
+# the default umask is set in /etc/profile; for setting the umask
+# for ssh logins, install and configure the libpam-umask package.
+#umask 022
+
+### From .profile: personal bin dir ###############################################################
+# set PATH so it includes user's private bin if it exists
+if [ -d "$HOME/bin" ] ; then
+    PATH="$HOME/bin:$PATH"
+fi
+
+### Let keychain check for an agent ###############################################################
+if [ -n "$INTERACTIVE" ] ; then
+    # This should be non-interactive
+    eval `/usr/bin/keychain --eval id_rsa`
+else
+    # This should be non-interactive
+    # I decided to skip keychain here because it takes too long for quick SSH commands
+    # eval `/usr/bin/keychain --eval --noask -q --nocolor id_rsa`
+    true # ... eh? come on, bash...
+fi
+

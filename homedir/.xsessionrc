@@ -1,0 +1,11 @@
+#!/bin/sh
+# (c) 2013 Markus Dangl <markus@q1cc.net>
+#
+# This file is sourced by /etc/X11/Xsession.d/40x11-common_xsessionrc
+# It is only checked for readability and is not required to be executable
+
+export XSESSIONRC_RAN=true
+if [ -r $HOME/.myrc ] ; then
+    . $HOME/.myrc
+fi
+
