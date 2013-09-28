@@ -4,10 +4,10 @@
 # This might be invoked by non-bash shells, so be careful
 
 # Debug
-# set -x
-# echo "(.myrc) BASH_SOURCE = ${BASH_SOURCE[0]} ${BASH_SOURCE[1]}"
-
-set -e
+#set -x
+#echo "(.myrc) BASH_SOURCE = ${BASH_SOURCE[0]} ${BASH_SOURCE[1]}"
+# "set -e" is dangerous here: if you don't unset it, your whole session might run on this
+#   thus logging you out whenever a command fails o_O
 
 # Did we already run?
 if [ -n "$MYRC_RAN" ] ; then
@@ -25,13 +25,18 @@ fi
 # In interactive mode: show a small greeter (and possibly debug info)
 if [ -n "$INTERACTIVE" ] ; then
     echo "(.myrc) Welcome. This seems to be an interactive session." 1>&2
-    echo "(.myrc) BASH_SOURCE = ${BASH_SOURCE[0]} ${BASH_SOURCE[1]}"
+    #echo "(.myrc) BASH_SOURCE = ${BASH_SOURCE[0]} ${BASH_SOURCE[1]}"
 fi
 
 ### From .profile: umask? #########################################################################
 # the default umask is set in /etc/profile; for setting the umask
 # for ssh logins, install and configure the libpam-umask package.
 #umask 022
+
+### Various settings ##############################################################################
+# Squelch "Couldn't connect to accessibility bus ..." messages
+# More info: http://askubuntu.com/questions/227515/terminal-warning-when-opening-a-file-in-gedit
+export NO_AT_BRIDGE=1
 
 ### From .profile: personal bin dir ###############################################################
 # set PATH so it includes user's private bin if it exists
