@@ -14,7 +14,6 @@ if [ -n "$MYRC_RAN" ] ; then
     #[ -n "$INTERACTIVE" ] && echo "(.myrc) Already ran .myrc" 1>&2
     return 0
 fi
-export MYRC_RAN=true
 
 # Bash?
 if [ -n "$BASH_VERSION" ] ; then
@@ -40,9 +39,11 @@ export NO_AT_BRIDGE=1
 
 ### From .profile: personal bin dir ###############################################################
 # set PATH so it includes user's private bin if it exists
+export MYRC_HOME="$HOME"
 if [ -d "$HOME/bin" ] ; then
     PATH="$HOME/bin:$PATH"
 fi
+export PATH
 
 ### Let keychain check for an agent ###############################################################
 if [ -n "$INTERACTIVE" ] ; then
@@ -54,4 +55,8 @@ else
     # eval `/usr/bin/keychain --eval --noask -q --nocolor id_rsa`
     true # ... eh? come on, bash...
 fi
+
+###################################################################################################
+# Finish up
+export MYRC_RAN=true
 
