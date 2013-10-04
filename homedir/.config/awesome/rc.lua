@@ -35,6 +35,17 @@ do
 end
 -- }}}
 
+-- Exit the gnome session when quitting
+
+_awesome_quit = awesome.quit
+awesome.quit = function()
+    if os.getenv("DESKTOP_SESSION") == "awesome-gnome" then
+        os.execute("/usr/bin/gnome-session-quit")
+    else
+        _awesome_quit()
+    end
+end
+
 -- {{{ Variable definitions
 -- Themes define colours, icons, and wallpapers
 --beautiful.init("/usr/share/awesome/themes/default/theme.lua")

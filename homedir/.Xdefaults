@@ -1,0 +1,202 @@
+
+!!! stuff !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!Xcursor*theme: Vanilla-DMZ-AA
+Xcursor*theme:  DMZ-White
+Xcursor.size:   12
+
+!Xft.dpi:        96
+Xft.antialias:  false
+!Xft.rgba:       rgb
+Xft.hinting:    false
+!Xft.hintstyle:  hintslight
+
+!!! urxvt !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! General
+!urxvt*termName:  rxvt-256color
+urxvt*loginShell:         true
+urxvt*scrollBar:         false
+urxvt*secondaryScroll:    true
+urxvt*saveLines:         65535
+urxvt*cursorBlink:       false
+urxvt*urgentOnBell:       true
+urxvt*visualBell:         true
+!urxvt*override-redirect:false
+!urxvt*borderLess:       false
+!urxvt*internalBorder:       0
+!urxvt*externalBorder:       0
+
+! Extensions
+urxvt*perl-lib:             /usr/lib/urxvt/perl/
+urxvt*perl-ext-common:      default,matcher,searchable-scrollback,clipboard
+urxvt*urlLauncher:          /usr/bin/xdg-open
+urxvt*url-launcher:         /usr/bin/xdg-open
+urxvt*matcher.button:       1
+urxvt.keysym.M-c:           perl:clipboard:copy
+urxvt.keysym.M-v:           perl:clipboard:paste
+urxvt.keysym.M-C-v:         perl:clipboard:paste_escaped
+urxvt.clipboard.autocopy:   true
+urxvt.clipboard.copycmd:    xsel -ib
+urxvt.clipboard.pastecmd:   xsel -ob
+
+!  - catch ugly URLs
+!urxvt.cutchars:        `()'*<>[]{|}"    '
+!urxvt.cutchars:         ()*<>[]{|}
+
+! Appearance
+urxvt.iconFile:     /usr/share/icons/Mint-X/apps/scalable/Terminal.svg
+!  - use a bitmap font
+!urxvt*font:        -xos4-terminus-medium-*-*-*-12-*-*-*-*-*-*-*
+!urxvt*boldFont:    -xos4-terminus-bold-*-*-*-12-*-*-*-*-*-*-*
+!  - use xft for drawing fonts
+!urxvt*font:       xft:Terminus:8
+urxvt*font:         xft:Bitstream Vera Sans Mono:pixelsize=12
+!  - cursor
+urxvt*cursorColor: #DCDCDC
+!  - pseudo transparency
+!urxvt*shading:    50
+!urxvt*transparent:true
+
+!!  - color scheme
+!urxvt.background:  #000000
+!urxvt.foreground:  #f0f0f0
+!! black + red
+!!urxvt*color0:     #3f3f3f
+!urxvt*color0:      #000000
+!urxvt*color1:      #e01010
+!! green + yellow
+!urxvt*color2:      #10e010
+!urxvt*color3:      #e0e010
+!! blue + purple
+!urxvt*color4:      #1010e0
+!urxvt*color5:      #e010e0
+!! cyan + white
+!urxvt*color6:      #1050e0
+!urxvt*color7:      #e0e0e0
+!! bright-black + bright-red
+!urxvt*color8:      #6a6a6a
+!urxvt*color9:      #ff5555
+!! bright-green + bright-yellow
+!urxvt*color10:     #55ff55
+!urxvt*color11:     #ffff55
+!! bright-blue + bright-purple
+!urxvt*color12:     #5555ff
+!urxvt*color13:     #e655ff
+!! bright-cyan + bright-white
+!urxvt*color14:     #55d5ff
+!urxvt*color15:     #ffffff
+
+! --- New color scheme ---------------------------------------------------------
+! --- generated with 4bit Terminal Color Scheme Designer -----------------------
+! --- http://ciembor.github.com/4bit -------------------------------------------
+
+!! --- special colors ---
+!
+!*background: #070707
+!*foreground: #c8c8c8
+!
+!! --- standard colors ---
+!
+!! black
+!*color0: #050505
+!
+!! bright_black
+!*color8: #404040
+!
+!! red
+!*color1: #5f0707
+!
+!! bright_red
+!*color9: #ec3636
+!
+!! green
+!*color2: #075f07
+!
+!! bright_green
+!*color10: #36ec36
+!
+!! yellow
+!*color3: #5f5f07
+!
+!! bright_yellow
+!*color11: #ecec36
+!
+!! blue
+!*color4: #120760
+!
+!! bright_blue
+!*color12: #3636ed
+!
+!! magenta
+!*color5: #5f0760
+!
+!! bright_magenta
+!*color13: #ec36ed
+!
+!! cyan
+!*color6: #075f60
+!
+!! bright_cyan
+!*color14: #36eced
+!
+!! white
+!*color7: #c8c8c8
+!
+!! bright_white
+!*color15: #ececed
+!
+
+! --- special colors ---
+
+*background: #040404
+*foreground: #c6c6c6
+
+! --- standard colors ---
+
+! black
+*color0: #040404
+
+! bright_black
+*color8: #3e3e3e
+
+! red
+*color1: #bf1414
+
+! bright_red
+*color9: #e43939
+
+! green
+*color2: #14af14
+
+! bright_green
+*color10: #39e439
+
+! yellow
+*color3: #afaf04
+
+! bright_yellow
+*color11: #e4e439
+
+! blue
+*color4: #1a049c
+
+! bright_blue
+*color12: #3939e4
+
+! magenta
+*color5: #9f04a0
+
+! bright_magenta
+*color13: #e439e4
+
+! cyan
+*color6: #049fa0
+
+! bright_cyan
+*color14: #39e4e4
+
+! white
+*color7: #c6c6c6
+
+! bright_white
+*color15: #e4e4e4
+

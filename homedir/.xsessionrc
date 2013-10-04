@@ -9,4 +9,5 @@
 if [ -r $HOME/.myrc ] ; then
     . $HOME/.myrc
 fi
+/usr/bin/xset b off
 
