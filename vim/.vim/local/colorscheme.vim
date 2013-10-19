@@ -5,3 +5,8 @@
 "colorscheme inkpot
 "colorscheme desert
 
+if has("gui_running")
+    colorscheme inkpot
+else
+end
+

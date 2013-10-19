@@ -15,3 +15,5 @@ Edited the inkpot colors in gvim to my taste.
 
 Added LargeFile script: http://www.vim.org/scripts/script.php?script_id=1506
 
+Added gnupg.vim plugin: http://www.vim.org/scripts/script.php?script_id=3645
+

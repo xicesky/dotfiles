@@ -62,19 +62,26 @@ set splitright
 " v opens a window on the right not on the left
 let g:netrw_altv = 1
 
+" gnupg.vim plugin configuration
+let g:GPGUseAgent = 1
+let g:GPGPreferSymmetric = 0
+let g:GPGPreferArmor = 0
+let g:GPGPreferSign = 1
+let g:GPGUsePipes = 0
+
 " Mega-Auto-Indent paste
-:nnoremap <F2> "+P=']
-:inoremap <F2> <C-o>"+P<C-o>=']
+":nnoremap <F2> "+P=']
+":inoremap <F2> <C-o>"+P<C-o>=']
 
 " Toggle line numbers
-:nmap <F3> :set invnumber<CR>
+nmap <F3> :set invnumber<CR>
 
 " Paste mode
 nnoremap <F4> :set invpaste paste?<CR>
 set pastetoggle=<F4>
 set showmode
 
-" We use "," as the leader because "\\" is aweful on german keyboard
+" We use "," as the leader because "\\" is awful on german keyboard
 let mapleader = ","
 
 " Using vimdiff for 3-way merges: http://blog.binchen.org/?p=601
@@ -86,19 +93,19 @@ map <silent> <leader>3 :diffget 3<CR> :diffupdate<CR>
 map <silent> <leader>4 :diffget 4<CR> :diffupdate<CR>
 
 " To have the numeric keypad working with putty / vim
-:imap <Esc>Oq 1
-:imap <Esc>Or 2
-:imap <Esc>Os 3
-:imap <Esc>Ot 4
-:imap <Esc>Ou 5
-:imap <Esc>Ov 6
-:imap <Esc>Ow 7
-:imap <Esc>Ox 8
-:imap <Esc>Oy 9
-:imap <Esc>Op 0
-:imap <Esc>On .
-:imap <Esc>OQ /
-:imap <Esc>OR *
-:imap <Esc>Ol +
-:imap <Esc>OS -
+imap <Esc>Oq 1
+imap <Esc>Or 2
+imap <Esc>Os 3
+imap <Esc>Ot 4
+imap <Esc>Ou 5
+imap <Esc>Ov 6
+imap <Esc>Ow 7
+imap <Esc>Ox 8
+imap <Esc>Oy 9
+imap <Esc>Op 0
+imap <Esc>On .
+imap <Esc>OQ /
+imap <Esc>OR *
+imap <Esc>Ol +
+imap <Esc>OS -
 

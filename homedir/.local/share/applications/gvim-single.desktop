@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=GVim (Single Instance)
+GenericName=Text Editor
+TryExec=gvim
+Exec=gvim --remote-tab-silent %F
+Terminal=false
+Type=Application
+Icon=vim
+Categories=Utility;TextEditor;
+StartupNotify=true
+MimeType=text/plain;text/PGP;
