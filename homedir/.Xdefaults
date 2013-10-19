@@ -13,7 +13,7 @@ Xft.hinting:    false
 !!! urxvt !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! General
 !urxvt*termName:  rxvt-256color
-urxvt*loginShell:         true
+urxvt*loginShell:        false
 urxvt*scrollBar:         false
 urxvt*secondaryScroll:    true
 urxvt*saveLines:         65535
@@ -24,6 +24,8 @@ urxvt*visualBell:         true
 !urxvt*borderLess:       false
 !urxvt*internalBorder:       0
 !urxvt*externalBorder:       0
+! Disable that pesky "keycap picture insert mode"
+urxvt.iso14755_52:       false
 
 ! Extensions
 urxvt*perl-lib:             /usr/lib/urxvt/perl/
