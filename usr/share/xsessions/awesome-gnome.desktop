@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Awesome + Gnome
+Comment=This session logs you into awesome with a gnome session
+Exec=gnome-session-awesome
+TryExec=/usr/bin/awesome
+Icon=
+Type=Application
+

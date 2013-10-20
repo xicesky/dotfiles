@@ -17,6 +17,7 @@ import XMonad.Hooks.DynamicLog
 import qualified XMonad.StackSet as W
 import XMonad.Util.Run(spawnPipe,safeSpawn)
 import XMonad.Util.EZConfig(additionalKeys)
+import XMonad.Actions.NoBorders
 
 import qualified Data.Map as M
 
@@ -32,6 +33,8 @@ myKeys (XConfig { modMask = modm, terminal = terminal }) = M.fromList $
     , ((modm .|. shiftMask, xK_Return), windows W.swapMaster)
     -- Launch a terminal (swapped with focused to master key)
     , ((modm, xK_Return), spawn terminal)
+    -- Toggle the border of the currently focused window 
+    , ((modm, xK_g), withFocused toggleBorder)
     ]
 
 myLogHook barProc = dynamicLogWithPP xmobarPP
