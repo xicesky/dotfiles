@@ -56,6 +56,13 @@ else
     true # ... eh? come on, bash...
 fi
 
+### Misc. environment variables (e.g for SSH) #####################################################
+
+export SSH_USER=markus.dangl
+export SVN_USER=svn-gr
+export USE_KEYCHAIN=no
+export DONT_CD_ME=please-dont
+
 ###################################################################################################
 # Finish up
 export MYRC_RAN=true

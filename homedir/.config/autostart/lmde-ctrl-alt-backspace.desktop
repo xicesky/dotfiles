@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Version=1.0
+Name=Ctrl Alt Backspace
+Exec=setxkbmap -option terminate:ctrl_alt_bksp
+Terminal=false
+Type=Application
+StartupNotify=false
+Terminal=false
+X-GNOME-Autostart-enabled=false

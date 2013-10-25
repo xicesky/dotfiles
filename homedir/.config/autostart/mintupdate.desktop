@@ -1,0 +1,11 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=mintUpdate
+Comment=Linux Mint Update Manager
+Icon=stock_lock
+Exec=mintupdate-launcher
+Terminal=false
+Type=Application
+Categories=
+
+X-GNOME-Autostart-enabled=false

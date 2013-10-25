@@ -10,14 +10,18 @@ import System.IO
 import System.Directory (getHomeDirectory)
 
 import XMonad
-import XMonad.Config.Desktop
-import XMonad.Config.Gnome
+import XMonad.Config.Desktop (desktopConfig)
+import XMonad.Config.Gnome (gnomeConfig)
+
 import XMonad.Hooks.DynamicLog
 -- import XMonad.Hooks.EwmhDesktops
 import qualified XMonad.StackSet as W
+
 import XMonad.Util.Run(spawnPipe,safeSpawn)
-import XMonad.Util.EZConfig(additionalKeys)
+-- import XMonad.Util.EZConfig(additionalKeys)
+
 import XMonad.Actions.NoBorders
+import qualified XMonad.Actions.FlexibleResize as Flex
 
 import qualified Data.Map as M
 
@@ -35,6 +39,25 @@ myKeys (XConfig { modMask = modm, terminal = terminal }) = M.fromList $
     , ((modm, xK_Return), spawn terminal)
     -- Toggle the border of the currently focused window 
     , ((modm, xK_g), withFocused toggleBorder)
+    -- launch gmrun on mod+r
+    , ((modm, xK_r), spawn "gmrun")
+    ]
+
+myMouse (XConfig { modMask = modm }) = M.fromList $
+    -- mod-button1, Set the window to floating mode and move by dragging
+    [ ((modm, button1), (\w -> focus w >> mouseMoveWindow w >> windows W.shiftMaster))
+
+    -- mod-button2, Raise the window to the top of the stack
+    -- , ((modm, button2), (\w -> focus w >> windows W.shiftMaster))
+    -- Swap with the master window instead
+    , ((modm, button2), (\w -> focus w >> windows W.swapMaster))
+
+    -- mod-button3, Set the window to floating mode and resize by dragging
+    --, ((modm, button3), (\w -> focus w >> mouseResizeWindow w >> windows W.shiftMaster))
+    -- Use FlexibleResize instead
+    , ((modm, button3), (\w -> focus w >> Flex.mouseResizeWindow w ))
+
+    -- button 4 & 5 = mousewheel
     ]
 
 myLogHook barProc = dynamicLogWithPP xmobarPP
