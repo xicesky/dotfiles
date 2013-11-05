@@ -1,0 +1,4 @@
+#!/bin/bash
+cd ~/Software/minecraft
+java -jar Minecraft.jar
+

@@ -1,0 +1,6 @@
+#!/bin/bash
+cd $HOME
+
+sshfs doggie:miomi miomi
+sshfs doggie:/mnt/localdata/Markus/xxx Videos/xxx
+
