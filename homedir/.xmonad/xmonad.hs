@@ -29,10 +29,10 @@ import qualified Data.Map as M
 baseConfig = desktopConfig { startupHook = startupHook gnomeConfig }
 
 myKeys (XConfig { modMask = modm, terminal = terminal }) = M.fromList $
-    -- Logout via gnome-session-quit
-    [ ((modm .|. shiftMask, xK_q), spawn "gnome-session-quit")  
     -- Grab any windows key event
-    , ((0, xK_Super_L), return ())
+    [ ((0, xK_Super_L), return ())
+    -- Logout via gnome-session-quit
+    -- , ((modm .|. shiftMask, xK_q), spawn "gnome-session-quit")  -- FIXME: check for gnome-session
     -- Swap the focused window and the master window (swapped with the launch terminal key)
     , ((modm .|. shiftMask, xK_Return), windows W.swapMaster)
     -- Launch a terminal (swapped with focused to master key)

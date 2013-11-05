@@ -1,0 +1,11 @@
+pixmap_path "/home/markus/.gnome-color-chooser/images/"
+
+style "gnome-color-chooser-default"
+{
+  engine "clearlooks"
+  {
+  }
+
+}
+class "GtkWidget" style "gnome-color-chooser-default"
+

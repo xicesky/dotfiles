@@ -5,10 +5,13 @@ Xcursor*theme:  DMZ-White
 Xcursor.size:   12
 
 !Xft.dpi:        96
-Xft.antialias:  false
+!Xft.antialias:  false
+Xft.antialias:  true
 !Xft.rgba:       rgb
-Xft.hinting:    false
+!Xft.hinting:    false
+Xft.hinting:    true
 !Xft.hintstyle:  hintslight
+Xft.hintstyle:  hintfull
 
 !!! urxvt !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! General

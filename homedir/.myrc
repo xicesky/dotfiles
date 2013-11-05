@@ -62,6 +62,7 @@ export SSH_USER=markus.dangl
 export SVN_USER=svn-gr
 export USE_KEYCHAIN=no
 export DONT_CD_ME=please-dont
+export BLOG_NAME=markusd
 
 ###################################################################################################
 # Finish up
