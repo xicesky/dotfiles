@@ -71,6 +71,9 @@ M_2_POINT="$HOME/Videos/xxx"
 M_2_FS="doggie:/mnt/localdata/Markus/xxx"
 
 case "$1" in
+    "")
+        # Default, ok
+        ;;
     "list"|"show")
         ACTION=showstate
         ;;
