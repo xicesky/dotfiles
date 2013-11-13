@@ -1,0 +1,11 @@
+[user]
+	name = Markus Dangl
+	email = markus@q1cc.net
+[core]
+	editor = gvim -f
+[merge]
+	tool = gvimdiff
+[alias]
+	st = status
+	ci = commit
+	co = checkout

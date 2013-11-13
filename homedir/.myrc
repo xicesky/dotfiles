@@ -64,6 +64,10 @@ export USE_KEYCHAIN=no
 export DONT_CD_ME=please-dont
 export BLOG_NAME=markusd
 
+# Pager
+export PAGER=less
+export LESS=RS
+
 ###################################################################################################
 # Finish up
 export MYRC_RAN=true
