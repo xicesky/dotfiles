@@ -68,6 +68,10 @@ export BLOG_NAME=markusd
 export PAGER=less
 export LESS=RS
 
+### Shell functions (better then aliases) #########################################################
+
+function cdp() { mkdir -p "$1"; cd "$1"; }
+
 ###################################################################################################
 # Finish up
 export MYRC_RAN=true

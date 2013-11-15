@@ -6,6 +6,7 @@ autocmd!
 
 " Load local settings
 runtime! local/colorscheme.vim
+runtime! local/gui.vim
 
 set nocompatible
 set backspace=indent,eol,start
@@ -80,6 +81,9 @@ nmap <F3> :set invnumber<CR>
 nnoremap <F4> :set invpaste paste?<CR>
 set pastetoggle=<F4>
 set showmode
+
+" Sky's close tab shortcut <C-w> (breaks split-window navigation...)
+map <C-w> :bw<CR>
 
 " We use "," as the leader because "\\" is awful on german keyboard
 let mapleader = ","
