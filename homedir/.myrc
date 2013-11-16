@@ -20,6 +20,8 @@ if [ -n "$BASH_VERSION" ] ; then
     export MYRC_RAN_FROM="${BASH_SOURCE[1]}"
 fi
 
+echo "MyRC: SHELL=$SHELL"
+
 ###################################################################################################
 # In interactive mode: show a small greeter (and possibly debug info)
 if [ -n "$INTERACTIVE" ] ; then
@@ -70,7 +72,7 @@ export LESS=RS
 
 ### Shell functions (better then aliases) #########################################################
 
-function cdp() { mkdir -p "$1"; cd "$1"; }
+cdp() { mkdir -p "$1"; cd "$1"; }
 
 ###################################################################################################
 # Finish up

@@ -6,7 +6,7 @@
 "colorscheme desert
 
 if has("gui_running")
-    colorscheme inkpot
+    colorscheme sky
 else
 end
 

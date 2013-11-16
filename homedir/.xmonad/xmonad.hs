@@ -13,6 +13,7 @@ import XMonad
 import XMonad.Config.Desktop (desktopConfig)
 import XMonad.Config.Gnome (gnomeConfig)
 
+import XMonad.Hooks.ManageHelpers
 import XMonad.Hooks.DynamicLog
 -- import XMonad.Hooks.EwmhDesktops
 import qualified XMonad.StackSet as W
@@ -22,6 +23,8 @@ import XMonad.Util.Run(spawnPipe,safeSpawn)
 
 import XMonad.Actions.NoBorders
 import qualified XMonad.Actions.FlexibleResize as Flex
+
+import XMonad.Layout.NoBorders
 
 import qualified Data.Map as M
 
@@ -58,6 +61,12 @@ myMouse (XConfig { modMask = modm }) = M.fromList $
     , ((modm, button3), (\w -> focus w >> Flex.mouseResizeWindow w ))
 
     -- button 4 & 5 = mousewheel
+    ]
+
+myLayoutHook = smartBorders
+
+myManageHook = composeAll
+    [ isFullscreen --> doFullFloat
     ]
 
 myLogHook barProc = dynamicLogWithPP xmobarPP
@@ -98,8 +107,8 @@ main = do
     --    ,   mouseBindings   = myMouse <+> mouseBindings baseConfig
 
         -- hooks
-    --    ,   layoutHook      = myLayout ||| layoutHook baseConfig
-    --    ,   manageHook      = myManageHook <+> manageHook baseConfig
+        ,   layoutHook      = myLayoutHook $ layoutHook baseConfig
+        ,   manageHook      = myManageHook <+> manageHook baseConfig
     --    ,   handleEventHook = myEventHook <+> handleEventHook baseConfig
         ,   logHook         = myLogHook barProc <+> logHook baseConfig
     --    ,   startupHook     = myStartupHook <+> startupHook baseConfig
