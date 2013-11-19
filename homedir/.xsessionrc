@@ -5,6 +5,7 @@
 # It is only checked for readability and is not required to be executable
 
 #export XSESSIONRC_RAN=true
+export MYRC_XSTARTUP=true
 
 if [ -r $HOME/.myrc ] ; then
     . $HOME/.myrc

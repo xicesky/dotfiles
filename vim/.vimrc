@@ -82,8 +82,10 @@ nnoremap <F4> :set invpaste paste?<CR>
 set pastetoggle=<F4>
 set showmode
 
-" Sky's close tab shortcut <C-w> (breaks split-window navigation...)
-map <C-w> :bw<CR>
+" Sky's close tab shortcut
+" <C-w> (breaks split-window navigation...)
+" map <C-w> :bw<CR>
+map <C-x> :bw<CR>
 
 " We use "," as the leader because "\\" is awful on german keyboard
 let mapleader = ","

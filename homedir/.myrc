@@ -20,7 +20,7 @@ if [ -n "$BASH_VERSION" ] ; then
     export MYRC_RAN_FROM="${BASH_SOURCE[1]}"
 fi
 
-echo "MyRC: SHELL=$SHELL"
+#echo "MyRC: SHELL=$SHELL"  # Doesn't really work this way
 
 ###################################################################################################
 # In interactive mode: show a small greeter (and possibly debug info)
@@ -42,8 +42,8 @@ export NO_AT_BRIDGE=1
 ### From .profile: personal bin dir ###############################################################
 # set PATH so it includes user's private bin if it exists
 export MYRC_HOME="$HOME"
-if [ -d "$HOME/bin" ] ; then
-    PATH="$HOME/bin:$PATH"
+if [ -d "$MYRC_HOME/bin" ] ; then
+    PATH="$MYRC_HOME/bin:$PATH"
 fi
 export PATH
 
@@ -73,6 +73,13 @@ export LESS=RS
 ### Shell functions (better then aliases) #########################################################
 
 cdp() { mkdir -p "$1"; cd "$1"; }
+
+###################################################################################################
+# X startup: run my favourite startup progs
+
+[ -n "$MYRC_XSTARTUP" ] && $MYRC_XSTARTUP && {
+    . $MYRC_HOME/.myrc_x_autostart
+}
 
 ###################################################################################################
 # Finish up
