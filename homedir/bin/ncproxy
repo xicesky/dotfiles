@@ -1,0 +1,16 @@
+#!/bin/bash
+
+SOURCE_PORT="$1"
+TARGET_HOST="$2"
+TARGET_PORT="$3"
+
+LOG_OUT="ncproxy-outgoing.log"
+LOG_IN="ncproxy-incoming.log"
+PIPE="ncproxy-pipe"
+
+mkfifo "$PIPE"
+nc -l -p "$SOURCE_PORT" < "$PIPE" \
+    | tee "$LOG_OUT" \
+    | nc "$TARGET_HOST" "$TARGET_PORT" \
+    | tee "$PIPE" "$LOG_IN"
+
