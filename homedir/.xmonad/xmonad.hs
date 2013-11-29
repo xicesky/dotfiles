@@ -97,7 +97,7 @@ main = do
         ,   terminal    = "urxvt"       -- The best terminal.
 
         -- basics
-        ,   focusFollowsMouse   = True
+        ,   focusFollowsMouse   = False
         ,   borderWidth         = 1
         ,   normalBorderColor   = "#555555"
         ,   focusedBorderColor  = "#5555ff"
