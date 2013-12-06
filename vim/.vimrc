@@ -87,6 +87,11 @@ set showmode
 " map <C-w> :bw<CR>
 map <C-x> :bw<CR>
 
+" Open each file in a new tab if running on gvim
+if has("gui_running")
+    :au BufAdd,BufNewFile,BufRead * nested tab sball
+end
+
 " We use "," as the leader because "\\" is awful on german keyboard
 let mapleader = ","
 

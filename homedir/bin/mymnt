@@ -60,9 +60,14 @@ function remount() {
     mount "$1" "$2"
 }
 
-ACTION=showstate
+function default() {
+    remount $1 $2
+    showstate $1 $2
+}
+
+ACTION=default
 #ACTION=echo
-ACTIVE="1 2"
+ACTIVE="1 2 3 4"
 
 M_1_POINT="$HOME/miomi"
 M_1_FS="doggie:miomi"
@@ -70,9 +75,18 @@ M_1_FS="doggie:miomi"
 M_2_POINT="$HOME/Videos/xxx"
 M_2_FS="doggie:/mnt/localdata/Markus/xxx"
 
+M_3_POINT="$HOME/Videos/Archive"
+M_3_FS="doggie:/mnt/archive/Videos"
+
+M_4_POINT="$HOME/Videos/ImbaPladde"
+M_4_FS="doggie:/mnt/serien"
+
 case "$1" in
     "")
-        # Default, ok
+        ACTION=default
+        ;;
+    "auto"|"remount")
+        ACTION=remount
         ;;
     "list"|"show")
         ACTION=showstate
@@ -82,9 +96,6 @@ case "$1" in
         ;;
     "unmount")
         ACTION=unmount
-        ;;
-    "auto"|"remount")
-        ACTION=remount
         ;;
     *)
         (
