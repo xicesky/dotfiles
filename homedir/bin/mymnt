@@ -88,13 +88,13 @@ case "$1" in
     "auto"|"remount")
         ACTION=remount
         ;;
-    "list"|"show")
+    "list"|"show"|"state"|"status")
         ACTION=showstate
         ;;
     "mount")
         ACTION=mount
         ;;
-    "unmount")
+    "unmount"|"umount")
         ACTION=unmount
         ;;
     *)
