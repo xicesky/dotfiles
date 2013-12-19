@@ -7,9 +7,44 @@
 
 {- TODO:
  - Kill child processes on exit (or restart triggered by mod+Q)
+ -
  - Cool app starting feature (Matrix stuff?)
- - Automagically put windows on thematic workspaces?
- - Lock windows to the workspace they were started on
+ -      http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-GridSelect.html
+ -      http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-Submap.html
+ -
+ - Topics & Automagic windows
+ -      http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-DynamicWorkspaces.html
+ -      http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-TopicSpace.html
+ -      http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Hooks-XPropManage.html
+ -      http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-SpawnOn.html
+ -
+ - Interesting stuff:
+ -      http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-CycleWS.html
+ -      or better: http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-Plane.html
+ -      or even: http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-WorkspaceCursors.html
+ -      http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-FloatKeys.html
+ -      http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-Search.html
+ -      http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-WindowMenu.html
+ -
+ -      http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Hooks-Script.html
+ -          Useless but inspires a dynamically loaded ("scripted") xmonad config
+ -
+ - Panels / Bars:
+ -      https://wiki.archlinux.org/index.php/PyPanel
+ -      http://stalonetray.sourceforge.net/manpage.html
+ -      https://wiki.archlinux.org/index.php/Stalonetray
+ -
+ - Eyecandy:
+ -      https://wiki.archlinux.org/index.php/Compton
+ -      https://wiki.archlinux.org/index.php/Category:Eye_candy
+ -      https://wiki.archlinux.org/index.php/Redshift
+ -
+ - More cool haskell stuff:
+ -      http://hackage.haskell.org/package/ztail
+ -
+ - Tips:
+ -      http://www.haskell.org/haskellwiki/Xmonad/Frequently_asked_questions
+ -      http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Doc-Extending.html
  -}
 
 ---------------------------------------------------------------------------------------------------
@@ -41,6 +76,7 @@ import XMonad.Hooks.EwmhDesktops (fullscreenEventHook)
 import XMonad.Hooks.ManageHelpers
 import XMonad.Hooks.DynamicLog
 import qualified XMonad.StackSet as W
+import XMonad.Actions.WindowMenu (windowMenu)   -- inspires a more sophisticated menu
 
 -- Spawn programs (xmobar, trayer)
 import XMonad.Util.Run(spawnPipe,safeSpawn)
@@ -72,6 +108,8 @@ myKeys (XConfig { modMask = modm, terminal = terminal }) = M.fromList $
     , ((modm, xK_g), withFocused toggleBorder)
     -- launch gmrun on mod+r
     , ((modm, xK_r), spawn "gmrun")
+    -- WindowMenu
+    , ((modm, xK_o ), windowMenu)
     ]
 
 myMouse :: XConfig t -> M.Map (KeyMask, Button) (Window -> X ())
@@ -108,9 +146,12 @@ myLayoutHook
           Window
 myLayoutHook = smartBorders     -- FIXME: Doku: What for?
 
+-- http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Hooks-ManageHelpers.html
+-- http://www.haskell.org/haskellwiki/Xmonad/Frequently_asked_questions#Prevent_new_windows_from_stealing_focus
+-- http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Hooks-XPropManage.html
 myManageHook :: Query (Data.Monoid.Endo WindowSet)
 myManageHook = mconcat
-    [ isFullscreen --> doFullFloat  -- FIXME: Doku: What for?
+    [ isFullscreen --> doFullFloat  -- Automatically fullscreen windows that want to fullscreen
     ]
 
 myEventHook :: Event -> X Data.Monoid.All

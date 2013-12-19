@@ -3,6 +3,7 @@
 # (c) 2013 Markus Dangl <markus@q1cc.net>
 # This might be invoked by non-bash shells, so be careful
 
+# See https://wiki.archlinux.org/index.php/Keyboard_Configuration_in_Xorg
 # Usage: setxkbmap [-model xkb_model] [-layout xkb_layout] [-variant xkb_variant] [-option xkb_options]
 # Print using: setxkbmap -print -verbose 10
 #setxkbmap -option "grp:alt_shift_toggle"
