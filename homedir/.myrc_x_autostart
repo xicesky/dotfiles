@@ -7,6 +7,7 @@
 # Print using: setxkbmap -print -verbose 10
 #setxkbmap -option "grp:alt_shift_toggle"
 setxkbmap -option ""
+setxkbmap -option ctrl:nocaps   # Disable that useless fucker of nonsense key
 
 eval `gnome-keyring-daemon --start`
 
@@ -14,8 +15,6 @@ export GNOME_KEYRING_SOCKET
 export GNOME_KEYRING_PID
 export SSH_AUTH_SOCK
 export GPG_AGENT_INFO
-
-# gnome-keyring-3 &
 
 fbxkb &
 $MYRC_HOME/bin/setup-xinput.sh
