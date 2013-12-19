@@ -1,36 +1,64 @@
 
+---------------------------------------------------------------------------------------------------
+-- Prelude          :   Info, Todo, ...
+---------------------------------------------------------------------------------------------------
 -- Sky's xmonad config
 -- Author: Markus Dangl <markus@q1cc.net>
 
 {- TODO:
  - Kill child processes on exit (or restart triggered by mod+Q)
+ - Cool app starting feature (Matrix stuff?)
+ - Automagically put windows on thematic workspaces?
+ - Lock windows to the workspace they were started on
  -}
+
+---------------------------------------------------------------------------------------------------
+-- Chapter 0        :   Imports
+---------------------------------------------------------------------------------------------------
 
 import System.IO
 import System.Directory (getHomeDirectory)
 
-import XMonad
-import XMonad.Config.Desktop (desktopConfig)
-import XMonad.Config.Gnome (gnomeConfig)
+import qualified Data.Map as M
+import qualified Data.Monoid
+import Data.Monoid (mconcat)
 
+-- Big yays please
+import XMonad
+
+-- We need to import some modules just to write proper type signatures
+import XMonad.Layout.LayoutModifier (ModifiedLayout)
+import XMonad.Hooks.ManageDocks (AvoidStruts)
+
+-- Our base config
+import XMonad.Config.Desktop (desktopConfig)
+
+-- A bit of gnomishness (maybe remove that later)
+import XMonad.Config.Gnome (gnomeRegister)
+
+-- Bits and pieces
+import XMonad.Hooks.EwmhDesktops (fullscreenEventHook)
 import XMonad.Hooks.ManageHelpers
 import XMonad.Hooks.DynamicLog
--- import XMonad.Hooks.EwmhDesktops
 import qualified XMonad.StackSet as W
 
+-- Spawn programs (xmobar, trayer)
 import XMonad.Util.Run(spawnPipe,safeSpawn)
 -- import XMonad.Util.EZConfig(additionalKeys)
 
+-- Window handling
 import XMonad.Actions.NoBorders
 import qualified XMonad.Actions.FlexibleResize as Flex
-
 import XMonad.Layout.NoBorders
 
-import qualified Data.Map as M
+---------------------------------------------------------------------------------------------------
+-- Chapter I        :   Configuration
+---------------------------------------------------------------------------------------------------
 
--- Don't use gnomeConfig, it sucks.
-baseConfig = desktopConfig { startupHook = startupHook gnomeConfig }
+baseConfig :: XConfig (ModifiedLayout AvoidStruts (Choose Tall (Choose (Mirror Tall) Full)) )   -- come again?
+baseConfig = desktopConfig -- { startupHook = startupHook gnomeConfig } -- startupHook below
 
+myKeys :: XConfig t -> M.Map (KeyMask, KeySym) (X ())
 myKeys (XConfig { modMask = modm, terminal = terminal }) = M.fromList $
     -- Grab any windows key event
     [ ((0, xK_Super_L), return ())
@@ -46,6 +74,7 @@ myKeys (XConfig { modMask = modm, terminal = terminal }) = M.fromList $
     , ((modm, xK_r), spawn "gmrun")
     ]
 
+myMouse :: XConfig t -> M.Map (KeyMask, Button) (Window -> X ())
 myMouse (XConfig { modMask = modm }) = M.fromList $
     -- mod-button1, Set the window to floating mode and move by dragging
     [ ((modm, button1), (\w -> focus w >> mouseMoveWindow w >> windows W.shiftMaster))
@@ -63,18 +92,45 @@ myMouse (XConfig { modMask = modm }) = M.fromList $
     -- button 4 & 5 = mousewheel
     ]
 
-myLayoutHook = smartBorders
+myStartupHook :: X ()
+myStartupHook = do
+    gnomeRegister   -- FIXME: Doku: What for?
+    -- ewmhDesktopsStartup -- FIXME: Doku: What for?
 
-myManageHook = composeAll
-    [ isFullscreen --> doFullFloat
+-- Now that's one fucked up type signature...
+myLayoutHook
+  :: ModifiedLayout
+       AvoidStruts (Choose Tall (Choose (Mirror Tall) Full)) Window
+     -> ModifiedLayout
+          SmartBorder
+          (ModifiedLayout
+             AvoidStruts (Choose Tall (Choose (Mirror Tall) Full)))
+          Window
+myLayoutHook = smartBorders     -- FIXME: Doku: What for?
+
+myManageHook :: Query (Data.Monoid.Endo WindowSet)
+myManageHook = mconcat
+    [ isFullscreen --> doFullFloat  -- FIXME: Doku: What for?
     ]
 
-myLogHook barProc = dynamicLogWithPP xmobarPP
-    { ppOutput = hPutStrLn barProc
-    , ppTitle = xmobarColor "green" "" . shorten 80
+myEventHook :: Event -> X Data.Monoid.All
+myEventHook = fullscreenEventHook   -- Purpose: Applications can request fullscreen (Chrome)
+                                    --  this is not included in the desktopConfig / emwh defaults
+
+myLogHook :: Handle -> X ()
+myLogHook barProc = dynamicLogWithPP xmobarPP           -- Purpose: xmobar
+    { ppOutput = hPutStrLn barProc                      --     Desktops
+    , ppTitle = xmobarColor "green" "" . shorten 80     --     Window title
     }
 
-spawnTray = safeSpawn "trayer"
+---------------------------------------------------------------------------------------------------
+-- Chapter II       :   External Programs
+---------------------------------------------------------------------------------------------------
+
+-- TODO: Move config stuff from here to previous "chapter"
+
+spawnTray :: IO ()
+spawnTray = safeSpawn "trayer"                          -- Purpose: trayer
     [   "--edge", "top"
     ,   "--align", "right"
     ,   "--width", "10"
@@ -86,6 +142,11 @@ spawnTray = safeSpawn "trayer"
     ,   "--expand", "true"
     ]
 
+---------------------------------------------------------------------------------------------------
+-- Chapter ZZ       :   Main - Assemble and Launch!
+---------------------------------------------------------------------------------------------------
+
+main :: IO ()
 main = do
     xmDir <- getXMonadDir
     barCmd <- return $ "xmobar " ++ xmDir ++ "/xmobar.config"
@@ -104,15 +165,14 @@ main = do
 
         -- bindings
         ,   keys            = myKeys <+> keys baseConfig
-    --    ,   mouseBindings   = myMouse <+> mouseBindings baseConfig
+        ,   mouseBindings   = myMouse <+> mouseBindings baseConfig
 
         -- hooks
+        ,   startupHook     = myStartupHook <+> startupHook baseConfig
         ,   layoutHook      = myLayoutHook $ layoutHook baseConfig
         ,   manageHook      = myManageHook <+> manageHook baseConfig
-    --    ,   handleEventHook = myEventHook <+> handleEventHook baseConfig
+        ,   handleEventHook = myEventHook <+> handleEventHook baseConfig
         ,   logHook         = myLogHook barProc <+> logHook baseConfig
-    --    ,   startupHook     = myStartupHook <+> startupHook baseConfig
 
         }
-
 
