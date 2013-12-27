@@ -6,7 +6,7 @@
 -- Author: Markus Dangl <markus@q1cc.net>
 
 {- TODO:
- - Kill child processes on exit (or restart triggered by mod+Q)
+ -      Kill child processes on exit (or restart triggered by mod+Q)
  -
  - Cool app starting feature (Matrix stuff?)
  -      http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-GridSelect.html
@@ -45,6 +45,9 @@
  - Tips:
  -      http://www.haskell.org/haskellwiki/Xmonad/Frequently_asked_questions
  -      http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Doc-Extending.html
+ - 
+ - More configs:
+ -      http://www.haskell.org/haskellwiki/Xmonad/Config_archive
  -}
 
 ---------------------------------------------------------------------------------------------------
@@ -91,8 +94,43 @@ import XMonad.Layout.NoBorders
 -- Chapter I        :   Configuration
 ---------------------------------------------------------------------------------------------------
 
+-- Simple settings - following the style in
+-- http://hackage.haskell.org/package/xmonad-0.11/docs/src/XMonad-Config.html
+
+-- | Workspaces enumerated by name
+myWorkspaces :: [WorkspaceId]
+myWorkspaces = map show [1 .. 9 :: Int]
+
+-- | The modkey you want to use.
+myModKey        :: KeyMask
+myModKey        = mod4Mask
+
+-- | Width of the window border in pixels.
+myBorderWidth :: Dimension
+myBorderWidth = 1
+
+-- | Border colors for unfocused and focused windows, respectively.
+myNormalBorderColor, myFocusedBorderColor :: String
+myNormalBorderColor  = "#555555"        -- darkish grey
+myFocusedBorderColor = "#5555ff"        -- grayish light blue
+
+-- | The preferred terminal program (By default on mod+return)
+myTerminal      :: String
+myTerminal      = "urxvt"
+
+-- | Whether focus follows the mouse pointer.
+myFocusFollowsMouse :: Bool
+myFocusFollowsMouse = False                 -- generally doesn't work well
+
+-- | Whether a mouse click select the focus or is just passed to the window
+myClickJustFocuses :: Bool
+myClickJustFocuses = True                   -- okay with me
+
+-- Base configuration to use
 baseConfig :: XConfig (ModifiedLayout AvoidStruts (Choose Tall (Choose (Mirror Tall) Full)) )   -- come again?
-baseConfig = desktopConfig -- { startupHook = startupHook gnomeConfig } -- startupHook below
+baseConfig = desktopConfig
+
+---------------------------------------------------------------------------------------------------
 
 myKeys :: XConfig t -> M.Map (KeyMask, KeySym) (X ())
 myKeys (XConfig { modMask = modm, terminal = terminal }) = M.fromList $
@@ -111,6 +149,23 @@ myKeys (XConfig { modMask = modm, terminal = terminal }) = M.fromList $
     -- WindowMenu
     , ((modm, xK_o ), windowMenu)
     ]
+
+
+-- | The available layouts.  Note that each layout is separated by |||, which
+-- denotes layout choice.
+layout = tiled ||| Mirror tiled ||| Full
+  where
+     -- default tiling algorithm partitions the screen into two panes
+     tiled   = Tall nmaster delta ratio
+
+     -- The default number of windows in the master pane
+     nmaster = 1
+
+     -- Default proportion of screen occupied by master pane
+     ratio   = 1/2
+
+     -- Percent of screen to increment by when resizing panes
+     delta   = 3/100
 
 myMouse :: XConfig t -> M.Map (KeyMask, Button) (Window -> X ())
 myMouse (XConfig { modMask = modm }) = M.fromList $
@@ -144,7 +199,7 @@ myLayoutHook
           (ModifiedLayout
              AvoidStruts (Choose Tall (Choose (Mirror Tall) Full)))
           Window
-myLayoutHook = smartBorders     -- FIXME: Doku: What for?
+myLayoutHook = smartBorders     -- Hides border when unneccesary (e.g. in fullscreen)
 
 -- http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Hooks-ManageHelpers.html
 -- http://www.haskell.org/haskellwiki/Xmonad/Frequently_asked_questions#Prevent_new_windows_from_stealing_focus
@@ -152,16 +207,38 @@ myLayoutHook = smartBorders     -- FIXME: Doku: What for?
 myManageHook :: Query (Data.Monoid.Endo WindowSet)
 myManageHook = mconcat
     [ isFullscreen --> doFullFloat  -- Automatically fullscreen windows that want to fullscreen
+--    , className =? "Gimp"      --> doFloat    -- Example
     ]
 
 myEventHook :: Event -> X Data.Monoid.All
 myEventHook = fullscreenEventHook   -- Purpose: Applications can request fullscreen (Chrome)
                                     --  this is not included in the desktopConfig / emwh defaults
+myLogHook :: RuntimeConfig -> X ()
+myLogHook rtcfg = dynamicLogWithPP xmobarPP         -- Purpose: xmobar
+    { ppOutput = hPutStrLn (barProc rtcfg)          --     Desktops
+    , ppTitle = xmobarColor "green" "" . shorten 80 --     Window title
+    }
 
-myLogHook :: Handle -> X ()
-myLogHook barProc = dynamicLogWithPP xmobarPP           -- Purpose: xmobar
-    { ppOutput = hPutStrLn barProc                      --     Desktops
-    , ppTitle = xmobarColor "green" "" . shorten 80     --     Window title
+---------------------------------------------------------------------------------------------------
+-- I like to have all settings explicitly enumerated here
+-- If i upgrade XMonad and there are any new settings i'd like to get a compile error here
+-- Some variables are only available at runtime, i put those in a special "RuntimeConfig" record
+myConfig rtcfg = XConfig
+    { XMonad.borderWidth        = myBorderWidth         -- no merge
+    , XMonad.workspaces         = myWorkspaces          -- no merge
+    , XMonad.layoutHook         = myLayoutHook          $   XMonad.layoutHook           baseConfig
+    , XMonad.terminal           = myTerminal            -- no merge
+    , XMonad.normalBorderColor  = myNormalBorderColor   -- no merge
+    , XMonad.focusedBorderColor = myFocusedBorderColor  -- no merge
+    , XMonad.modMask            = myModKey              -- no merge
+    , XMonad.keys               = myKeys                <+> XMonad.keys                 baseConfig
+    , XMonad.logHook            = myLogHook rtcfg       <+> XMonad.logHook              baseConfig
+    , XMonad.startupHook        = myStartupHook         <+> XMonad.startupHook          baseConfig
+    , XMonad.mouseBindings      = myMouse               <+> XMonad.mouseBindings        baseConfig
+    , XMonad.manageHook         = myManageHook          <+> XMonad.manageHook           baseConfig
+    , XMonad.handleEventHook    = myEventHook           <+> XMonad.handleEventHook      baseConfig
+    , XMonad.focusFollowsMouse  = myFocusFollowsMouse   -- no merge
+    , XMonad.clickJustFocuses   = myClickJustFocuses    -- no merge
     }
 
 ---------------------------------------------------------------------------------------------------
@@ -187,33 +264,20 @@ spawnTray = safeSpawn "trayer"                          -- Purpose: trayer
 -- Chapter ZZ       :   Main - Assemble and Launch!
 ---------------------------------------------------------------------------------------------------
 
+data RuntimeConfig = RuntimeConfig
+    {   barProc     :: !Handle
+    }
+
+
 main :: IO ()
 main = do
     xmDir <- getXMonadDir
     barCmd <- return $ "xmobar " ++ xmDir ++ "/xmobar.config"
     -- safeSpawn "xmessage" [ barCmd ]
     barProc <- spawnPipe barCmd
-    spawnTray
-    xmonad $ baseConfig
-        {   modMask     = mod4Mask      -- Yay for the super key.
-        ,   terminal    = "urxvt"       -- The best terminal.
-
-        -- basics
-        ,   focusFollowsMouse   = False
-        ,   borderWidth         = 1
-        ,   normalBorderColor   = "#555555"
-        ,   focusedBorderColor  = "#5555ff"
-
-        -- bindings
-        ,   keys            = myKeys <+> keys baseConfig
-        ,   mouseBindings   = myMouse <+> mouseBindings baseConfig
-
-        -- hooks
-        ,   startupHook     = myStartupHook <+> startupHook baseConfig
-        ,   layoutHook      = myLayoutHook $ layoutHook baseConfig
-        ,   manageHook      = myManageHook <+> manageHook baseConfig
-        ,   handleEventHook = myEventHook <+> handleEventHook baseConfig
-        ,   logHook         = myLogHook barProc <+> logHook baseConfig
-
+    rtcfg <- return RuntimeConfig
+        {   barProc = barProc
         }
+    spawnTray
+    xmonad (myConfig rtcfg)
 
