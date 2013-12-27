@@ -16,10 +16,9 @@ text/richtext=gvim.desktop;gvim-single.desktop;kde4-kwrite.desktop;libreoffice-w
 video/mp4=vlc.desktop;
 video/x-flv=vlc.desktop;
 video/x-msvideo=vlc.desktop;
-x-scheme-handler/http=chromium.desktop;
-x-scheme-handler/https=chromium.desktop;
 x-scheme-handler/news=thunderbird.desktop;
 video/webm=vlc.desktop;
+application/x-deb=gdebi.desktop;
 
 [Default Applications]
 application/pgp-encrypted=gvim-single.desktop
@@ -44,3 +43,4 @@ x-scheme-handler/mailto=thunderbird.desktop
 x-scheme-handler/news=thunderbird.desktop
 application/pdf=evince.desktop
 video/webm=vlc.desktop
+application/x-deb=gdebi.desktop

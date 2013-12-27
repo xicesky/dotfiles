@@ -1,4 +1,12 @@
 #!/bin/bash
 cd ~/Software/HoN
+
+# Hon does not cope well with multi screens
+xrandr --output DFP7 --off
+
+# Run
 ./hon.sh
+
+# Hon fucks up my screen somehow
+xrandr --output DFP7 --auto --right-of DFP6
 

@@ -54,7 +54,14 @@ urxvt.iconFile:     /usr/share/icons/Mint-X/apps/scalable/Terminal.svg
 !urxvt*boldFont:    -xos4-terminus-bold-*-*-*-12-*-*-*-*-*-*-*
 !  - use xft for drawing fonts
 !urxvt*font:       xft:Terminus:8
-urxvt*font:         xft:Bitstream Vera Sans Mono:pixelsize=12
+
+! You can append options e.g. :autohint=true:pixelsize=12
+urxvt*font:             xft:Bitstream Vera Sans Mono:pixelsize=12
+urxvt*boldFont:         xft:Bitstream Vera Sans Mono:bold
+urxvt*italicFont:       xft:Bitstream Vera Sans Mono:italic
+urxvt*boldItalicFont:   xft:Bitstream Vera Sans Mono:bold:italic
+! rxvt should underline this URL: https://www.q1cc.net/
+
 !  - cursor
 urxvt*cursorColor: #DCDCDC
 !  - pseudo transparency
