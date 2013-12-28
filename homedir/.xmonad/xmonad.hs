@@ -81,14 +81,6 @@ import XMonad.Hooks.DynamicLog
 import qualified XMonad.StackSet as W
 import XMonad.Actions.WindowMenu (windowMenu)   -- inspires a more sophisticated menu
 
--- Topic spaces
-import XMonad.Actions.TopicSpace
-    ( (>*>)     -- TODO: i don't like fish
-    , Topic, TopicConfig
-    , defaultTopicConfig, defaultTopic, defaultTopicAction
-    , topicActions, currentTopicAction, checkTopicConfig
-    )
-
 -- Spawn programs (xmobar, trayer)
 import XMonad.Util.Run(spawnPipe,safeSpawn)
 -- import XMonad.Util.EZConfig(additionalKeys)
@@ -106,23 +98,8 @@ import XMonad.Layout.NoBorders
 -- http://hackage.haskell.org/package/xmonad-0.11/docs/src/XMonad-Config.html
 
 -- | Workspaces enumerated by name
---myWorkspaces :: [WorkspaceId]
---myWorkspaces = map show [1 .. 9 :: Int]
-
--- | Topics instead of workspaces
-myTopics :: [Topic]
-myTopics =
-    [   "main"
-    ,   "browser"
-    ,   "3"
-    ,   "4"
-    ,   "5"
-    ,   "6"
-    ,   "7"
-    ,   "8"
-    ,   "communication"
-    ,   "system"
-    ]
+myWorkspaces :: [WorkspaceId]
+myWorkspaces = map show [1 .. 9 :: Int]
 
 -- | The modkey you want to use.
 myModKey        :: KeyMask
@@ -137,9 +114,9 @@ myNormalBorderColor, myFocusedBorderColor :: String
 myNormalBorderColor  = "#555555"        -- darkish grey
 myFocusedBorderColor = "#5555ff"        -- grayish light blue
 
--- | The preferred terminal program (Used in various places)
-myTerminal :: String
-myTerminal = "urxvt"
+-- | The preferred terminal program (By default on mod+return)
+myTerminal      :: String
+myTerminal      = "urxvt"
 
 -- | Whether focus follows the mouse pointer.
 myFocusFollowsMouse :: Bool
@@ -153,38 +130,10 @@ myClickJustFocuses = True                   -- okay with me
 baseConfig :: XConfig (ModifiedLayout AvoidStruts (Choose Tall (Choose (Mirror Tall) Full)) )   -- come again?
 baseConfig = desktopConfig
 
--- | Which browser do u like to launch
-myBrowser :: String
-myBrowser = "chromium"
-
 ---------------------------------------------------------------------------------------------------
 
-myTopicConfig :: TopicConfig
-myTopicConfig = defaultTopicConfig
-    {   defaultTopic = "main"
-    ,   defaultTopicAction = const $ spawnShell >*> 3       -- !?!
---    ,   topicDirs = M.fromList $
---        [   ("example",     "Dev/example" )
---        ,   ("documents",   "Dokumente" )
---        ]
---
-    , topicActions = M.fromList $
-        [   ("main",    spawnShellIn "~")           -- see if that works
-        ,   ("browser", spawn $ myBrowser)
-        --,   ("communication",   mailAction)
-        ]
-    }
-
--- Custom actions
-
-spawnShell :: X ()
-spawnShell = spawn $ myTerminal
-
-spawnShellIn :: String -> X ()
-spawnShellIn dir = spawn $ myTerminal ++ "urxvt '(cd ''" ++ dir ++ "'' && " ++ myTerminal ++ " )'"
-
 myKeys :: XConfig t -> M.Map (KeyMask, KeySym) (X ())
-myKeys (XConfig { modMask = modm }) = M.fromList $
+myKeys (XConfig { modMask = modm, terminal = terminal }) = M.fromList $
     -- Grab any windows key event
     [ ((0, xK_Super_L), return ())
     -- Logout via gnome-session-quit
@@ -192,15 +141,13 @@ myKeys (XConfig { modMask = modm }) = M.fromList $
     -- Swap the focused window and the master window (swapped with the launch terminal key)
     , ((modm .|. shiftMask, xK_Return), windows W.swapMaster)
     -- Launch a terminal (swapped with focused to master key)
-    , ((modm, xK_Return), spawnShell)
+    , ((modm, xK_Return), spawn terminal)
     -- Toggle the border of the currently focused window 
     , ((modm, xK_g), withFocused toggleBorder)
     -- launch gmrun on mod+r
     , ((modm, xK_r), spawn "gmrun")
     -- WindowMenu
-    , ((modm, xK_o), windowMenu)
-    -- Topic
-    , ((modm, xK_a), currentTopicAction myTopicConfig)
+    , ((modm, xK_o ), windowMenu)
     ]
 
 
@@ -278,8 +225,7 @@ myLogHook rtcfg = dynamicLogWithPP xmobarPP         -- Purpose: xmobar
 -- Some variables are only available at runtime, i put those in a special "RuntimeConfig" record
 myConfig rtcfg = XConfig
     { XMonad.borderWidth        = myBorderWidth         -- no merge
---    , XMonad.workspaces         = myWorkspaces          -- no merge
-    , XMonad.workspaces         = myTopics
+    , XMonad.workspaces         = myWorkspaces          -- no merge
     , XMonad.layoutHook         = myLayoutHook          $   XMonad.layoutHook           baseConfig
     , XMonad.terminal           = myTerminal            -- no merge
     , XMonad.normalBorderColor  = myNormalBorderColor   -- no merge
@@ -322,9 +268,9 @@ data RuntimeConfig = RuntimeConfig
     {   barProc     :: !Handle
     }
 
+
 main :: IO ()
 main = do
-    checkTopicConfig myTopics myTopicConfig
     xmDir <- getXMonadDir
     barCmd <- return $ "xmobar " ++ xmDir ++ "/xmobar.config"
     -- safeSpawn "xmessage" [ barCmd ]
