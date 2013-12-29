@@ -22,9 +22,6 @@
  -      http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-SpawnOn.html
  -
  - Interesting stuff:
- -      http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-CycleWS.html
- -      or better: http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-Plane.html
- -      or even: http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-WorkspaceCursors.html
  -      http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-FloatKeys.html
  -      http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-Search.html
  -
@@ -209,7 +206,9 @@ baseKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
         , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
 
 myKeys :: XConfig Layout -> M.Map (KeyMask, KeySym) (X ())
-myKeys conf@(XConfig { modMask = modm, terminal = terminal }) = mconcat
+myKeys conf@(XConfig { modMask = modm, terminal = terminal }) = mconcat $
+    -- mconcat is left-biased, we want right biased
+    reverse
     [ baseKeys conf
     , M.fromList $  -- Custom keys
         -- Grab any windows key event
