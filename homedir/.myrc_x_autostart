@@ -35,9 +35,10 @@ export GPG_AGENT_INFO
 #######################################################################################################################
 # Look & feel & fancyness
 
-xscreensaver -no-splash &
+#xscreensaver -no-splash &      # What for anyway
 #xsetroot -solid midnightblue
 xsetroot -mod 4 4 -fg gray1 -bg grey5
+xset +dpms
 
 #######################################################################################################################
 # Misc
