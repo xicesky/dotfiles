@@ -66,7 +66,6 @@ import XMonad
 
 -- We need to import some modules just to write proper type signatures
 import XMonad.Layout.LayoutModifier (ModifiedLayout)
-import XMonad.Hooks.ManageDocks (AvoidStruts)
 
 -- Our base config
 import XMonad.Config.Desktop (desktopConfig)
@@ -76,6 +75,7 @@ import XMonad.Config.Gnome (gnomeRegister)
 
 -- Bits and pieces
 import XMonad.Hooks.EwmhDesktops (fullscreenEventHook)
+import XMonad.Hooks.ManageDocks (AvoidStruts, ToggleStruts (..))
 import XMonad.Hooks.ManageHelpers
 import XMonad.Hooks.DynamicLog
 import qualified XMonad.StackSet as W
@@ -207,20 +207,20 @@ baseKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
 
 myKeys :: XConfig Layout -> M.Map (KeyMask, KeySym) (X ())
 myKeys conf@(XConfig { modMask = modm, terminal = terminal }) = mconcat $
-    -- mconcat is left-biased, we want right biased
+    -- mconcat is a left-biased map join, we want it to be right biased
     reverse
     [ baseKeys conf
     , M.fromList $  -- Custom keys
         -- Grab any windows key event
         [ ((0, xK_Super_L), return ())
-        -- Logout via gnome-session-quit
-        -- , ((modm .|. shiftMask, xK_q), spawn "gnome-session-quit")  -- FIXME: check for gnome-session
-        -- Swap the focused window and the master window (swapped with the launch terminal key)
+        -- Swap the focused window and the master window
         , ((modm .|. shiftMask, xK_Return), windows W.swapMaster)
-        -- Launch a terminal (swapped with focused to master key)
+        -- Launch a terminal
         , ((modm, xK_Return), spawn terminal)
         -- Toggle the border of the currently focused window 
         , ((modm, xK_g), withFocused toggleBorder)
+        -- Toggle struts on the current workspace (from XMonad.Config.Desktop)
+        , ((modm, xK_b), sendMessage ToggleStruts)
         -- launch gmrun on mod+r
         , ((modm, xK_r), spawn "gmrun")
         -- WindowMenu
