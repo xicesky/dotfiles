@@ -48,7 +48,7 @@ fi
 export PATH
 
 ### Let keychain check for an agent ###############################################################
-if [ -x /usr/bin/keychain ] ; then
+if [ "$USE_KEYCHAIN" != "no" -a -x /usr/bin/keychain ] ; then
     if [ -n "$INTERACTIVE" ] ; then
         # This should be non-interactive
         eval `/usr/bin/keychain --eval id_rsa`
