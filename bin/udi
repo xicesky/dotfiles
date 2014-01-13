@@ -2,7 +2,7 @@
 VERBOSE=true
 
 set -e
-. $HOME/_tool/lib/common.lib.sh
+. $HOME/_dotfiles/lib/common.lib.sh
 set +e
 
 [ $# -eq 0 ] && {

@@ -1,5 +1,8 @@
 # Have fun!
 
 #include ".gtkrc-2.0-gnome-color-chooser"
-include "/home/markus/_tool/gtk-theme/gtkrc-2.0-eclipse"
+
+# This probably messes things up...
+# Maybe this only should get loaded when launching eclipse.
+include "_dotfiles/x-gtk/gtkrc-2.0-eclipse"
 
