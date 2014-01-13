@@ -1,5 +1,10 @@
+vim
+===
 
-Started this file :P
+Vim configuration, plugins, ...
+
+"Changelog"
+===========
 
 Added http://www.vim.org/scripts/script.php?script_id=90
     vcscommand.vim : CVS/SVN/SVK/git/hg/bzr integration plugin
