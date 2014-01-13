@@ -1,0 +1,116 @@
+#!/bin/bash
+cd $HOME
+
+# Mount/Unmount etc always use the mountpoint as first argument!
+
+function mount() {
+    sshfs "$2" "$1"
+}
+
+function unmount() {
+    fusermount -u "$1"
+}
+
+function fstype()  {
+    stat -f -c '%T' "$1"
+}
+
+function is_fuse() {
+    test `fstype "$1"` = "fuseblk"
+}
+
+function is_mounted() {
+    mountpoint -q "$1"
+}
+
+function is_fuse_mounted() {
+    is_mounted "$1" && is_fuse "$1"
+}
+
+function state() {
+    STATE="?"
+    if is_mounted "$1" ; then
+        if is_fuse "$1" ; then
+            STATE="fuse-mounted"
+        else
+            STATE="unknown-mounted" # (`fstype "$1"`)"
+        fi
+    else
+        STATE="unmounted"
+    fi
+    echo $STATE
+}
+
+function showstate() {
+    printf '%-40s %-12s\n' $1 `state "$1"`
+}
+
+function remount() {
+    case `state "$1"` in
+        fuse-mounted)
+            unmount "$1"
+            ;;
+        unmounted)
+            ;;
+        *)
+            echo "Mounted filesystem can't be handled: $1 `fstype "$1"`"
+            return 1
+            ;;
+    esac
+    mount "$1" "$2"
+}
+
+function default() {
+    remount $1 $2
+    showstate $1 $2
+}
+
+ACTION=default
+#ACTION=echo
+ACTIVE="1 2 3 4"
+
+M_1_POINT="$HOME/miomi"
+M_1_FS="doggie:miomi"
+
+M_2_POINT="$HOME/Videos/xxx"
+M_2_FS="doggie:/mnt/localdata/Markus/xxx"
+
+M_3_POINT="$HOME/Videos/Archive"
+M_3_FS="doggie:/mnt/archive/Videos"
+
+M_4_POINT="$HOME/Videos/ImbaPladde"
+M_4_FS="doggie:/mnt/serien"
+
+case "$1" in
+    "")
+        ACTION=default
+        ;;
+    "auto"|"remount")
+        ACTION=remount
+        ;;
+    "list"|"show"|"state"|"status")
+        ACTION=showstate
+        ;;
+    "mount")
+        ACTION=mount
+        ;;
+    "unmount"|"umount")
+        ACTION=unmount
+        ;;
+    *)
+        (
+            echo "Invalid syntax"
+            echo "`basename $0` <auto|list|mount|unmount>"
+        ) 1>&2
+        exit 1
+        ;;
+esac
+shift
+
+for i in $ACTIVE ; do
+    eval \$ACTION \$M_${i}_POINT \$M_${i}_FS
+done
+
+#sshfs doggie:miomi miomi
+#sshfs doggie:/mnt/localdata/Markus/xxx Videos/xxx
+

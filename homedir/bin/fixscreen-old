@@ -1,0 +1,24 @@
+#!/bin/bash
+
+#OUT1=DFP2
+#OUT2=CRT2
+OUT1="DVI-0"
+OUT2="DVI-1"
+
+echo "Trying automatic setting..."
+xrandr --output "$OUT2" --off
+xrandr --output "$OUT1" --auto
+xgamma -gamma 1.0
+
+xrandr --output "$OUT2" --auto --right-of "$OUT1"
+
+exit 0
+
+echo "Press CTRL+C to cancel this script now."
+read NOTHING
+
+echo "Trying fixed settings..."
+xrandr --output $OUT1 --mode 1600x1200 --rate 60
+xrandr --output $OUT2 --mode 1280x960 --rate 85
+xrandr --output $OUT2 --pos 1600x1200
+

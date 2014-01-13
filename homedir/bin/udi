@@ -1,0 +1,30 @@
+#!/bin/bash
+VERBOSE=true
+
+set -e
+. $HOME/_tool/lib/common.lib.sh
+set +e
+
+[ $# -eq 0 ] && {
+    find /sys -name dev
+    exit $?
+}
+
+PARAMS=""
+
+while [ -n "$1" ] ; do
+    case "$1" in
+        --*)
+            PARAMS="$PARAMS $1"
+            ;;
+        *)
+            TARGET="$1"
+            ;;
+    esac
+    shift
+done
+
+#[ -z "$PARAMS" ] && PARAMS="--query=all"
+
+invoke udevadm info $PARAMS "--path=$TARGET" "$@"
+

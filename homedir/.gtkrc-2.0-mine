@@ -1,0 +1,5 @@
+# Have fun!
+
+#include ".gtkrc-2.0-gnome-color-chooser"
+include "/home/markus/_tool/gtk-theme/gtkrc-2.0-eclipse"
+

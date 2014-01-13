@@ -1,0 +1,4 @@
+prefer-format = ^.*youtube.*\.com:fmt22_720p
+continue = true
+filename-format = %i.%t.%s
+

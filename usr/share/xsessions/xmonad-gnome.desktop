@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=XMonad + Gnome
+Comment=Xmonad as window manager with a gnome session (no panel)
+Exec=gnome-session-just-xmonad
+TryExec=gnome-session
+Icon=
+Type=Application

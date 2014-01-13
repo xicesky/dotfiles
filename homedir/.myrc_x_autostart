@@ -1,0 +1,57 @@
+#!/bin/sh
+# ~/.myrc_x_autostart: executed at xsession login
+# (c) 2013 Markus Dangl <markus@q1cc.net>
+# This might be invoked by non-bash shells, so be careful
+
+#######################################################################################################################
+# X resources
+
+( R="~/.Xresources" ; [ -f "$R" ] && xrdb -merge .Xresources ; )
+#( R="~/.Xdefaults" ; [ -f "$R" ] && xrdb -merge .Xdefaults ; )
+
+#######################################################################################################################
+# Input & keyboard configuration
+
+# See https://wiki.archlinux.org/index.php/Keyboard_Configuration_in_Xorg
+# Usage: setxkbmap [-model xkb_model] [-layout xkb_layout] [-variant xkb_variant] [-option xkb_options]
+# Print using: setxkbmap -print -verbose 10
+#setxkbmap -option "grp:alt_shift_toggle"
+setxkbmap -option ""
+setxkbmap -option ctrl:nocaps   # Disable that useless fucker of nonsense key
+
+$MYRC_HOME/bin/setup-xinput.sh
+fbxkb &
+
+#######################################################################################################################
+# Keyring stuff
+
+eval `gnome-keyring-daemon --start`
+
+export GNOME_KEYRING_SOCKET
+export GNOME_KEYRING_PID
+export SSH_AUTH_SOCK
+export GPG_AGENT_INFO
+
+#######################################################################################################################
+# Look & feel & fancyness
+
+#xscreensaver -no-splash &      # What for anyway
+#xsetroot -solid midnightblue
+xsetroot -mod 4 4 -fg gray1 -bg grey5
+xset +dpms
+
+#######################################################################################################################
+# Misc
+
+# To show some info:
+# xset q
+
+#if [ -x /usr/bin/nm-applet ] ; then
+#    nm-applet --sm-disable &
+#fi
+
+#if [ -x /usr/bin/gnome-power-manager ] ; then
+#    sleep 3
+#    gnome-power-manager &
+#fi
+
