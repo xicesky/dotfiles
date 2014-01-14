@@ -2223,7 +2223,7 @@
 #alsa-audio-channels=6
 
 # Software gain (float)
-alsa-gain=0.091125
+alsa-gain=0.274625
 
 [xcb_window] # X11 video window (XCB)
 
@@ -2663,10 +2663,10 @@ alsa-gain=0.091125
 [skins2] # Skinnable Interface
 
 # Skin to use (string)
-#skins2-last=
+skins2-last=/home/markus/VLC-Skins/DD63.vlt
 
 # Config of last used skin (string)
-#skins2-config=
+skins2-config=["aboutwin" "aboutwinwin-main" 675 439 330 171 0]["eqwin" "eqwin-main" 675 439 330 171 0]["fullscreenController" "fsc_normal" 590 889 500 130 0]["main" "normal" 590 350 500 350 1]["plwin" "plwin-normal" 674 402 500 350 0]
 
 # Enable transparency effects (boolean)
 #skins2-transparency=0
