@@ -1,19 +1,39 @@
 #!/bin/sh
 
-# Setup the console / terminal correctly
-aptitude install console-setup
-aptitude install ncurses-term
-
-# Most important
+## Most important
 aptitude install etckeeper
+git config --global user.name "Markus Dangl"
+git config --global user.email "markus@q1cc.net"
+( cd /etc ; git commit --amend --reset-author ; )
 
-# then this
+## Setup the console / terminal correctly
+aptitude install console-setup ncurses-term
+
+## Then install this
 aptitude install \
-    vim-nox mlocate htop iotop ntop iptraf arora p7zip-full mc netcat curl wget \
-    nmap screen byobu checkinstall cclive sl pigz grub-invaders gzrt gparted \
-    vim-gtk gzip bzip2 hwinfo linux-headers-amd64 ltrace strace lvm2 lzma \
-    memtest86+ ncftp netcat-openbsd ntp parted p7zip-rar pv screenie subversion \
-    xinetd \
-    gdisk bc xauth dosfstools cryptsetup zsh \
-    debootstrap grml-debootstrap
+    vim htop iotop iptraf p7zip-full mc netcat curl wget \
+    nmap screen checkinstall cclive pigz gzrt \
+    gzip bzip2 hwinfo ltrace strace lvm2 lzma \
+    ncftp netcat-openbsd parted p7zip-rar pv \
+    gdisk bc xauth zsh \
+    subversion git git-svn
+
+## Comment this out if you mind larger downloads
+aptitude install \
+    linux-headers-amd64
+
+## Maybe this
+#aptitude install \
+#    sl vim-gtk screenie dosfstools cryptsetup gparted arora \
+#    cclive lshw hwinfo
+
+## Services (have to decide on those)
+#aptitude install \
+#    ntop ntp xinetd anacron
+aptitude install \
+    mlocate
+
+## More stuff (i dont use that often)
+#aptitude install \
+#    byobu memtest86+ grub-invaders
 
