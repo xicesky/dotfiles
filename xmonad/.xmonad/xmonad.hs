@@ -27,11 +27,14 @@
  -
  -      http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Hooks-Script.html
  -          Useless but inspires a dynamically loaded ("scripted") xmonad config
+ -      http://hackage.haskell.org/package/xmonad-eval
  -
  - Panels / Bars:
  -      https://wiki.archlinux.org/index.php/PyPanel
  -      http://stalonetray.sourceforge.net/manpage.html
  -      https://wiki.archlinux.org/index.php/Stalonetray
+ -      http://hackage.haskell.org/package/taffybar or https://github.com/travitch/taffybar
+ -          nice idea: https://github.com/koterpillar/tianbar
  -
  - Eyecandy:
  -      https://wiki.archlinux.org/index.php/Compton

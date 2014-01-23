@@ -23,6 +23,11 @@ $MYRC_HOME/bin/setup-xinput.sh
 fbxkb &
 
 #######################################################################################################################
+# Running into problems with d-bus maybe we need to start consolekit / dbus?
+
+#exec ck-launch-session dbus-launch --sh-syntax --exit-with-session xmonad
+
+#######################################################################################################################
 # Keyring stuff
 
 eval `gnome-keyring-daemon --start`
