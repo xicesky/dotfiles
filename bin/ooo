@@ -1,0 +1,4 @@
+#!/bin/sh
+#echo "Apache Openoffice.org"
+/opt/openoffice4/program/soffice
+
