@@ -11,7 +11,13 @@
 
 {- TODO:
  -      Kill child processes on exit (or restart triggered by mod+Q)
- -
+ -      Be able to reset workspace (master size, layout) using a hotkey
+ -      Use a better bar that integrates notifications & tray
+ -      Set up different layouts on different workspaces by default (e.g. Full on 5 for browser)
+ -      Create a hotkey that autolaunches my default apps on various workspaces
+ -          (Don't do that on startup, i want xmonad to start FAST)
+ -          (This will need a proper SpawnOn configuration)
+ -      
  - Cool app starting feature (Matrix stuff?)
  -      http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-GridSelect.html
  -      http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-Submap.html
