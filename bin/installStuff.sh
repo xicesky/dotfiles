@@ -15,7 +15,7 @@ aptitude install \
     nmap screen checkinstall cclive pigz gzrt \
     gzip bzip2 hwinfo ltrace strace lvm2 lzma \
     ncftp netcat-openbsd parted p7zip-rar pv \
-    gdisk bc xauth zsh sudo \
+    gdisk bc xauth zsh sudo dnsutils \
     subversion git git-svn
 
 ## Comment this out if you mind larger downloads
