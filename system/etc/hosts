@@ -7,7 +7,7 @@
 
 ###############################################################################
 # q1cc VPN space 10.101.2.* (dangl)
-10.101.2.1	router          router.internal.q1cc.net
+10.101.2.1	router          router.internal.q1cc.net virtualrouter.internal.q1cc.net
 # THEY CALL ME STOMPI
 10.101.2.2  stompi-bmc      stompi-bmc.internal.q1cc.net 
 10.101.2.3  stompi          stompi.internal.q1cc.net stompi-rescue.internal.q1cc.net
@@ -44,6 +44,7 @@
 ###############################################################################
 # q1cc VPN space 10.101.9.* (root)
 10.101.9.1 rootserver       root.internal.q1cc.net
+10.101.9.6 light-int        light.internal.q1cc.net
 10.101.9.10 vm1             vm1.internal.q1cc.net
 10.101.9.11 vm2             vm2.internal.q1cc.net
 10.101.9.12 vm3             vm3.internal.q1cc.net
