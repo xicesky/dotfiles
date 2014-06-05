@@ -8,9 +8,9 @@
 ###############################################################################
 # q1cc VPN space 10.101.2.* (dangl)
 10.101.2.1	router          router.internal.q1cc.net virtualrouter.internal.q1cc.net
-# THEY CALL ME STOMPI
 10.101.2.2  stompi-bmc      stompi-bmc.internal.q1cc.net 
 10.101.2.3  stompi          stompi.internal.q1cc.net stompi-rescue.internal.q1cc.net
+10.101.2.9  vprint          vprint.internal.q1cc.net virtualprintserver.internal.q1cc.net
 #
 10.101.2.19 puddle          puddle.internal.q1cc.net
 #10.101.2.21 doggiex2       doggiex2.internal.q1cc.net
