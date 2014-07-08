@@ -7,15 +7,15 @@
 
 ###############################################################################
 # q1cc VPN space 10.101.2.* (dangl)
-10.101.2.1	router          router.internal.q1cc.net
-# THEY CALL ME STOMPI
+10.101.2.1	router          router.internal.q1cc.net virtualrouter.internal.q1cc.net
 10.101.2.2  stompi-bmc      stompi-bmc.internal.q1cc.net 
 10.101.2.3  stompi          stompi.internal.q1cc.net stompi-rescue.internal.q1cc.net
-#
+10.101.2.9  vprint          vprint.internal.q1cc.net virtualprintserver.internal.q1cc.net
 10.101.2.19 puddle          puddle.internal.q1cc.net
 #10.101.2.21 doggiex2       doggiex2.internal.q1cc.net
 10.101.2.22 doggie          doggie.internal.q1cc.net
 10.101.2.23 rindehart       rindehart.internal.q1cc.net
+10.101.2.24 crow            crow.internal.q1cc.net
 10.101.2.25 borsti          borsti.internal.q1cc.net
 10.101.2.32 quarki          quarki.internal.q1cc.net
 10.101.2.36	fun4free        fun4free.internal.q1cc.net
@@ -24,6 +24,7 @@
 10.101.2.51 netgear-ap      netgear-ap.internal.q1cc.net
 10.101.2.54 printserver     printserver.internal.q1cc.net
 10.101.2.57 zonet-ap        #zonet-ap.internal.q1cc.net
+10.101.2.61 georeach-vm     georeach-vm.internal.q1cc.net
 10.101.2.66 fileserver      fileserver.internal.q1cc.net
 #10.101.2.70 guest1
 #10.101.2.71 guest2
@@ -43,6 +44,7 @@
 ###############################################################################
 # q1cc VPN space 10.101.9.* (root)
 10.101.9.1 rootserver       root.internal.q1cc.net
+10.101.9.6 light-int        light.internal.q1cc.net
 10.101.9.10 vm1             vm1.internal.q1cc.net
 10.101.9.11 vm2             vm2.internal.q1cc.net
 10.101.9.12 vm3             vm3.internal.q1cc.net

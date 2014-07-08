@@ -1,0 +1,55 @@
+
+#dhcp-host=00:0f:3d:09:d9:8b,10.101.2.84 #dlink wlan ap
+
+# Markus' Notebook "sky"
+dhcp-host=00:0b:5d:4d:41:8f,10.101.2.98
+dhcp-host=00:0e:35:42:75:e2,10.101.2.99 #wlan
+
+# Markus' new Notebook "crow"
+dhcp-host=00:90:f5:fa:7c:0b,10.101.2.24 # ethernet
+
+# Stefan's altes Notebook "stangls-mobil"
+dhcp-host=00:0b:6b:4a:46:4d,10.101.2.95
+
+# PC in Stefan's Zimmer "quarki"
+dhcp-host=00:21:85:64:68:a0,10.101.2.32
+
+# Fun4Free (Eigtl Papas PC)
+dhcp-host=00:50:ba:c7:9b:2d,10.101.2.36
+
+# Markus' Desktop "puddle"
+dhcp-host=00:1a:4d:f4:d7:80,10.101.2.19
+
+# Markus' Desktop "doggie"
+dhcp-host=00:1e:58:9a:98:fd,10.101.2.21 # "wrong" network card
+dhcp-host=00:1d:92:81:68:47,10.101.2.22
+
+# Markus' Desktop "rindehart"
+dhcp-host=44:8A:5B:21:A3:78,10.101.2.23
+
+# Markus' Nexus 4 "borsti"
+dhcp-host=98:d6:f7:60:72:4a,10.101.2.25
+
+# Stefan's neues Notebook "stangls"
+dhcp-host=00:26:c7:16:5e:da,10.101.2.80
+dhcp-host=60:36:dd:63:94:6c,10.101.2.81 #wlan
+
+# Stefan's Handys
+dhcp-host=c4:43:8f:ca:4a:a7,10.101.2.85 #nexus4
+dhcp-host=18:87:96:e6:fb:69,10.101.2.84 #htc desire
+
+# Hoi Yen's Notebook
+dhcp-host=00:18:de:b3:3f:57,10.101.2.87 #wlan
+
+# Virtual Machines
+dhcp-host=08:00:27:be:ed:0d,10.101.2.91 # ???
+dhcp-host=08:00:27:a3:a0:55,10.101.2.92 # ???
+dhcp-host=08:00:27:a5:a7:65,10.101.2.93 #netboot-box on puddle
+dhcp-host=08:00:27:f3:91:fa,10.101.2.94 #xp on rindehart
+
+# Notebook Brockhoff "UlrikeNotebook"
+dhcp-host=00:15:c5:52:9e:06,10.101.2.70
+
+# Papas Android Handy
+dhcp-host=a4:eb:d3:99:91:0c,10.101.2.37
+
