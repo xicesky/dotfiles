@@ -7,6 +7,7 @@ dhcp-host=00:0e:35:42:75:e2,10.101.2.99 #wlan
 
 # Markus' new Notebook "crow"
 dhcp-host=00:90:f5:fa:7c:0b,10.101.2.24 # ethernet
+dhcp-host=c4:d9:87:23:6f:13,10.101.2.29 # wireless
 
 # Stefan's altes Notebook "stangls-mobil"
 dhcp-host=00:0b:6b:4a:46:4d,10.101.2.95
