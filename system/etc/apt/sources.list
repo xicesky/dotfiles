@@ -1,3 +1,4 @@
 
-# Empty, use files in /etc/apt/sources.list.d/ instead.
+#######################################################################################
+# Markus: Leave this empty, all sources are in /etc/sources.list.d/
 
