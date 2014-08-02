@@ -1,0 +1,6 @@
+
+# Bad repos ftw.
+# http://software.opensuse.org/download/package?project=isv:ownCloud:community&package=owncloud
+# curl -L http://download.opensuse.org/repositories/isv:ownCloud:community/Debian_7.0/Release.key | apt-key add -
+deb http://download.opensuse.org/repositories/isv:ownCloud:community/Debian_7.0/ /
+

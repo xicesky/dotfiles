@@ -1,0 +1,13 @@
+#
+# Harware RAID drivers
+# http://hwraid.le-vert.net/wiki/DebianPackages
+#
+
+# official debian repository:
+#  deb     http://ftp.debian.org/debian/ wheezy main contrib non-free
+#  deb-src http://ftp.debian.org/debian/ wheezy main contrib non-free
+
+# wget -O - http://hwraid.le-vert.net/debian/hwraid.le-vert.net.gpg.key | sudo apt-key add -
+#deb http://hwraid.le-vert.net/debian wheezy main
+deb http://hwraid.le-vert.net/debian sid main
+
