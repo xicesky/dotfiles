@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# TODO:
+# Interprete arguments like 1h, 1m, 1s
+
+SECS=$(( $1 * 60 ))
+
+while [ $SECS -gt 0 ] ; do
+    # Format timestamp nicely, abusing date
+    TIMER=`date -u --date @$SECS +"%H:%M:%S"`
+    echo -ne "$TIMER\033[0K\r"
+    sleep 1
+    : $(( SECS-- ))
+done
+
