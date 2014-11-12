@@ -1,3 +1,14 @@
+
+#######################################################################################
+# Official mirrors
+
 deb http://ftp2.de.debian.org/debian/ jessie main contrib non-free
 deb http://security.debian.org jessie/updates main contrib non-free
+
+
+#######################################################################################
+# Hetzner APT-Mirror
+
+#deb     http://mirror.hetzner.de/debian/packages jessie main contrib non-free
+#deb     http://mirror.hetzner.de/debian/security jessie/updates main contrib non-free
 
