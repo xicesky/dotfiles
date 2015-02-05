@@ -1,4 +1,4 @@
 Windows Registry Editor Version 5.00
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\PHP\5]
-"IniFilePath"="C:\\Program Files (x86)\\PHP"
+"IniFilePath"="C:\\Program Files (x86)\\PHP\\php.ini"
