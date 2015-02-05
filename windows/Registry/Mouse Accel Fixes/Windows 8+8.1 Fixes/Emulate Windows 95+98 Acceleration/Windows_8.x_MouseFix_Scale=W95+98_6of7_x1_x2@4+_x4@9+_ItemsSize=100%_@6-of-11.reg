@@ -1,0 +1,24 @@
+Windows Registry Editor Version 5.00
+; Windows_8.x_MouseFix_Scale=W95+98_6of7_x1_x2@4+_x4@9+_ItemsSize=100%_@6-of-11
+
+[HKEY_CURRENT_USER\Control Panel\Mouse]
+
+"MouseSensitivity"="10"
+"SmoothMouseXCurve"=hex:\
+	00,60,01,00,00,00,00,00,\
+	00,C0,02,00,00,00,00,00,\
+	00,00,00,00,00,00,00,00,\
+	00,00,00,09,00,00,00,00,\
+	00,00,00,00,92,24,00,00
+"SmoothMouseYCurve"=hex:\
+	0D,08,0C,00,00,00,00,00,\
+	19,10,18,00,00,00,00,00,\
+	00,00,00,00,00,00,00,00,\
+	81,9D,80,9D,00,00,00,00,\
+	02,40,01,00,00,00,00,00
+
+[HKEY_USERS\.DEFAULT\Control Panel\Mouse]
+
+"MouseSpeed"="0"
+"MouseThreshold1"="0"
+"MouseThreshold2"="0"

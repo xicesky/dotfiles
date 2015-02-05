@@ -1,0 +1,24 @@
+Windows Registry Editor Version 5.00
+; Windows_7_MouseFix_Scale=W95+98_5of7_x1_x2@4+_x4@12+_TextSize(DPI)=100%_@6-of-11
+
+[HKEY_CURRENT_USER\Control Panel\Mouse]
+
+"MouseSensitivity"="10"
+"SmoothMouseXCurve"=hex:\
+	00,60,01,00,00,00,00,00,\
+	00,A0,03,00,00,00,00,00,\
+	00,00,00,00,00,00,00,00,\
+	00,00,00,09,00,00,00,00,\
+	00,00,00,00,92,24,00,00
+"SmoothMouseYCurve"=hex:\
+	01,0A,0F,00,00,00,00,00,\
+	03,A6,27,00,00,00,00,00,\
+	00,00,00,00,00,00,00,00,\
+	4F,0C,E0,C4,00,00,00,00,\
+	01,90,01,00,00,00,00,00
+
+[HKEY_USERS\.DEFAULT\Control Panel\Mouse]
+
+"MouseSpeed"="0"
+"MouseThreshold1"="0"
+"MouseThreshold2"="0"

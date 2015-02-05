@@ -1,0 +1,18 @@
+Windows Registry Editor Version 5.00
+; XP+Vista_MouseFix_Scale=W95+98_2of7_x1_x2@10+_@60Hz_DPI=96_@6-of-11
+
+[HKEY_CURRENT_USER\Control Panel\Mouse]
+
+"MouseSensitivity"="10"
+"SmoothMouseXCurve"=hex:\
+	00,00,00,00,00,00,00,00,\
+	00,00,00,00,00,00,00,00,\
+	00,20,03,00,00,00,00,00,\
+	00,00,00,00,00,00,00,00,\
+	00,00,28,00,00,00,00,00
+"SmoothMouseYCurve"=hex:\
+	00,00,00,00,00,00,00,00,\
+	00,00,00,00,00,00,00,00,\
+	00,80,11,00,00,00,00,00,\
+	00,00,00,00,00,00,00,00,\
+	00,00,C0,01,00,00,00,00
