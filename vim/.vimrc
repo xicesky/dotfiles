@@ -53,6 +53,10 @@ set shiftwidth=4
 set expandtab
 set tabstop=4
 
+" Use unix line endings by default
+set fileformats=unix,dos
+set fileformat=unix
+
 " In diff mode unfold all
 if &diff " only for diff mode/vimdiff
     set diffopt=filler,context:1000000 " filler is default and inserts empty lines for sync
