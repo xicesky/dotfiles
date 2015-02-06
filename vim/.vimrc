@@ -53,7 +53,7 @@ set shiftwidth=4
 set expandtab
 set tabstop=4
 
-" Use unix line endings by default
+" Use unix line endings by default (windows)
 set fileformats=unix,dos
 set fileformat=unix
 
@@ -98,6 +98,12 @@ end
 
 " We use "," as the leader because "\\" is awful on german keyboard
 let mapleader = ","
+
+" Windows fix: Add ~/.vim at the front of the "runtimepath" to find plugins and syntax files
+if has('win32') || has('win64')
+    " Make windows use ~/.vim too, I don't want to use _vimfiles
+    set runtimepath^=~/.vim
+endif
 
 " Using vimdiff for 3-way merges: http://blog.binchen.org/?p=601
 " if you know the buffer number, you can use hot key like “,2″ (press comma
