@@ -7,7 +7,7 @@
 " Based on an earlier version by Вячеслав Горбанев (Slava Gorbanev), with
 " heavy modifications.
 " 
-" $Id$
+" $Id: bindzone.vim 12 2011-07-16 21:09:57Z julian $
 
 " For version 5.x: Clear all syntax items
 " For version 6.x: Quit when a syntax file was already loaded
