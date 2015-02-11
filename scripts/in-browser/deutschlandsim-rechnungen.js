@@ -23,10 +23,20 @@ pdfs.each(function(index) {
     title = $(e_title).html();
     var url = pdf.href;
     if (!url.match(/showPDF/i)) return;
+
+    // Additional fields
+    var date = title.match(/(\d+)\.(\d+)\.(\d+)/);
+    var fdate = '' + date[3] + '_' + date[2] + '_' + date[1] ;
+    var fn = fdate + '_' + title.replace(/[^a-zA-Z0-9]/g, '_') + '.pdf';
+
     data.push({
         index: index,
         title: title,
         url: url,
+        // Computed
+        date: date,
+        fdate: fdate,
+        fn: fn,
         // Rest is for fun
         element1: pdf,
         element2: e_title,
@@ -58,9 +68,8 @@ if (!out_pre.length) {
 // Output as download link
 out_links.html('');
 data.forEach(function(d) {
-
-    var fn = d.title.replace(/[^a-zA-Z0-9]/g, '_') + '.pdf';
-    // var dl = $('<a>', { text: d.title, href: d.url, download: fn});
+    // console.log(d.title);
+    // var dl = $('<a>', { text: d.title, href: d.url, download: d.fn});
     var dl = $('<a>', { text: d.title, href: d.url });
     out_links.append(dl);
     out_links.append('<br/>');
@@ -74,10 +83,9 @@ out_pre.append('# Fetch the real cookie from the network page in the developer t
 out_pre.append('# and save it as COOKIE environment variable').append('<br/>');
 out_pre.append('COOKIE=""').append('<br/>');
 data.forEach(function(d) {
-    var fn = d.title.replace(/[^a-zA-Z0-9]/g, '_') + '.pdf';
-    var p = out_pre;
-    p.append('curl "' + d.url + '" -H "Cookie: $COOKIE" -o "' + fn + '"').append('<br/>');
+    out_pre.append('curl "' + d.url + '" -H "Cookie: $COOKIE" -o "' + d.fn + '"').append('<br/>');
 });
+for (var i=0; i < 3; i++) out_pre.append('<br/>');
 
 output.css({
     backgroundColor: '#EEEEEE',
@@ -102,6 +110,7 @@ output.css({
 var shader = $('#shader');
 if (!shader.length) {
     shader = $('<div>', { id: 'shader' }).appendTo('body');
+    shader.click(function(){ $('#output').hide(); $('#shader').hide(); });
 }
 shader.html('');
 
