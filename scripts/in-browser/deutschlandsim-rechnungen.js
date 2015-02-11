@@ -18,16 +18,7 @@ var pdfs = $(".pdf a").not(":contains('Einzelverbindungsnachweis')");
 // For each of those:
 pdfs.each(function(index) {
     var pdf = this;
-    /* Find the title, its a p element in the span "scope" above:
-        <span>
-            <p class="aufklappen">Rechnung vom 31.01.2015</p>
-            <div class="infotext">
-                <p class="pdf"><a href="/mytariff/invoice/showPDF/21341234213" target="_blank">Rechnung</a></p>
-                
-                <p class="pdf"><a href="/mytariff/invoice/showPDF/12341243231" target="_blank">Einzelverbindungsnachweis</a></p>
-            </div>
-        </span>
-    */
+    /* Find the title, its a p element in the span "scope" above */
     var e_title = $(pdf).parent().parent().siblings('.aufklappen,.zuklappen')[0];
     title = $(e_title).html();
     var url = pdf.href;
