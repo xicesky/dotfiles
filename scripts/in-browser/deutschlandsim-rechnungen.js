@@ -125,3 +125,5 @@ shader.css({
 
 output.css({zIndex: 10});
 shader.css({backgroundColor: 'rgba(0,0,0,0.7)'});
+$('#output').show();
+$('#shader').show();
