@@ -2477,7 +2477,7 @@ fi
 
 # Use hard limits, except for a smaller stack and no core dumps
 unlimit
-is425 && limit stack 8192
+[ "$OSTYPE" != "cygwin" ] && is425 && limit stack 8192
 isgrmlcd && limit core 0 # important for a live-cd-system
 limit -s
 
