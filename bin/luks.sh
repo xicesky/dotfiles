@@ -11,13 +11,13 @@ LV="data"
 LV_DEV="/dev/$VG/$LV"
 
 # Mountpoint
-MNT_PATH="/mnt/data"
+MNT_PATH="/data"
 
 ################################################################################
 
 luks_open() {
     [ -e "$LUKS_DEV" ] && return 0
-    cryptsetup open -v --type luks UUID="$UUID" "$LUKS_NAME"
+    cryptsetup open -v --type luks $OPT_LUKS UUID="$UUID" "$LUKS_NAME"
 }
 
 luks_close() {
@@ -37,7 +37,7 @@ vg_close() {
 
 do_mount() {
     # No state control yet, just ignore errors
-    mount "$LV_DEV" "$MNT_PATH" || true
+    mount $OPT_MOUNT "$LV_DEV" "$MNT_PATH" || true
 }
 
 do_umount() {
@@ -47,7 +47,33 @@ do_umount() {
 
 ################################################################################
 
-case "$1" in
+# Parse cmd
+OPT_LUKS=""
+OPT_MOUNT=""
+MODE=""
+
+while test -n "$1" ; do
+    case "$1" in
+        -r|--ro|--readonly|--read-only)
+            OPT_LUKS="$OPT_LUKS --readonly"
+            OPT_MOUNT="--read-only"
+            ;;
+        --*)
+            echo "Unkown option: $1" 1>&2
+            exit 1
+            ;;
+        *)
+            test -z "$MODE" || {
+                echo "Mode already set to $MODE" 1>&2
+                exit 1
+            }
+            MODE="$1"
+            ;;
+    esac
+    shift
+done
+
+case "$MODE" in
     "open")
         set -x
         luks_open
