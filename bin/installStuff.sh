@@ -9,6 +9,9 @@ git config --global user.email "markus@q1cc.net"
 ## Setup the console / terminal correctly
 aptitude install console-setup ncurses-term
 
+## Ferm is nice but impacts your network instantly upon installation
+#aptitude install ferm
+
 ## Then install this
 aptitude install \
     vim htop iotop iptraf p7zip-full mc netcat curl wget \
@@ -36,4 +39,11 @@ aptitude install \
 ## More stuff (i dont use that often)
 #aptitude install \
 #    byobu memtest86+ grub-invaders
+
+## Required software for my X11 setup
+#aptitude install \
+#    xmonad xmobar trayer xsel \
+#    libghc-xmonad-contrib-dev \
+#    rxvt-unicode-256color suckless-tools gmrun \
+#    pavucontrol
 
