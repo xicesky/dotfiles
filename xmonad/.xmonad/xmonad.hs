@@ -17,6 +17,8 @@
  -      Create a hotkey that autolaunches my default apps on various workspaces
  -          (Don't do that on startup, i want xmonad to start FAST)
  -          (This will need a proper SpawnOn configuration)
+ -      Add XMonad.Hooks.EwmhDesktops.ewmhDesktopsEventHook (or possibly all of those hooks)
+ -          so _NET_WM_DESKTOP works for xmobar.
  -      
  - Cool app starting feature (Matrix stuff?)
  -      http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-GridSelect.html
