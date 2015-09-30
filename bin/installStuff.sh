@@ -19,7 +19,7 @@ aptitude install \
     gzip bzip2 hwinfo ltrace strace lvm2 lzma \
     ncftp netcat-openbsd parted p7zip-rar pv \
     gdisk bc xauth zsh sudo dnsutils tcpdump \
-    subversion git git-svn
+    subversion git git-svn gnupg2
 
 ## Comment this out if you mind larger downloads
 aptitude install \
