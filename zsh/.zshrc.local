@@ -334,4 +334,7 @@ setopt interactivecomments
 HISTSIZE=10000
 SAVEHIST=10000
 
+# Load gvm
+[[ -s "/home/markus/.gvm/scripts/gvm" ]] && source "/home/markus/.gvm/scripts/gvm"
+
 ## END OF FILE #################################################################
