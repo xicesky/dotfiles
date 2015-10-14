@@ -1,0 +1,27 @@
+{
+	"color_scheme": "Packages/Color Scheme - Default/Solarized (Light).tmTheme",
+	"default_line_ending": "unix",
+	"drag_text": false,
+	"fade_fold_buttons": false,
+	"font_face": "Source Code Pro",
+	"font_options":
+	[
+		"directwrite"
+	],
+	"font_size": 10,
+	"highlight_line": true,
+	"ignored_packages":
+	[
+		"Markdown",
+		"Vintage"
+	],
+	"line_padding_bottom": 1,
+	"line_padding_top": 1,
+	"soda_classic_tabs": true,
+	"tab_completion": false,
+	"tab_size": 4,
+	"theme": "Sodarized Light 3.sublime-theme",
+	"translate_tabs_to_spaces": true,
+	"word_wrap": false,
+	"wrap_width": 120
+}
