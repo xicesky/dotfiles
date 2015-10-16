@@ -340,4 +340,7 @@ SAVEHIST=10000
 # For informing servers about our identity
 export REAL_USER=markus
 
+# Default options for less
+LESS=RSF
+
 ## END OF FILE #################################################################
