@@ -1,15 +1,25 @@
 # Configure xrandr multihead
 
+xrandr_monitor_isconnected() {
+    xrandr | grep "^$1 " | grep " connected "
+}
+
 MONITOR0="eDP1"
 
 # Check for external monitors
 MONITOR1=""
-xrandr | grep DP1-1 | grep connected && MONITOR1="DP1-1"
+xrandr_monitor_isconnected "DP1-1" && MONITOR1="DP1-1"
+
 MONITOR2=""
-xrandr | grep DP1-2-1 | grep connected && MONITOR2="DP1-2-1"
+if xrandr_monitor_isconnected "DP1-2-1" ; then
+    MONITOR2="DP1-2-1"
+elif xrandr_monitor_isconnected "DP2-1" ; then
+    # Alternative direct connection
+    MONITOR2="DP2-1"
+fi
 
 if [ \( -n "$MONITOR1" \) -a \( -n "$MONITOR2" \) ] ; then
-    echo "Found 2 external monitors."
+    echo "Found 2 external monitors: $MONITOR1 $MONITOR2"
     # Monitor 1 mirrors monitor 0
     xrandr --output "$MONITOR1" --same-as "$MONITOR0"
     # Second monitor right of first
