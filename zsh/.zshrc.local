@@ -341,6 +341,7 @@ SAVEHIST=10000
 export REAL_USER=markus
 
 # Default options for less
+export PAGER=less
 export LESS=RSF
 
 ## END OF FILE #################################################################
