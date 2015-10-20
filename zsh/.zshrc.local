@@ -342,6 +342,6 @@ export REAL_USER=markus
 
 # Default options for less
 export PAGER=less
-export LESS=RSF
+export LESS=RS
 
 ## END OF FILE #################################################################
