@@ -105,6 +105,9 @@ import XMonad.Actions.NoBorders
 import qualified XMonad.Actions.FlexibleResize as Flex
 import XMonad.Layout.NoBorders
 
+-- Extra keycodes (multimedia)
+import Graphics.X11.ExtraTypes.XF86
+
 ---------------------------------------------------------------------------------------------------
 -- Chapter I        :   Configuration
 ---------------------------------------------------------------------------------------------------
@@ -234,6 +237,12 @@ myKeys conf@(XConfig { modMask = modm, terminal = terminal }) = mconcat $
         , ((modm, xK_r), spawn "gmrun")
         -- WindowMenu
         , ((modm, xK_o ), windowMenu)
+        -- "Multimedia keys"
+        , ((0, xF86XK_AudioLowerVolume  ), spawn "pactl set-sink-volume 0 -1.5%")
+        , ((0, xF86XK_AudioRaiseVolume  ), spawn "pactl set-sink-volume 0 +1.5%")
+        , ((0, xF86XK_AudioMute         ), spawn "pactl set-sink-mute 0 toggle")
+        -- Map sleep key to screenlock
+        , ((0, xF86XK_Sleep             ), spawn "lockscreen")
         ]
     , M.fromList $  -- Workspace switching with numpad
         [ ((m .|. modm, k), windows $ f i)
