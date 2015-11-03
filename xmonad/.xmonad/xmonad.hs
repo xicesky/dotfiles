@@ -225,6 +225,8 @@ myKeys conf@(XConfig { modMask = modm, terminal = terminal }) = mconcat $
     , M.fromList $  -- Custom keys
         -- Grab any windows key event
         [ ((0, xK_Super_L), return ())
+        -- Screen lock
+        , ((modm, xK_l ), spawn "lockscreen")
         -- Swap the focused window and the master window
         , ((modm .|. shiftMask, xK_Return), windows W.swapMaster)
         -- Launch a terminal
