@@ -1,0 +1,54 @@
+[
+	{
+		"args":
+		{
+			"characters": "\""
+		},
+		"command": "insert"
+	},
+	{
+		"args":
+		{
+			"extend": false,
+			"to": "eol"
+		},
+		"command": "move_to"
+	},
+	{
+		"args":
+		{
+			"characters": "\\n"
+		},
+		"command": "insert"
+	},
+	{
+		"args":
+		{
+			"characters": "\""
+		},
+		"command": "insert"
+	},
+	{
+		"args":
+		{
+			"characters": " +"
+		},
+		"command": "insert"
+	},
+	{
+		"args":
+		{
+			"extend": false,
+			"to": "bol"
+		},
+		"command": "move_to"
+	},
+	{
+		"args":
+		{
+			"by": "lines",
+			"forward": true
+		},
+		"command": "move"
+	}
+]
