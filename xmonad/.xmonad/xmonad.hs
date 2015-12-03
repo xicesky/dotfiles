@@ -237,7 +237,10 @@ myKeys conf@(XConfig { modMask = modm, terminal = terminal }) = mconcat $
         , ((modm, xK_b), sendMessage ToggleStruts)
         -- launch gmrun on mod+r
         , ((modm, xK_r), spawn "gmrun")
-        -- WindowMenu
+        -- Resize master with keypad +/-
+        , ((modm, xK_KP_Subtract    ), sendMessage Shrink)
+        , ((modm, xK_KP_Add         ), sendMessage Expand)
+        -- WindowMenu (todo)
         , ((modm, xK_o ), windowMenu)
         -- "Multimedia keys"
         , ((0, xF86XK_AudioLowerVolume  ), spawn "pactl set-sink-volume 0 -1.5%")
