@@ -26,6 +26,7 @@ usage() {
 }
 
 invoke git checkout $1
+invoke git pull
 invoke git tag -a branch_$1 -m "Already merged $1 to master"
 invoke git push --tags
 echo ""
