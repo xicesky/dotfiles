@@ -334,7 +334,10 @@ setopt interactivecomments
 HISTSIZE=10000
 SAVEHIST=10000
 
+# Load torch
+[[ -s "$HOME/Dev/deep/torch/install/bin/torch-activate" ]] && source "$HOME/Dev/deep/torch/install/bin/torch-activate"
+
 # Load gvm (Go Version Manager): https://github.com/moovweb/gvm
-[[ -s "/home/markus/.gvm/scripts/gvm" ]] && source "/home/markus/.gvm/scripts/gvm"
+[[ -s "$HOME/.gvm/scripts/gvm" ]] && source "$HOME/.gvm/scripts/gvm"
 
 ## END OF FILE #################################################################
