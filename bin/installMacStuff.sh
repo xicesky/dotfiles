@@ -1,7 +1,12 @@
 #!/bin/sh
 set -e
 
-# TODO: Proper option parser
+# Installs my stuff on OSX
+# TODO:
+#   Proper option parser
+#   https://pqrs.org/osx/karabiner/      <=   http://apple.stackexchange.com/questions/116617/how-to-separate-mouse-and-trackpad-settings
+#   More stuff: https://www.topbug.net/blog/2013/04/14/install-and-use-gnu-command-line-tools-in-mac-os-x/
+
 FAST=false
 if [ "$1" == "--fast" ] ; then FAST=true ; fi
 
@@ -54,10 +59,15 @@ fi
 # Install stuff using homebrew
 brew install vim --override-system-vi --override-system-vim
 brew install htop --with-ncurses
-brew install coreutils zsh wget screen 
+brew install coreutils zsh wget screen mc
 
 # After installing zsh:
 # LOC_ZSH="`which zsh`"
 # (???) sudo echo "$LOC_ZSH" >>/etc/shells (?wouldn't work that way!)
 # chsh -s "$LOC_ZSH"
+
+# Settings
+# TODO: Settings should be seperate (available via option?)
+# Disable horrible mouse accel
+defaults write .GlobalPreferences com.apple.mouse.scaling -1
 
