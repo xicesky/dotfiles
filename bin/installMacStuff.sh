@@ -1,6 +1,13 @@
 #!/bin/sh
 set -e
 
+do_sudo() {
+    if [ "$1" == "-n" ] ; then shift
+    else echo "Please enter your password to run the following command as root:"; fi
+    echo "    $@"
+    sudo "$@"
+}
+
 # Installs my stuff on OSX
 # TODO:
 #   Proper option parser
@@ -70,4 +77,8 @@ brew install coreutils zsh wget screen mc
 # TODO: Settings should be seperate (available via option?)
 # Disable horrible mouse accel
 defaults write .GlobalPreferences com.apple.mouse.scaling -1
+
+# Start creating the database for locate
+echo "Starting to create locate DB, enter your sudo password to run:"
+do_sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.locate.plist
 
