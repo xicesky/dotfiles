@@ -189,7 +189,9 @@ urxvt*cursorColor: #DCDCDC
 *color11: #e4e439
 
 ! blue
-*color4: #1a049c
+!*color4: #1a049c
+! slightly brighter, less saturated
+*color4: #2912B3
 
 ! bright_blue
 *color12: #3939e4

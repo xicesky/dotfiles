@@ -68,7 +68,7 @@ import System.Exit (exitWith, ExitCode (..))
 
 import qualified Data.Map as M
 import qualified Data.Monoid
-import Data.Monoid (mconcat)
+import Data.Monoid (mempty, mappend, mconcat)
 
 -- Big yays please
 import XMonad
@@ -83,8 +83,8 @@ import XMonad.Config.Desktop (desktopConfig)
 import XMonad.Config.Gnome (gnomeRegister)
 
 -- Bits and pieces
-import XMonad.Hooks.EwmhDesktops (fullscreenEventHook)
-import XMonad.Hooks.ManageDocks (AvoidStruts, ToggleStruts (..))
+import XMonad.Hooks.EwmhDesktops (ewmhDesktopsEventHook, fullscreenEventHook)
+import XMonad.Hooks.ManageDocks (AvoidStruts, ToggleStruts (..), manageDocks)
 import XMonad.Hooks.ManageHelpers
 import XMonad.Hooks.DynamicLog
 import qualified XMonad.StackSet as W
@@ -97,13 +97,16 @@ import XMonad.Actions.WindowMenu (windowMenu)   -- inspires a more sophisticated
 import XMonad.Actions.Plane
 
 -- Spawn programs (xmobar, trayer)
-import XMonad.Util.Run(spawnPipe,safeSpawn)
+import XMonad.Util.Run(spawnPipe,safeSpawn,safeSpawnProg)
 -- import XMonad.Util.EZConfig(additionalKeys)
 
 -- Window handling
 import XMonad.Actions.NoBorders
 import qualified XMonad.Actions.FlexibleResize as Flex
 import XMonad.Layout.NoBorders
+
+-- Extra keycodes (multimedia)
+import Graphics.X11.ExtraTypes.XF86
 
 ---------------------------------------------------------------------------------------------------
 -- Chapter I        :   Configuration
@@ -222,6 +225,8 @@ myKeys conf@(XConfig { modMask = modm, terminal = terminal }) = mconcat $
     , M.fromList $  -- Custom keys
         -- Grab any windows key event
         [ ((0, xK_Super_L), return ())
+        -- Screen lock
+        , ((modm, xK_l ), spawn "lockscreen")
         -- Swap the focused window and the master window
         , ((modm .|. shiftMask, xK_Return), windows W.swapMaster)
         -- Launch a terminal
@@ -232,8 +237,17 @@ myKeys conf@(XConfig { modMask = modm, terminal = terminal }) = mconcat $
         , ((modm, xK_b), sendMessage ToggleStruts)
         -- launch gmrun on mod+r
         , ((modm, xK_r), spawn "gmrun")
-        -- WindowMenu
+        -- Resize master with keypad +/-
+        , ((modm, xK_KP_Subtract    ), sendMessage Shrink)
+        , ((modm, xK_KP_Add         ), sendMessage Expand)
+        -- WindowMenu (todo)
         , ((modm, xK_o ), windowMenu)
+        -- "Multimedia keys"
+        , ((0, xF86XK_AudioLowerVolume  ), spawn "pactl set-sink-volume 0 -1.5%")
+        , ((0, xF86XK_AudioRaiseVolume  ), spawn "pactl set-sink-volume 0 +1.5%")
+        , ((0, xF86XK_AudioMute         ), spawn "pactl set-sink-mute 0 toggle")
+        -- Map sleep key to screenlock
+        , ((0, xF86XK_Sleep             ), spawn "lockscreen")
         ]
     , M.fromList $  -- Workspace switching with numpad
         [ ((m .|. modm, k), windows $ f i)
@@ -293,8 +307,9 @@ myMouse (XConfig { modMask = modm }) = M.fromList $
 
 myStartupHook :: X ()
 myStartupHook = do
-    gnomeRegister   -- FIXME: Doku: What for?
-    -- ewmhDesktopsStartup -- FIXME: Doku: What for?
+    gnomeRegister       -- Announce XMonad to gnome-session (if that's running at all), reducing startup time
+    --ewmhDesktopsStartup -- Announce EWMH support to the X server (needed for e.g. multi-monitor windows)
+                        -- This is already included in baseConfig = desktopConfig
 
 -- Now that's one fucked up type signature...
 myLayoutHook
@@ -305,7 +320,9 @@ myLayoutHook
           (ModifiedLayout
              AvoidStruts (Choose Tall (Choose (Mirror Tall) Full)))
           Window
-myLayoutHook = smartBorders     -- Hides border when unneccesary (e.g. in fullscreen)
+myLayoutHook = 
+    --avoidStruts . -- Already included in baseConfig = desktopConfig
+    smartBorders    -- Hides border when unneccesary (e.g. in fullscreen)
 
 -- http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Hooks-ManageHelpers.html
 -- http://www.haskell.org/haskellwiki/Xmonad/Frequently_asked_questions#Prevent_new_windows_from_stealing_focus
@@ -319,11 +336,15 @@ myManageHook = mconcat
 myEventHook :: Event -> X Data.Monoid.All
 myEventHook = fullscreenEventHook   -- Purpose: Applications can request fullscreen (Chrome)
                                     --  this is not included in the desktopConfig / emwh defaults
+    `mappend` ewmhDesktopsEventHook -- Already included in baseConfig = desktopConfig
+
 myLogHook :: RuntimeConfig -> X ()
-myLogHook rtcfg = dynamicLogWithPP xmobarPP         -- Purpose: xmobar
-    { ppOutput = hPutStrLn (barProc rtcfg)          --     Desktops
-    , ppTitle = xmobarColor "green" "" . shorten 80 --     Window title
-    }
+myLogHook rtcfg = mempty
+--myLogHook rtcfg = dynamicLogWithPP xmobarPP         -- Purpose: xmobar
+--    { ppOutput = hPutStrLn (barProc rtcfg)          --     Desktops
+--    , ppTitle = xmobarColor "green" "" . shorten 80 --     Window title
+--    }
+--    -- `mappend` ewmhDesktopsLogHook      -- Already included in baseConfig = desktopConfig
 
 ---------------------------------------------------------------------------------------------------
 -- I like to have all settings explicitly enumerated here
@@ -351,39 +372,40 @@ myConfig rtcfg = XConfig
 -- Chapter II       :   External Programs
 ---------------------------------------------------------------------------------------------------
 
--- TODO: Move config stuff from here to previous "chapter"
-
-spawnTray :: IO ()
-spawnTray = safeSpawn "trayer"                          -- Purpose: trayer
-    [   "--edge", "top"
-    ,   "--align", "right"
-    ,   "--width", "10"
-    ,   "--height", "18"
-    ,   "--transparent", "true"
-    ,   "--tint", "0x000000"
-    ,   "--SetDockType", "true"
-    ,   "--SetPartialStrut", "true"
-    ,   "--expand", "true"
-    ]
+-- -- TODO: Move config stuff from here to previous "chapter"
+-- 
+-- spawnTray :: IO ()
+-- spawnTray = safeSpawn "trayer"                          -- Purpose: trayer
+--     [   "--edge", "top"
+--     ,   "--align", "right"
+--     ,   "--width", "10"
+--     ,   "--height", "18"
+--     ,   "--transparent", "true"
+--     ,   "--tint", "0x000000"
+--     ,   "--SetDockType", "true"
+--     ,   "--SetPartialStrut", "true"
+--     ,   "--expand", "true"
+--     ]
 
 ---------------------------------------------------------------------------------------------------
 -- Chapter ZZ       :   Main - Assemble and Launch!
 ---------------------------------------------------------------------------------------------------
 
 data RuntimeConfig = RuntimeConfig
-    {   barProc     :: !Handle
+    {   --barProc     :: !Handle
     }
 
 
 main :: IO ()
 main = do
     xmDir <- getXMonadDir
-    barCmd <- return $ "xmobar " ++ xmDir ++ "/xmobar.config"
+    -- barCmd <- return $ "xmobar " ++ xmDir ++ "/xmobar.config"
     -- safeSpawn "xmessage" [ barCmd ]
-    barProc <- spawnPipe barCmd
+    -- barProc <- spawnPipe barCmd
+    safeSpawnProg "taffybar" 
     rtcfg <- return RuntimeConfig
-        {   barProc = barProc
+        {   --barProc = barProc
         }
-    spawnTray
+    -- spawnTray
     xmonad (myConfig rtcfg)
 

@@ -334,4 +334,13 @@ setopt interactivecomments
 HISTSIZE=10000
 SAVEHIST=10000
 
+# Load torch
+[[ -s "$HOME/Dev/deep/torch/install/bin/torch-activate" ]] && source "$HOME/Dev/deep/torch/install/bin/torch-activate"
+
+# Load gvm (Go Version Manager): https://github.com/moovweb/gvm
+[[ -s "$HOME/.gvm/scripts/gvm" ]] && source "$HOME/.gvm/scripts/gvm"
+
+# Load iterm2 shell integration if available
+test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+
 ## END OF FILE #################################################################
