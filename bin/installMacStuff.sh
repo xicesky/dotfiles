@@ -64,7 +64,7 @@ if ! $FAST ; then
 fi
 
 # Install stuff using homebrew
-brew install vim --override-system-vi --override-system-vim
+brew install vim --override-system-vi --with-override-system-vi
 brew install htop --with-ncurses
 brew install coreutils zsh wget screen mc
 
