@@ -7,7 +7,7 @@ set -e
 # This version is tailored for star-trac flow
 #
 # TODO:
-#   - GIT IT
+#   - Order TODO list by priority
 #   - Cool stuff on prompt (current bc config?)
 #   - git checkout error detection (FIXME)
 #   - git pull could work in parallel
@@ -26,6 +26,7 @@ set -e
 #   - option to force wildfly 10 (req section in user gradle config)
 #   - Database, integration tests, autotesting... zzzZZZzzz
 #   - check git for local modifiations on switch
+#   - Better output on terminal (max width... colors?)
 
 # OS Detection
 OSX=false
@@ -67,6 +68,8 @@ ENVIRONMENT_FILE="$MAIN_DIR/$LOCAL_DIR/.projectrc"  # This has to be an absolute
 # "build-control" holds the build system and usually stays on a fixed branch
 NONBUILD_PROJECTS="intelligrator flow-core flow-terminal `ls -1 "$MAIN_DIR" | grep '^flow-plugin-'`"
 ALL_PROJECTS="build-control $NONBUILD_PROJECTS"
+
+BUILD_DIR="build-control"
 
 # Use gradle in offline mode?
 GRADLE_OFFLINE=false
@@ -158,7 +161,9 @@ if $GRADLE_OFFLINE ; then GRADLE_FLAGS="$GRADLE_FLAGS --offline"; fi
 #}
 
 gradle() {
-    "$TOOL_GRADLE" $(echo $GRADLE_FLAGS) "$@"
+    local INVOKE=""
+    if [ "$1" == "--invoke" ] ; then INVOKE="invoke"; shift; fi
+    $INVOKE "$TOOL_GRADLE" $(echo $GRADLE_FLAGS) "$@"
 }
 
 #TOOL_GIT_BASH="$(tool_search git-bash)" #; echo "TOOL_GIT_BASH=$TOOL_GIT_BASH" ; exit 0
@@ -233,7 +238,7 @@ tool_openshell() {
 # Highly star-trac specific
 
 sc_currentconfig() {
-    cat "$MAIN_DIR/build-control/bc-config/current-config"
+    cat "$MAIN_DIR/$BUILD_DIR/bc-config/current-config"
 }
 
 sc_currentbranch() {
@@ -243,7 +248,20 @@ sc_currentbranch() {
 sc_parse_packages() {
     CONFIG="$1"
     # Not very clean but it works
-    echo `cat "$MAIN_DIR/build-control/bc-config/$1".gradle | sed -n -e "s/^[^']*'\([^']*\)' *: *sourceBranch.*$/\1/p"`
+    echo `cat "$MAIN_DIR/$BUILD_DIR/bc-config/$1".gradle | sed -n -e "s/^[^']*'\([^']*\)' *: *sourceBranch.*$/\1/p"`
+}
+
+sc_gradle() {
+    local INVOKE=""
+    if [ "$1" == "--invoke" ] ; then INVOKE="--invoke"; shift; fi
+    (
+        cd "$MAIN_DIR/$BUILD_DIR"
+        gradle $INVOKE "$@"
+    )
+}
+
+sc_fresh_db() {
+    sc_gradle --invoke dropDbUser databaseFromScratch
 }
 
 sc_detectpackages() {
@@ -293,7 +311,7 @@ sc_switch_source() {
             multigit_all -s -n multigit_checkout -q "$SCSS_BRANCH" || complain 01 "Failed to switch branches!"
         else
             # Use default branch from the gradle file
-            ( cd build-control; gradle checkout; ) || complain 01 "Failed to switch branches!"
+            sc_gradle checkout || complain 01 "Failed to switch branches!"
         fi
     fi
 
@@ -313,16 +331,13 @@ sc_switchtopreset() {
     #     invoke gradle $GRADLE_FLAGS "-DCONFIG=$1" --refresh-dependencies || complain 01 "Gradle failed."
     # fi
     if $CLEAN ; then
-        (
-            cd "$MAIN_DIR/build-control"
-            # flow build-control is so annoyingly verbose that i'd want to redirect to devnull
-            #invoke_devnull \
-            invoke gradle \
-                $GRADLE_FLAGS "-DCONFIG=$PRESET_CONFIG" \
-                --quiet \
-                --refresh-dependencies \
-                clean || complain 01 "Gradle failed."
-        )
+        # flow build-control is so annoyingly verbose that i'd want to redirect to devnull
+        #invoke_devnull \
+        sc_gradle --invoke \
+            "-DCONFIG=$PRESET_CONFIG" \
+            --quiet \
+            --refresh-dependencies \
+            clean || complain 01 "Gradle failed."
     fi
 
     echo   ""
@@ -428,13 +443,14 @@ multigit_switchtodate() {
 ################################################################################################################################################################
 # Major functionality: Test runner
 
-test_invoke() {
+test_invoke_gradle() {
     local ERR=0
     echo "------------------------------------------------------------------------------------------------------------------------"
     date
-    echo "$@"
-    echo ""
-    "$@" || ERR=$?
+    #echo "$@"
+    #echo ""
+    #"$@" || ERR=$?
+    sc_gradle --invoke "$@" || ERR=$?
     if [ "$ERR" -neq "0" ] ; then echo "-> non-zero exit value: $ERR"; fi
     echo ""
     return $ERR
@@ -443,16 +459,15 @@ test_invoke() {
 # We need this just so we can "return"
 test_inner() {
     (
-        cd build-control
+        cd build-control        # Do we still need to cd here?
 
         if [ "$1" != "" -a "$1" != "`sc_currentconfig`" ] ; then
-            test_invoke gradle $GRADLE_FLAGS "-DCONFIG=$1" --refresh-dependencies || return 01
+            test_invoke_gradle "-DCONFIG=$1" --refresh-dependencies || return 01
         fi
         if "$CLEAN" ; then
-            test_invoke gradle $GRADLE_FLAGS clean || return 03
+            test_invoke_gradle clean || return 03
         fi
-        #test_invoke echo gradle $GRADLE_FLAGS test --continue || return 04      # FOR DEBUGGING THIS SCRIPT
-        test_invoke gradle $GRADLE_FLAGS test --continue || return 04
+        test_invoke_gradle test --continue || return 04
     )
 }
 
@@ -537,7 +552,7 @@ test_main() {
 
     pushd "$MAIN_DIR" >/dev/null
 
-    [ -d build-control ] || complain 01 "Could not find build-control dir"
+    [ -d "$BUILD_DIR" ] || complain 01 "Could not find build dir: $BUILD_DIR"
 
     DATETAG="`datetag`"
 
@@ -753,6 +768,10 @@ main() {
 
         vagrant)
             env_vagrant
+            ;;
+
+        fresh-db)
+            sc_fresh_db
             ;;
 
         start)
