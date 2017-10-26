@@ -74,6 +74,7 @@ GRADLE_OFFLINE=false
 ################################################################################
 # "Constants"
 
+LOCAL_SETTINGS_FILE="$LOCAL_DIR/.project.sh.settings"
 CATCH_GRADLE_OUTPUT_FILE="$TEMP_DIR/${THIS_SCRIPT_NAME}.gradle-output.txt"
 # It's not really json
 FILE_JSON_INFO="$TEMP_DIR/testresults-info.js"
@@ -82,10 +83,16 @@ FILE_JSON_INFO="$TEMP_DIR/testresults-info.js"
 TOOL_WHICH=/usr/bin/which
 TOOL_GRADLE="$($READLINK -f "$($TOOL_WHICH gradle)")"
 #echo "TOOL_GRADLE=$TOOL_GRADLE" ; exit 0
+TOOL_SHELL="$SHELL"
+TOOL_SHELL_BEHAVIOUR="`basename $SHELL`"    # bash or zsh supported
 
 # FIXME: Detect version from gradle config
 #WILDFLY="wildfly-8.2.1.Final"
 WILDFLY="wildfly-10.1.0.Final"
+
+# Settings can be overridden locally
+[ -e "$MAIN_DIR/$LOCAL_SETTINGS_FILE" ] || echo "" >"$MAIN_DIR/$LOCAL_SETTINGS_FILE"
+. "$MAIN_DIR/$LOCAL_SETTINGS_FILE"
 
 ################################################################################################################################################################
 # Utility functions
@@ -150,8 +157,64 @@ if $GRADLE_OFFLINE ; then GRADLE_FLAGS="$GRADLE_FLAGS --offline"; fi
 #    "$TOOL_GRADLE" $(echo $GRADLE_FLAGS) "$@"
 #}
 
+gradle() {
+    "$TOOL_GRADLE" $(echo $GRADLE_FLAGS) "$@"
+}
+
 #TOOL_GIT_BASH="$(tool_search git-bash)" #; echo "TOOL_GIT_BASH=$TOOL_GIT_BASH" ; exit 0
-TOOL_MINTTY="$(tool_search mintty)" #; echo "TOOL_MINTTY=$TOOL_MINTTY" ; exit 0
+[ -n "$TOOL_MINTTY" ] || TOOL_MINTTY="$(tool_search mintty)"
+#; echo "TOOL_MINTTY=$TOOL_MINTTY" ; exit 0
+
+tool_list() {
+    printf "%-20s: %s\n" "TOOL_GRADLE" "$TOOL_GRADLE"
+    printf "%-20s: %s\n" "TOOL_MINTTY" "$TOOL_MINTTY"
+
+    VERSION_GRADLE="`gradle --version | sed -n -e 's/^Gradle \(.*\)/\1/p'`"
+    printf "%-20s: %s\n" "VERSION_GRADLE" "$VERSION_GRADLE"
+}
+
+tool_shell_env() {
+    local ENVFILE="$1"
+    shift
+    #local ENVCMD="$@"
+    local INITFLAG=""
+
+    case $TOOL_SHELL_BEHAVIOUR in
+        bash)
+            INITFLAG="--init-file"
+            ;;
+        zsh)
+            #INITFLAG="--rcs"
+            # HACK
+            #(
+            #    set +e
+            #    source $ENVFILE
+            #    [ -z "$1" ] || "$@"
+            #    $TOOL_SHELL --no-rcs
+            #)
+
+            # This works "somewhat"... Include user's settings too.
+            # http://zsh.sourceforge.net/Intro/intro_3.html
+            # http://zsh.sourceforge.net/Guide/zshguide02.html
+            local ZDIR="`dirname "$ENVFILE"`"
+            [ -e "$ZDIR/.zshrc" ] || ln -s "$ENVFILE" "$ZDIR/.zshrc"
+            ZDOTDIR="$ZDIR" zsh # --no-global-rcs
+
+            return 0
+            ;;
+        *)
+            complain 01 "Unsupported shell type: $TOOL_SHELL_BEHAVIOUR - $TOOL_SHELL"
+            ;;
+    esac
+
+    if [ "$1" == "" ] ; then
+        "$TOOL_SHELL" $INITFLAG "$ENVFILE"
+    else
+        # FIXME: We can only hope the args don't contain spaces here...
+        #bash --init-file <(echo set -x\; . \""$ENVIRONMENT_FILE"\"\; "$@")
+        "$TOOL_SHELL" $INITFLAG <(echo . \""$ENVFILE"\"\; "$@")
+    fi
+}
 
 tool_openshell() {
     # FIXME WINDOWS ONLY
@@ -161,7 +224,7 @@ tool_openshell() {
         #"$TOOL_GIT_BASH" project.sh env #--cd-to-home # "$THIS_SCRIPT_NAME" env "$@" &
         # -w min
         "$TOOL_MINTTY" -p right \
-            --exec "/usr/bin/bash" \
+            --exec "$TOOL_BASH_COMPATIBLE_SHELL" \
              "$@" &
     )
 }
@@ -252,10 +315,13 @@ sc_switchtopreset() {
     if $CLEAN ; then
         (
             cd "$MAIN_DIR/build-control"
-            # flow build-control is so annoyingly verbose that i prefer to redirect to devnull
-            invoke_devnull gradle $GRADLE_FLAGS "-DCONFIG=$PRESET_CONFIG" --quiet \
-                --refresh-dependencies clean \
-                || complain 01 "Gradle failed."
+            # flow build-control is so annoyingly verbose that i'd want to redirect to devnull
+            #invoke_devnull \
+            invoke gradle \
+                $GRADLE_FLAGS "-DCONFIG=$PRESET_CONFIG" \
+                --quiet \
+                --refresh-dependencies \
+                clean || complain 01 "Gradle failed."
         )
     fi
 
@@ -281,20 +347,14 @@ env_run() {
 alias p="$THIS_SCRIPT"
 export TITLEPREFIX="$PROJECT_NAME"
 export PS_HINT="$PROJECT_NAME"
-PS1='\[\033]0;\$TITLEPREFIX:\${PWD//[^[:ascii:]]/?}\007\]\n\[\033[32m\]\u@\h \[\033[35m\]\$PS_HINT \[\033[33m\]\w\[\033[36m\]\`__git_ps1\`\[\033[0m\]\n\$ '
+#PS1='\[\033]0;\$TITLEPREFIX:\${PWD//[^[:ascii:]]/?}\007\]\n\[\033[32m\]\u@\h \[\033[35m\]\$PS_HINT \[\033[33m\]\w\[\033[36m\]\`__git_ps1\`\[\033[0m\]\n\$ '
 echo -e "\033[32m"
 echo "==============================================================================="
 echo "  Loaded $PROJECT_NAME environment. Have fun!"
 #echo "      MY_SPECIAL_VARIABLE=\$MY_SPECIAL_VARIABLE"
 echo -e "\033[0m"
 EOF
-    if [ "$1" == "" ] ; then
-        bash --init-file "$ENVIRONMENT_FILE"
-    else
-        # FIXME: We can only hope the args don't contain spaces here...
-        #bash --init-file <(echo set -x\; . \""$ENVIRONMENT_FILE"\"\; "$@")
-        bash --init-file <(echo . \""$ENVIRONMENT_FILE"\"\; "$@")
-    fi
+    tool_shell_env "$ENVIRONMENT_FILE" "$@"
 }
 
 env_vagrant() {
@@ -764,6 +824,10 @@ main() {
 
         ################################################################################
         # Help / fail
+
+        config)
+            tool_list
+            ;;
 
         ""|help)
             help
