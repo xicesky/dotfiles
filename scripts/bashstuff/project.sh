@@ -27,6 +27,15 @@ set -e
 #   - Database, integration tests, autotesting... zzzZZZzzz
 #   - check git for local modifiations on switch
 #   - Better output on terminal (max width... colors?)
+#   - Use multiple "temporary" project trees (since we can't build out-of-source-tree)
+#       to e.e. run tests in parallel
+#       and use a "cache" for git checkouts (git clone --reference ...; git repack -a; rm .git/objects/info/alternates)
+#       see https://randyfay.com/content/git-clone-reference-considered-harmful
+#   - I don't like the test preset stuff, it sets really short globals: BRANCH, CHECKOUT, PULL, CLEAN
+#       It would be nice to return a "tuple" instead, but i guess a nice prefix to the variable names will do
+#   - Clean up the ouput of build-control a little (using grep/sed)
+#   - Replace the main gradle file by our own (and include the others)
+#       Many tasks could be done in gradle instead...
 
 # OS Detection
 OSX=false
@@ -66,7 +75,8 @@ TEMP_DIR="$LOCAL_DIR/temp"
 ENVIRONMENT_FILE="$MAIN_DIR/$LOCAL_DIR/.projectrc"  # This has to be an absolute path
 
 # "build-control" holds the build system and usually stays on a fixed branch
-NONBUILD_PROJECTS="intelligrator flow-core flow-terminal `ls -1 "$MAIN_DIR" | grep '^flow-plugin-'`"
+function find_plugins() { ls -1 "$MAIN_DIR" | grep '^flow-plugin-'; true; }
+NONBUILD_PROJECTS="intelligrator flow-core flow-terminal `find_plugins`"
 ALL_PROJECTS="build-control $NONBUILD_PROJECTS"
 
 BUILD_DIR="build-control"
@@ -260,6 +270,13 @@ sc_gradle() {
     )
 }
 
+sc_gradle_refresh() {
+    # Used when project dependencies might have changes (customer plugins)
+    local INVOKE=""
+    if [ "$1" == "--invoke" ] ; then INVOKE="--invoke"; shift; fi
+    sc_gradle $INVOKE --refresh-dependencies
+}
+
 sc_fresh_db() {
     sc_gradle --invoke dropDbUser databaseFromScratch
 }
@@ -328,16 +345,14 @@ sc_switchtopreset() {
     sc_switch_source "$CHECKOUT" "$PULL" "$BRANCH"
 
     # if [ "$OLD_CONFIG" != "$PRESET_CONFIG" ] ; then
-    #     invoke gradle $GRADLE_FLAGS "-DCONFIG=$1" --refresh-dependencies || complain 01 "Gradle failed."
+    #     sc_gradle_refresh --invoke || complain 01 "Gradle failed."
     # fi
     if $CLEAN ; then
         # flow build-control is so annoyingly verbose that i'd want to redirect to devnull
         #invoke_devnull \
-        sc_gradle --invoke \
-            "-DCONFIG=$PRESET_CONFIG" \
-            --quiet \
-            --refresh-dependencies \
-            clean || complain 01 "Gradle failed."
+        sc_gradle_refresh --invoke "-DCONFIG=$PRESET_CONFIG" || complain 01 "Gradle failed."
+        sc_gradle --invoke "-DCONFIG=$PRESET_CONFIG" \
+            --quiet clean || complain 01 "Gradle failed."
     fi
 
     echo   ""
@@ -348,6 +363,20 @@ sc_switchtopreset() {
     echo   "    Extra packages  : $PACKAGES_EXTRA"
 }
 
+sc_clone_all() {
+    for i in \
+        build-control \
+        intelligrator \
+        flow-core \
+        flow-terminal \
+        flow-plugin-henkel \
+        flow-plugin-infraleuna \
+        flow-plugin-tkse \
+        flow-plugin-wacker \
+        ; do
+        invoke git clone "https://git.star-trac.de:3000/star-trac/${i}.git"
+    done
+}
 
 ################################################################################################################################################################
 # Set up bash environment
@@ -467,7 +496,7 @@ test_inner() {
         if "$CLEAN" ; then
             test_invoke_gradle clean || return 03
         fi
-        test_invoke_gradle test --continue || return 04
+        test_invoke_gradle --continue test jacocoTestReport || return 04
     )
 }
 
@@ -573,7 +602,13 @@ test_main() {
     declare -a TESTRESULTS=()
 
     for i in `sc_list_subproject_roots` ; do
-        TESTRESULTS=("${TESTRESULTS[@]}" "$i/build/reports/tests" "$i/build/test-results")
+        TESTRESULTS=( \
+            "${TESTRESULTS[@]}" \
+            "$i/build/reports/tests" \
+            "$i/build/reports/jacoco" \
+            "$i/build/test-results" \
+            "$i/build/jacoco" \
+            )
     done
 
     ################################################################################
@@ -618,8 +653,8 @@ test_main() {
     # Copy fixed files
     cp  $CATCH_GRADLE_OUTPUT_FILE "$RESULTDIR"/gradle-output.txt
     cp  $FILE_JSON_INFO \
-        $LOCAL_DIR/tools/testresults.html \
-        $LOCAL_DIR/tools/testresults-overview.html \
+        $LOCAL_DIR/tools/testresults/index.html \
+        $LOCAL_DIR/tools/testresults/overview.html \
         "$RESULTDIR" || complain 02 "ERROR: Failed to copy test templates."
 
     # Copy results
@@ -774,10 +809,47 @@ main() {
             sc_fresh_db
             ;;
 
+        switch)
+            # Switch to "test preset"
+            sc_switchtopreset "$@"
+            ;;
+
+        clone-all)
+            sc_clone_all
+            ;;
+
+        info)
+            sc_info
+            ;;
+
+        ################################################################################
+        # Build / run
+
+        clean)
+            sc_gradle_refresh
+            sc_gradle clean
+            # Chaining
+            [ -z "$1" ] || main "$@"
+            ;;
+
+        build)
+            sc_gradle build
+            # Chaining
+            [ -z "$1" ] || main "$@"
+            ;;
+
+        deploy)
+            sc_gradle deployExploded
+            # Chaining
+            [ -z "$1" ] || main "$@"
+            ;;
+
         start)
             # HAXX
             # FIXME wildfly version hardcoded
             tool_openshell "$WILDFLY/bin/standalone.sh"
+            # Chaining
+            [ -z "$1" ] || main "$@"
             ;;
 
         stop)
@@ -787,6 +859,8 @@ main() {
                 cd "$MAIN_DIR"
                 "$WILDFLY/bin/jboss-cli.sh" --connect controller=localhost:34990 command=:shutdown
             )
+            # Chaining
+            [ -z "$1" ] || main "$@"
             ;;
 
         ################################################################################
@@ -827,18 +901,6 @@ main() {
         test)
             test_main "$@"
             #pwd
-            ;;
-
-        ################################################################################
-        # star-trac specific
-
-        switch)
-            # Switch to "test preset"
-            sc_switchtopreset "$@"
-            ;;
-
-        info)
-            sc_info
             ;;
 
         ################################################################################
