@@ -443,13 +443,19 @@ multigit_branch() {
     CURBRANCH="`git status | sed -n -e 's/^On branch \([^ ]*\)/\1/p'`"
     CURRCOMMIT="`git log -1 --pretty=oneline | cut -f1 -d' '`"      #b22cd15f43fdfdc5e28a5d2cd207bcef9efb4377
     # TODO: Maybe use git status -bs and also print remote branch
-    printf "%-20s %-30s %-40s\n" "$PROJNAME" "$CURBRANCH" "$CURRCOMMIT"
+    printf "%-24s %-30s %-40s\n" "$PROJNAME" "$CURBRANCH" "$CURRCOMMIT"
 }
 
 multigit_pull() {
     PROJNAME="$1"; shift
     $SILENT || printf "%-20s: %s\n" "$PROJNAME" "git pull"
     git pull "$@" || true           # Don't care about fails (TODO?)
+}
+
+multigit_fetch() {
+    PROJNAME="$1"; shift
+    $SILENT || printf "%-20s: %s\n" "$PROJNAME" "git fetch"
+    git fetch "$@"                  # Don't care about fails (TODO?)
 }
 
 multigit_checkout() {
@@ -480,7 +486,7 @@ test_invoke_gradle() {
     #echo ""
     #"$@" || ERR=$?
     sc_gradle --invoke "$@" || ERR=$?
-    if [ "$ERR" -neq "0" ] ; then echo "-> non-zero exit value: $ERR"; fi
+    if [ "$ERR" -ne "0" ] ; then echo "-> non-zero exit value: $ERR"; fi
     echo ""
     return $ERR
 }
@@ -779,6 +785,7 @@ help() {
     echo   ""
     echo   "    checkout            - switch branches (git checkout)"
     echo   "    pull                - git pull"
+    echo   "    fetch               - git fetch"
     #echo   "    switchtodate        - switch to a certain max commit date"
     echo   "    git                 - execute git command in all project dirs"
     echo   ""
@@ -888,6 +895,10 @@ main() {
 
         pull)
             multigit_all multigit_pull
+            ;;
+
+        fetch)
+            multigit_all multigit_fetch
             ;;
 
         git)
