@@ -71,6 +71,10 @@ MAIN_DIR="$THIS_SCRIPT_DIR"     # Paths are usually relative to this
 LOCAL_DIR="_local"              # Local files, never commited to VCS
 TEMP_DIR="$LOCAL_DIR/temp"
 
+# Also make sure these directories exist
+mkdir -p $LOCAL_DIR
+mkdir -p $TEMP_DIR
+
 # Where to store environment settings
 ENVIRONMENT_FILE="$MAIN_DIR/$LOCAL_DIR/.projectrc"  # This has to be an absolute path
 
