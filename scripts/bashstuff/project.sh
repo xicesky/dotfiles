@@ -546,6 +546,9 @@ test_run() {
 
 test_main() {
 
+    local OVERRIDE_NO_PULL # OVERRIDE_NO_CHECKOUT OVERRIDE_NO_CLEAN
+    OVERRIDE_NO_PULL=false
+
     test_preset default
 
     ################################################################################
@@ -571,6 +574,10 @@ test_main() {
                 return 0
                 ;;
 
+            --no-pull)
+                OVERRIDE_NO_PULL=true
+                ;;
+
             *)
                 # Might be a preset
                 if test_preset "$ARG" ; then
@@ -581,6 +588,13 @@ test_main() {
                 ;;
         esac
     done
+
+    # Usually presets include the following settings:
+    #CHECKOUT=true
+    #PULL=true
+    #CLEAN=true
+
+    if $OVERRIDE_NO_PULL ; then PULL=false; fi
 
     ################################################################################
     # Checks / setup
@@ -723,6 +737,16 @@ test_preset() {
             CLEAN=true
             ;;
 
+        tkse-4.1)
+            # TKSE (dev) 4.1
+
+            PRESET_CONFIG="flow-4.1.tkse"
+            BRANCH="dev/flow_4_1_Geronimo"
+            CHECKOUT=true
+            PULL=true
+            CLEAN=true
+            ;;
+
         wacker|wacker-prod|wacker-prod-4.0)
             # Wacker prod 4.0
 
@@ -747,6 +771,26 @@ test_preset() {
             # Henkel dev 4.1
 
             PRESET_CONFIG="flow-4.1.henkel"
+            BRANCH="dev/flow_4_1_Geronimo"
+            CHECKOUT=true
+            PULL=true
+            CLEAN=true
+            ;;
+
+        infraleuna-prod|infraleuna-prod-4.0)
+            # Infraleuna prod 4.0
+
+            PRESET_CONFIG="flow-4.0.infraleuna"
+            BRANCH="prod/flow_4_0_Infraleuna"
+            CHECKOUT=true
+            PULL=true
+            CLEAN=true
+            ;;
+
+        infraleuna|infraleuna-4.1)
+            # Infraleuna dev 4.1
+
+            PRESET_CONFIG="flow-4.1.infraleuna"
             BRANCH="dev/flow_4_1_Geronimo"
             CHECKOUT=true
             PULL=true
@@ -876,7 +920,7 @@ main() {
         checkout)
             multigit_all -n multigit_checkout "$@"
             echo "--------------------------------------------------------------------------------"
-            multigit_all -s gitbranch
+            multigit_all -s multigit_branch
             ;;
 
         switchtodate)
