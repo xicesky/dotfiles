@@ -771,11 +771,21 @@ test_preset() {
             CLEAN=true
             ;;
 
-        henkel|henkel-4.1)
+        henkel-4.1)
             # Henkel dev 4.1
 
             PRESET_CONFIG="flow-4.1.henkel"
             BRANCH="dev/flow_4_1_Geronimo"
+            CHECKOUT=true
+            PULL=true
+            CLEAN=true
+            ;;
+
+        henkel|henkel-prod|henkel-prod-4.1)
+            # Henkel prod 4.1
+
+            PRESET_CONFIG="flow-4.1.henkel"
+            BRANCH="prod/flow_4_1_Henkel"
             CHECKOUT=true
             PULL=true
             CLEAN=true
