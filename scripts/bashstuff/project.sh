@@ -890,6 +890,10 @@ main() {
         ################################################################################
         # Build / run
 
+        gradle)
+            sc_gradle --invoke "$@"
+            ;;
+
         clean)
             sc_gradle_refresh
             sc_gradle clean
