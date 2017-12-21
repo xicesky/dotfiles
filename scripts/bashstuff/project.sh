@@ -282,7 +282,7 @@ sc_gradle_refresh() {
 }
 
 sc_fresh_db() {
-    sc_gradle --invoke dropDbUser databaseFromScratch
+    sc_gradle --invoke dropDb databaseFromScratch
 }
 
 sc_detectpackages() {
@@ -411,6 +411,18 @@ env_vagrant() {
     #vagrant up
     env_run PS_HINT="$PROJECT_NAME"-vagrant\; TITLEPREFIX="$PROJECT_NAME"-vagrant\; cd vagrant-ubuntu-oracle-xe\; vagrant status\; echo\; echo\; vagrant up
     #env_run echo hello
+}
+
+################################################################################################################################################################
+# Simple git functions (single dir)
+
+git_single_difftool() {
+    # TODO: Check which project & branch the commit is on?
+    # We need the filenames, windiff does not show them...
+    echo "Files:"
+    git diff --name-only "$1"^.."$1"
+    echo ""
+    git difftool "$1"^.."$1"
 }
 
 ################################################################################################################################################################
@@ -930,6 +942,13 @@ main() {
             )
             # Chaining
             [ -z "$1" ] || main "$@"
+            ;;
+
+        ################################################################################
+        # Simple git
+
+        difftool)
+            git_single_difftool "$@"
             ;;
 
         ################################################################################
