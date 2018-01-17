@@ -262,7 +262,10 @@ sc_currentbranch() {
 sc_parse_packages() {
     CONFIG="$1"
     # Not very clean but it works
-    echo `cat "$MAIN_DIR/$BUILD_DIR/bc-config/$1".gradle | sed -n -e "s/^[^']*'\([^']*\)' *: *sourceBranch.*$/\1/p"`
+    #echo `cat "$MAIN_DIR/$BUILD_DIR/bc-config/$1".gradle | sed -n -e "s/^[^']*'\([^']*\)' *: *sourceBranch.*$/\1/p"`
+    cat "$MAIN_DIR/$BUILD_DIR/bc-config/$1".gradle \
+        | sed -n '/corePackages = \[.*/,/\]/{//!p};/extraPackages = \[.*/,/\]/{//!p}' \
+        | sed -n "s/^[^']*'\([^']*\)' *: .*/\1/p"
 }
 
 sc_gradle() {
@@ -309,6 +312,7 @@ sc_info() {
     sc_detectpackages "$CURRENT_CONFIG"
     printf "%-20s: %s\n" "Current config" "$CURRENT_CONFIG"
     printf "%-20s: %s\n" "Branch (guess)" "$CURRENT_BRANCH"
+    #printf "%-20s: %s\n" "Core packages" "$PACKAGES_CORE"
     printf "%-20s: %s\n" "Extra packages" "$PACKAGES_EXTRA"
 }
 
@@ -380,6 +384,18 @@ sc_clone_all() {
         ; do
         invoke git clone "https://git.star-trac.de:3000/star-trac/${i}.git"
     done
+}
+
+# Switch workflow terminal screen
+sc_switchscreen() {
+    pushd "$MAIN_DIR/$LOCAL_DIR"
+    SCREEN="WelcomeScreen"
+    PORT="8091"
+    HOST="localhost"
+    if [ -n "$1" ] ; then SCREEN="$1"; fi
+    if [ -n "$2" ] ; then PORT="$2"; fi
+    if [ -n "$3" ] ; then HOST="$3"; fi
+    invoke java -jar switch_it.jar "$HOST":"$PORT" "$SCREEN"
 }
 
 ################################################################################################################################################################
@@ -897,6 +913,10 @@ main() {
 
         info)
             sc_info
+            ;;
+
+        switchscreen)
+            sc_switchscreen "$@"
             ;;
 
         ################################################################################
