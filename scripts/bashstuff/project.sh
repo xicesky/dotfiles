@@ -7,6 +7,7 @@ set -e
 # This version is tailored for star-trac flow
 #
 # TODO:
+#   - Rewrite everything in python :D
 #   - Order TODO list by priority
 #   - Cool stuff on prompt (current bc config?)
 #   - git checkout error detection (FIXME)
@@ -21,7 +22,6 @@ set -e
 #   - fix haxx in main
 #   - make jboss-cli stfu
 #   - integrate vagrant calls
-#   - integrate gradle jobs (databaseFromScratch, deployExploded)
 #   - run = check if built (because gradle zzz), deployExploded, run wildfly
 #   - option to force wildfly 10 (req section in user gradle config)
 #   - Database, integration tests, autotesting... zzzZZZzzz
@@ -36,6 +36,44 @@ set -e
 #   - Clean up the ouput of build-control a little (using grep/sed)
 #   - Replace the main gradle file by our own (and include the others)
 #       Many tasks could be done in gradle instead...
+#   - Deliver "payloads" in a shell script - how to do it right? I'd love to have a all-in-one file project.sh
+#       that includes e.g. vargant, maybe some shell libs...
+#   - Installation / initial setup (to get seperate subprojects for each customer)
+#       - Needs configuration (which DB to use, or if to install a custom one)
+#       - "Bootstrapping" part:
+#           # Copy project.sh       # TODO: Symlink would be better but doesn't work on windows. Use a wrapper!?
+#           ./project.sh env # Enter environment # env_run
+#           # FIXME: setup env script should be a seperate function. make sure aliases work?
+#           # See the fixme in the env code below
+#           p clone-all     # sc_clone_all      # Maybe not checkout all plugins?
+#           # git clone "https://git.star-trac.de:3000/star-trac/build-control.git" # Already included
+#           cd build-control
+#           git checkout dev/master
+#           #!manual!? create user.xxx.gradle from user.settings.template ?
+#           p gradle -DCONFIG=flow-4.1.tkse --refresh-dependencies          # Switch build config
+#           # Adjust settings in user.$(whoami).gradle -> currently manual step?
+#           vi bc-config/user.$(whoami).gradle
+#           # DB stuff see notes: https://docs.google.com/document/d/10xRrEYHgE9HAs20AUvUdV8MtRaBD7-lt1vmDgenBKQk
+#           p gradle checkout       # Run this to fetch default branches
+#           # Download appserver
+#           p gradle bootstrap
+#           p st
+#           # IDEA: Setup links for shells, link for eclipse with seperate workspace
+#   - Set up git aliases, esp for updating a local tracking branch like in
+#       https://superuser.com/questions/623217/how-to-pull-into-multiple-branches-at-once-with-git
+#       My version:
+#           sync = "!f() { \
+#               git checkout --quiet --detach HEAD && \
+#               git fetch origin $1:$1 ; \
+#               git checkout --quiet - ; \
+#           }; f"
+#   - Iterate over all local branches, run git sync
+#   - A search tool that does the find ... -exec grep ... command for us
+#       Add a few presets like "java" "js" search... and a general "code" one
+#       Exclude "build" and "bin" directories and stupidly large files (that are not text)
+#       e.g. maps and concatenated js like WebRoot/js/flow-core-modules/flow-core-modules.js
+#       ... for large (and non-text) files, just report the filename?
+#       Use grep's perl regex or even ack https://beyondgrep.com/
 
 # OS Detection
 OSX=false
@@ -48,7 +86,7 @@ case "`uname | tr '[:upper:]' '[:lower:]'`" in
         OSX=true
         READLINK="`which greadlink`"    # FIXME: brew install coreutils
         ;;
-    mingw)
+    mingw*)
         WINDOWS=true
         ;;
     *)
@@ -68,15 +106,17 @@ THIS_RUN_DIR="`pwd`"
 
 PROJECT_NAME="star-trac"
 MAIN_DIR="$THIS_SCRIPT_DIR"     # Paths are usually relative to this
-LOCAL_DIR="_local"              # Local files, never commited to VCS
-TEMP_DIR="$LOCAL_DIR/temp"
+LOCAL_DIR_REL="_local"          # Local files, never commited to VCS
+TEMP_DIR_REL="$LOCAL_DIR_REL/temp"
+LOCAL_DIR="$MAIN_DIR/$LOCAL_DIR_REL"
+TEMP_DIR="$MAIN_DIR/$TEMP_DIR_REL"
 
 # Also make sure these directories exist
-mkdir -p $LOCAL_DIR
-mkdir -p $TEMP_DIR
+mkdir -p "$LOCAL_DIR"
+mkdir -p "$TEMP_DIR"
 
 # Where to store environment settings
-ENVIRONMENT_FILE="$MAIN_DIR/$LOCAL_DIR/.projectrc"  # This has to be an absolute path
+ENVIRONMENT_FILE="$LOCAL_DIR/.projectrc"  # This has to be an absolute path
 
 # "build-control" holds the build system and usually stays on a fixed branch
 function find_plugins() { ls -1 "$MAIN_DIR" | grep '^flow-plugin-'; true; }
@@ -102,14 +142,29 @@ TOOL_GRADLE="$($READLINK -f "$($TOOL_WHICH gradle)")"
 #echo "TOOL_GRADLE=$TOOL_GRADLE" ; exit 0
 TOOL_SHELL="$SHELL"
 TOOL_SHELL_BEHAVIOUR="`basename $SHELL`"    # bash or zsh supported
+TOOL_CURL="$($READLINK -f "$($TOOL_WHICH curl)")"
 
 # FIXME: Detect version from gradle config
 #WILDFLY="wildfly-8.2.1.Final"
 WILDFLY="wildfly-10.1.0.Final"
 
+FRONTEND_HOST="localhost"
+FRONTEND_PORT="34080"
+FRONTEND_BASE="http://$FRONTEND_HOST:$FRONTEND_PORT"
+
+CREDENTIALS_FILE="$LOCAL_DIR/credentials.sh"
+CREDENTIALS_FRONTEND_LOGIN_ADMIN="SystemAdmin"
+CREDENTIALS_FRONTEND_LOGIN_ADMIN_PASSWORD=""
+CREDENTIALS_JMX_LOGIN="flow"
+CREDENTIALS_JMX_LOGIN_PASSWORD=""
+
+# Load credentials
+[ -e "$CREDENTIALS_FILE" ] || echo "" >"$CREDENTIALS_FILE"
+. "$CREDENTIALS_FILE"
+
 # Settings can be overridden locally
-[ -e "$MAIN_DIR/$LOCAL_SETTINGS_FILE" ] || echo "" >"$MAIN_DIR/$LOCAL_SETTINGS_FILE"
-. "$MAIN_DIR/$LOCAL_SETTINGS_FILE"
+[ -e "$LOCAL_SETTINGS_FILE" ] || echo "" >"$LOCAL_SETTINGS_FILE"
+. "$LOCAL_SETTINGS_FILE"
 
 ################################################################################################################################################################
 # Utility functions
@@ -185,11 +240,11 @@ gradle() {
 #; echo "TOOL_MINTTY=$TOOL_MINTTY" ; exit 0
 
 tool_list() {
-    printf "%-20s: %s\n" "TOOL_GRADLE" "$TOOL_GRADLE"
-    printf "%-20s: %s\n" "TOOL_MINTTY" "$TOOL_MINTTY"
-
     VERSION_GRADLE="`gradle --version | sed -n -e 's/^Gradle \(.*\)/\1/p'`"
-    printf "%-20s: %s\n" "VERSION_GRADLE" "$VERSION_GRADLE"
+    printf "%-20s (%-5s): %s\n" "TOOL_GRADLE" "$VERSION_GRADLE" "$TOOL_GRADLE"
+    printf "%-20s (%-5s): %s\n" "TOOL_MINTTY" "" "$TOOL_MINTTY"
+    printf "%-20s (%-5s): %s\n" "TOOL_SHELL" "$TOOL_SHELL_BEHAVIOUR" "$TOOL_SHELL"
+    printf "%-20s (%-5s): %s\n" "TOOL_CURL" "" "$TOOL_CURL"
 }
 
 tool_shell_env() {
@@ -246,6 +301,91 @@ tool_openshell() {
             --exec "$TOOL_BASH_COMPATIBLE_SHELL" \
              "$@" &
     )
+}
+
+tool_curl() {
+    local URL ACCEPT USER PASSWORD POSITIONAL CURLARGS ARG
+    URL=""
+    ACCEPT="application/json,text/json;q=0.9,text/html,application/xhtml+xml,application/xml;q=0.8,*/*;q=0.7"
+    USER="$CREDENTIALS_FRONTEND_LOGIN_ADMIN"
+    PASSWORD="$CREDENTIALS_FRONTEND_LOGIN_ADMIN_PASSWORD"
+    OFORMAT=""
+    POSITIONAL=()
+    CURLARGS=()
+    while [[ $# -gt 0 ]] ; do
+        ARG="$1"
+        case "$ARG" in
+            --accept)
+                ACCEPT="$2"; shift; shift
+                ;;
+            --user)
+                USER="$2"; shift; shift
+                ;;
+            --password)
+                PASSWORD="$2"; shift; shift
+                ;;
+            --output-http-code)
+                OFORMAT='\n%{http_code}\n'
+                ;;
+            --no-output)
+                CURLARGS+=("--output" "/dev/null")
+                ;;
+            -v|--verbose|-H|--header|-d|-data|-F|--form|--data-urlencode)
+                CURLARGS+=("$1" "$2"); shift; shift
+                ;;
+            -*)
+                echo "Unknown argument: $ARG" 1>&2; return 1
+                ;;
+            *)
+                POSITIONAL+=("$1"); shift
+                ;;
+        esac
+    done
+    set -- "${POSITIONAL[@]}" # restore positional parameters
+    URL="$1"; shift;
+    [ -z "$OFORMAT" ] || CURLARGS+=("--write-out" "$OFORMAT")
+    invoke $TOOL_CURL -s --write-out '\nHTTP %{http_code}\n' --no-keepalive \
+        "$URL" --user "$USER":"$PASSWORD" \
+        -H "Accept: $ACCEPT" \
+        "${CURLARGS[@]}"
+    # | head   # curl: (23) Failed writing body (0 != 16378)
+}
+
+SC_JMXFUNCTION_weight=('WebcontrollerConnector' 'setAutotestSimulatedWeight' 'java.lang.String' 'java.lang.Integer')
+SC_JMXFUNCTION_anpr=('WebcontrollerConnector' 'simulateNumberPlateEvent' 'java.lang.String' 'java.lang.String' 'java.lang.String' 'java.lang.String')
+SC_JMXFUNCTION_scanfds=('WebcontrollerConnector' 'simulateBarcodeEvent' 'java.lang.String' 'java.lang.String')
+SC_JMXFUNCTION_simulateInputEvent=('WebcontrollerConnector' 'simulateInputEvent' 'java.lang.String' 'int' 'boolean')
+
+sc_curl_jmx() {
+    local FINDEX FUNCTION
+    FINDEX="SC_JMXFUNCTION_$1[@]"; shift
+    FUNCTION=("${!FINDEX}")
+
+    CONNECTOR="${FUNCTION[0]}" #"WebcontrollerConnector"
+    METHODNAME="${FUNCTION[1]}" #"simulateNumberPlateEvent"
+    ARGTYPES=("${FUNCTION[@]:2}") #('java.lang.String' 'java.lang.String' 'java.lang.String' 'java.lang.String')
+    ARGS=("$@") #("Waage21_PLS+WC" "ZM-001" "DE" "FRONT")
+
+    #echo "CONNECTOR: $CONNECTOR"
+    #echo "METHODNAME: $METHODNAME"
+    #echo "ARGTYPES: ${ARGTYPES[@]}"
+    #echo "ARGS: ${ARGS[@]}"
+
+    #POSTFORMAT="-d"                 # Send arg0=blah blubb&arg1=...
+    POSTFORMAT="--data-urlencode"   # Send arg0=blah%20blubb&arg1=...
+    #POSTFORMAT="-F"                 # Send args as multipart/form-data
+    FORMARGS=("$POSTFORMAT" "action=invokeOpByName" "$POSTFORMAT" "name=intelligrator.de:service=$CONNECTOR" "$POSTFORMAT" "methodName=$METHODNAME")
+    for V in "${ARGTYPES[@]}"; do FORMARGS+=("$POSTFORMAT" "argType=$V"); done
+    for K in "${!ARGS[@]}"; do FORMARGS+=("$POSTFORMAT" "arg$K=${ARGS[$K]}"); done
+    
+    #echo "FORMARGS: ${FORMARGS[@]}"
+    #return 0
+
+    # ANPR: front ZM-001  on weightbridge Waage21_PLS+WC (lane -1)
+    tool_curl "$FRONTEND_BASE/jmx-console/HtmlAdaptor" \
+        --user "$CREDENTIALS_JMX_LOGIN" --password "$CREDENTIALS_JMX_LOGIN_PASSWORD" \
+        "${FORMARGS[@]}" \
+        | awk '/<pre>/{flag=1;next}/<\/pre>/{flag=0}flag{print $0}'
 }
 
 ################################################################################################################################################################
@@ -372,6 +512,7 @@ sc_switchtopreset() {
 }
 
 sc_clone_all() {
+    cd "$MAIN_DIR"
     for i in \
         build-control \
         intelligrator \
@@ -382,13 +523,15 @@ sc_clone_all() {
         flow-plugin-tkse \
         flow-plugin-wacker \
         ; do
-        invoke git clone "https://git.star-trac.de:3000/star-trac/${i}.git"
+        if [ ! -e "$i" ] ; then
+            invoke git clone "https://git.star-trac.de:3000/star-trac/${i}.git"
+        fi
     done
 }
 
 # Switch workflow terminal screen
 sc_switchscreen() {
-    pushd "$MAIN_DIR/$LOCAL_DIR"
+    pushd "$LOCAL_DIR"
     SCREEN="WelcomeScreen"
     PORT="8091"
     HOST="localhost"
@@ -404,10 +547,11 @@ sc_switchscreen() {
 #   "C:\Program Files\Git\git-bash.exe" project.sh env
 
 env_run() {
-    mkdir -p "$MAIN_DIR"/"$LOCAL_DIR"
+    mkdir -p "$LOCAL_DIR"
+    # FIXME: alias doesn't list aliases in a shell script! (this seems odd and buggy)
     alias >"$ENVIRONMENT_FILE"
     cat >>"$ENVIRONMENT_FILE" <<EOF
-[ -f "$MAIN_DIR/$LOCAL_DIR/.projectrc.local" ] && . "$MAIN_DIR/$LOCAL_DIR/.projectrc.local"
+[ -f "$LOCAL_DIR/.projectrc.local" ] && . "$LOCAL_DIR/.projectrc.local"
 alias p="$THIS_SCRIPT"
 export TITLEPREFIX="$PROJECT_NAME"
 export PS_HINT="$PROJECT_NAME"
@@ -441,6 +585,27 @@ git_single_difftool() {
     git difftool "$1"^.."$1"
 }
 
+git_current_branch() {
+    git status | sed -n -e 's/^On branch \([^ ]*\)/\1/p'
+}
+
+git_current_commit() {
+    # git log -1 --pretty=oneline | cut -f1 -d' '`
+    git rev-parse @
+}
+
+git_remote_status() {
+    # TODO count of commits ahead/behind
+    H_LOCAL=`git rev-parse @`
+    H_REMOTE=`git rev-parse @{u} 2> >(grep -v 'fatal: no upstream' 1>&2)`
+    H_BASE=`git merge-base @ @{u} 2> >(grep -v 'fatal: no upstream' 1>&2)`
+    if [ "$H_LOCAL" = "$H_REMOTE" ]; then :
+    elif [ "$H_LOCAL" = "$H_BASE" ]; then echo "behind"
+    elif [ "$H_REMOTE" = "$H_BASE" ]; then echo "ahead"
+    else echo "diverged"
+    fi
+}
+
 ################################################################################################################################################################
 # Major functionality: multiple git (sub-)projects
 
@@ -465,17 +630,23 @@ multigit_pass() {
 
 multigit_st() {
     PROJNAME="$1"; shift
-    $SILENT || printf "%-20s: %s\n" "$PROJNAME" "git st"
-    # TODO: Shorten git st output?
-    git status
+    BRANCH="`git_current_branch`"
+    RSTATUS="`git_remote_status`"
+    $SILENT || printf "\e[1;34m%-20s\e[0m: \e[1;30m%-50s\e[0m \e[1;33m%s\e[0m\n" "$PROJNAME" "$BRANCH" "$RSTATUS"
+    git status -s
 }
 
 multigit_branch() {
     PROJNAME="$1"; shift
-    CURBRANCH="`git status | sed -n -e 's/^On branch \([^ ]*\)/\1/p'`"
-    CURRCOMMIT="`git log -1 --pretty=oneline | cut -f1 -d' '`"      #b22cd15f43fdfdc5e28a5d2cd207bcef9efb4377
+    VERBOSE=false
+    [ "$1" == "-v" ] && { VERBOSE=true; shift; }
     # TODO: Maybe use git status -bs and also print remote branch
-    printf "%-24s %-30s %-40s\n" "$PROJNAME" "$CURBRANCH" "$CURRCOMMIT"
+    if $VERBOSE ; then
+        # Long format
+        printf "%-24s %-44s %-s\n" "$PROJNAME" "`git_current_branch`" "`git log --pretty=oneline -1`"
+    else
+        printf "%-24s %-30s %-40s\n" "$PROJNAME" "`git_current_branch`" "`git_current_commit`"
+    fi
 }
 
 multigit_pull() {
@@ -646,7 +817,7 @@ test_main() {
     if [ "$BRANCH" != "" ] ; then
         APPEND_BRANCH_FILENAME="`echo -${BRANCH} | tr '/' '-'`"
     fi
-    RESULTDIR="$LOCAL_DIR/testresults/${DATETAG}-${CURRENT_CONFIG}${APPEND_BRANCH_FILENAME}"
+    RESULTDIR="$LOCAL_DIR_REL/testresults/${DATETAG}-${CURRENT_CONFIG}${APPEND_BRANCH_FILENAME}"
 
     sc_detectpackages "$CURRENT_CONFIG"
 
@@ -705,8 +876,8 @@ test_main() {
     # Copy fixed files
     cp  $CATCH_GRADLE_OUTPUT_FILE "$RESULTDIR"/gradle-output.txt
     cp  $FILE_JSON_INFO \
-        $LOCAL_DIR/tools/testresults/index.html \
-        $LOCAL_DIR/tools/testresults/overview.html \
+        $LOCAL_DIR_REL/tools/testresults/index.html \
+        $LOCAL_DIR_REL/tools/testresults/overview.html \
         "$RESULTDIR" || complain 02 "ERROR: Failed to copy test templates."
 
     # Copy results
@@ -919,6 +1090,26 @@ main() {
             sc_switchscreen "$@"
             ;;
 
+        jmx)
+            case "$1" in
+                radioOk)
+                    sc_curl_jmx simulateInputEvent "$2" 80 true
+                    ;;
+                voucherReady)
+                    sc_curl_jmx simulateInputEvent "$2" 07 true
+                    ;;
+                takeVoucher)
+                    sc_curl_jmx simulateInputEvent "$2" 07 false
+                    ;;
+                freeLane)
+                    sc_curl_jmx simulateInputEvent "$2" 64 true
+                    ;;
+                *)
+                    sc_curl_jmx "$@"
+                    ;;
+            esac
+            ;;
+
         ################################################################################
         # Build / run
 
@@ -987,7 +1178,7 @@ main() {
             ;;
         
         branch)
-            multigit_all -s multigit_branch
+            multigit_all -s multigit_branch "$@"
             ;;
 
         st)
