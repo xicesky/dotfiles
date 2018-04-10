@@ -189,8 +189,6 @@ setopt interactivecomments
 #alias -g T='|tail'
 #alias -g V='| vim -'
 
-alias -g vi=vim
-
 ## instead of global aliase it might be better to use grmls $abk assoc array, whose contents are expanded after pressing ,.
 #$abk[SnL]="| sort -n | less"
 
@@ -336,8 +334,13 @@ alias -g vi=vim
 HISTSIZE=10000
 SAVEHIST=10000
 
-# ssh-pageant
-#eval $(/usr/bin/ssh-pageant -ra /tmp/.ssh-pageant)
-eval $(~/bin/my-ssh-pageant.sh)
+# Load torch
+[[ -s "$HOME/Dev/deep/torch/install/bin/torch-activate" ]] && source "$HOME/Dev/deep/torch/install/bin/torch-activate"
+
+# Load gvm (Go Version Manager): https://github.com/moovweb/gvm
+[[ -s "$HOME/.gvm/scripts/gvm" ]] && source "$HOME/.gvm/scripts/gvm"
+
+# Load iterm2 shell integration if available
+test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 
 ## END OF FILE #################################################################

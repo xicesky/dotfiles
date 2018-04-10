@@ -2,6 +2,11 @@
 " Reset autocommands if vimrc is parsed again
 autocmd!
 
+" Load pathogen - https://github.com/tpope/vim-pathogen
+execute pathogen#infect()
+syntax enable
+filetype plugin indent on
+
 "colorscheme desert
 
 " Load local settings
@@ -23,7 +28,6 @@ set showmatch
 set incsearch
 set hlsearch
 set nowrap
-syntax enable
 
 " More visual modes (color status lines)
 set laststatus=2

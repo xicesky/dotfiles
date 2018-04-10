@@ -1,0 +1,31 @@
+{
+	"auto_complete": false,
+	"auto_match_enabled": false,
+	"default_line_ending": "unix",
+	"detect_indentation": false,
+	"drag_text": false,
+	"fade_fold_buttons": false,
+	"highlight_line": true,
+	"ignored_packages":
+	[
+		"Markdown",
+		"Vintage"
+	],
+	"show_encoding": true,
+	"tab_completion": false,
+	"tab_size": 4,
+	"translate_tabs_to_spaces": true,
+	"word_wrap": false,
+	"wrap_width": 120
+	// "theme": "Sodarized Light 3.sublime-theme",
+	// "color_scheme": "Packages/Color Scheme - Default/Solarized (Light).tmTheme",
+	// "font_face": "Source Code Pro",
+	// "font_options":
+	// [
+	// 	"directwrite"
+	// ],
+	// "font_size": 10,
+	// "line_padding_bottom": 1,
+	// "line_padding_top": 1,
+	// "soda_classic_tabs": true,
+}
