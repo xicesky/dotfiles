@@ -1,5 +1,6 @@
 #!/bin/sh
 
+[ -z "$1" ] && { echo "Usage: $0 [hostname]"; exit; }
 ssh-keygen -R $1
 ssh-keygen -R `dig $1 +short`
 
