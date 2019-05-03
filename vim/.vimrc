@@ -3,11 +3,11 @@
 autocmd!
 
 " Load pathogen - https://github.com/tpope/vim-pathogen
-execute pathogen#infect()
+" execute pathogen#infect()
+
+" Enable syntax highlighting & filetype detection
 syntax enable
 filetype plugin indent on
-
-"colorscheme desert
 
 " Load local settings
 runtime! local/colorscheme.vim
@@ -36,10 +36,6 @@ set laststatus=2
 "    au InsertLeave * hi StatusLine term=reverse ctermbg=2 gui=bold,reverse
 "endif
 
-" Enable filetype plugin
-filetype plugin on
-filetype indent on
-
 " Set to auto read when a file is changed from the outside
 set autoread
 
@@ -61,10 +57,14 @@ set tabstop=4
 set fileformats=unix,dos
 set fileformat=unix
 
-" In diff mode unfold all
-if &diff " only for diff mode/vimdiff
-    set diffopt=filler,context:1000000 " filler is default and inserts empty lines for sync
-endif
+" Unfold everything (by default) - especially diffs
+"" Disabled due to performance issues
+" if &diff " only for diff mode/vimdiff
+"     set diffopt=filler,context:1000000 " filler is default and inserts empty lines for sync
+" endif
+
+"au BufRead * normal zR     " -- doesn't seem to work
+"set nofoldenable           " -- doesn't seem to work
 
 " Vim :Ex configuration
 set splitright
