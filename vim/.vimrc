@@ -3,7 +3,8 @@
 autocmd!
 
 " Load pathogen - https://github.com/tpope/vim-pathogen
-" execute pathogen#infect()
+runtime bundle/vim-pathogen/autoload/pathogen.vim
+execute pathogen#infect()
 
 " Enable syntax highlighting & filetype detection
 syntax enable

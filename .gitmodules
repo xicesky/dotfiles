@@ -2,3 +2,6 @@
 	path = fonts/source-code-pro
 	url = git@github.com:adobe-fonts/source-code-pro.git
 	branch = release
+[submodule "vim/.vim/bundle/vim-pathogen"]
+	path = vim/.vim/bundle/vim-pathogen
+	url = https://github.com/tpope/vim-pathogen
