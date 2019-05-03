@@ -14,3 +14,6 @@
 [submodule "vim/.vim/bundle/vim-airline"]
 	path = vim/.vim/bundle/vim-airline
 	url = https://github.com/vim-airline/vim-airline
+[submodule "vim/.vim/bundle/vim-dim"]
+	path = vim/.vim/bundle/vim-dim
+	url = https://github.com/jeffkreeftmeijer/vim-dim
