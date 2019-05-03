@@ -5,3 +5,9 @@
 [submodule "vim/.vim/bundle/vim-pathogen"]
 	path = vim/.vim/bundle/vim-pathogen
 	url = https://github.com/tpope/vim-pathogen
+[submodule "vim/.vim/bundle/LargeFile"]
+	path = vim/.vim/bundle/LargeFile
+	url = https://github.com/vim-scripts/LargeFile
+[submodule "vim/.vim/bundle/vim-gnupg"]
+	path = vim/.vim/bundle/vim-gnupg
+	url = https://github.com/jamessan/vim-gnupg
