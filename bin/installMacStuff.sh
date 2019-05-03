@@ -82,3 +82,8 @@ defaults write .GlobalPreferences com.apple.mouse.scaling -1
 echo "Starting to create locate DB, enter your sudo password to run:"
 do_sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.locate.plist
 
+# Android studio & stuff
+#brew install android-sdk
+#sdkmanager "platform-tools" "platforms;android-28"
+#brew install android-studio
+
