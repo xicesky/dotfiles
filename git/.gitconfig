@@ -3,12 +3,14 @@
 	email = markus.r.dangl@gmail.com
 [core]
 	editor = vim
-[difftool]
-	prompt = false
 [diff]
 	tool = vimdiff
 [merge]
 	tool = vimdiff
+[difftool]
+	prompt = false
+[difftool "vimdiff"]
+	cmd = vim -f -d -c \"wincmd l\" -c 'cd \"$GIT_PREFIX\"' \"$LOCAL\" \"$REMOTE\"
 [alias]
 	st = status
 	d = difftool
