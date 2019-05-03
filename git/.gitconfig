@@ -1,14 +1,17 @@
 [user]
 	name = Markus Dangl
-	email = markus@q1cc.net
+	email = markus.r.dangl@gmail.com
 [core]
-	editor = gvim -f
+	editor = vim
+[difftool]
+	prompt = false
+[diff]
+	tool = vimdiff
 [merge]
-	tool = gvimdiff
+	tool = vimdiff
 [alias]
 	st = status
-	ci = commit
-	co = checkout
+	d = difftool
 [push]
 	default = simple
 [color]
