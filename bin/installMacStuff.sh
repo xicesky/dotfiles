@@ -87,3 +87,5 @@ do_sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.locate.plist
 #sdkmanager "platform-tools" "platforms;android-28"
 #brew install android-studio
 
+# Make a symlink to launch sublime text from the command line
+#( cd ~/bin ; ln ln -s /Applications/Sublime\ Text.app/Contents/SharedSupport/bin/subl ; )
