@@ -189,6 +189,8 @@ setopt interactivecomments
 #alias -g T='|tail'
 #alias -g V='| vim -'
 
+alias -g vi=vim
+
 ## instead of global aliase it might be better to use grmls $abk assoc array, whose contents are expanded after pressing ,.
 #$abk[SnL]="| sort -n | less"
 
@@ -333,6 +335,10 @@ setopt interactivecomments
 ## I like my history LARGE
 HISTSIZE=10000
 SAVEHIST=10000
+
+# ssh-pageant
+#eval $(/usr/bin/ssh-pageant -ra /tmp/.ssh-pageant)
+test -e "${HOME}/bin/my-ssh-pageant.sh" && eval $(${HOME}/bin/my-ssh-pageant.sh)
 
 # Load torch
 [[ -s "$HOME/Dev/deep/torch/install/bin/torch-activate" ]] && source "$HOME/Dev/deep/torch/install/bin/torch-activate"
