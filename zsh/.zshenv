@@ -1,7 +1,14 @@
 typeset -U path
 path=(~/bin ~/.local/bin /usr/local/bin $path)
 
-[[ -d "$HOME/Library/Android/sdk/platform-tools" ]] && path=($path "$HOME/Library/Android/sdk/platform-tools")
+# Check if we can find android sdk or platform tools
+if [ -d "/usr/local/share/android-sdk" ] ; then
+    export ANDROID_SDK_ROOT="/usr/local/share/android-sdk"
+    path=($path "$ANDROID_SDK_ROOT/platform-tools")
+elif [[ -d "$HOME/Library/Android/sdk/platform-tools" ]] ; then
+    # No? Check if we have platform tools at least
+    path=($path "$HOME/Library/Android/sdk/platform-tools")
+fi
 
 # MAC specific
 # FIXME: Mac already has /etc/zshrc and /etc/zprofile - those mess with our paths
