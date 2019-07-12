@@ -340,6 +340,10 @@ SAVEHIST=10000
 #eval $(/usr/bin/ssh-pageant -ra /tmp/.ssh-pageant)
 test -e "${HOME}/bin/my-ssh-pageant.sh" && eval $(${HOME}/bin/my-ssh-pageant.sh)
 
+# gpg tty - see man 1 gpg-agent
+GPG_TTY=$(tty)
+export GPG_TTY
+
 # Load torch
 [[ -s "$HOME/Dev/deep/torch/install/bin/torch-activate" ]] && source "$HOME/Dev/deep/torch/install/bin/torch-activate"
 
@@ -348,5 +352,8 @@ test -e "${HOME}/bin/my-ssh-pageant.sh" && eval $(${HOME}/bin/my-ssh-pageant.sh)
 
 # Load iterm2 shell integration if available
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+
+# Load system-dependent hacks, if any
+test -e "${HOME}/.zshrc.haxx" && source "${HOME}/.zshrc.haxx"
 
 ## END OF FILE #################################################################
