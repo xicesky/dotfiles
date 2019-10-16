@@ -22,8 +22,8 @@ git submodule update
 
 # Symlink the config to your home directory
 cd ~
-ln -s _dotfiles/.vim
-ln -s _dotfiles/.vimrc
+ln -s _dotfiles/vim/.vim
+ln -s _dotfiles/vim/.vimrc
 ``` 
 
 "Changelog"
