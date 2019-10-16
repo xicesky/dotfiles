@@ -8,6 +8,24 @@ as git submodules - see https://gist.github.com/romainl/9970697
 
 I like this page for plugins: https://vimawesome.com/
 
+Installation
+============
+
+```
+# Clone dotfiles
+git clone "git@github.com:xicesky/dotfiles.git" _dotfiles
+
+# Init submodules (Our plugins are held in submodules)
+cd _dotfiles
+git submodule init
+git submodule update
+
+# Symlink the config to your home directory
+cd ~
+ln -s _dotfiles/.vim
+ln -s _dotfiles/.vimrc
+``` 
+
 "Changelog"
 ===========
 
