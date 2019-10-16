@@ -1,7 +1,8 @@
 dotfiles
 ========
 
-Personal settings and stuff
+Personal settings and stuff.
+
 This repo uses git submodules (e.g. for vim plugins). You probably want to
 fetch them:
 ```
