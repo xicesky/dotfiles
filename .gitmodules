@@ -17,3 +17,6 @@
 [submodule "vim/.vim/bundle/vim-dim"]
 	path = vim/.vim/bundle/vim-dim
 	url = https://github.com/jeffkreeftmeijer/vim-dim
+[submodule "vim/.vim/bundle/idris-vim"]
+	path = vim/.vim/bundle/idris-vim
+	url = https://github.com/idris-hackers/idris-vim.git

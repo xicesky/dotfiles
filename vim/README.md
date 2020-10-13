@@ -54,3 +54,6 @@ All plugins are now in .vim/bundle and can be managed individually (thanks for p
 Added vim-airline: https://github.com/vim-airline/vim-airline
 
 Now using vim-dim as default colorscheme: https://github.com/jeffkreeftmeijer/vim-dim
+
+Added idris-vim: https://github.com/idris-hackers/idris-vim
+
