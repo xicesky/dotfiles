@@ -2,6 +2,11 @@
 " Reset autocommands if vimrc is parsed again
 autocmd!
 
+" Pathogen: Disable certain plugins
+let g:pathogen_disabled = []
+" Disable idris-vim because it sadly conflicts with idris2-vim
+call add(g:pathogen_disabled, 'idris-vim')
+
 " Load pathogen - https://github.com/tpope/vim-pathogen
 runtime bundle/vim-pathogen/autoload/pathogen.vim
 execute pathogen#infect()
@@ -104,11 +109,22 @@ end
 " We use "," as the leader because "\\" is awful on german keyboard
 let mapleader = ","
 
+" Some plugins (idris) use the localleader instead, which we just set to the
+" same key
+let maplocalleader = ","
+
 " Windows fix: Add ~/.vim at the front of the "runtimepath" to find plugins and syntax files
 if has('win32') || has('win64')
     " Make windows use ~/.vim too, I don't want to use _vimfiles
     set runtimepath^=~/.vim
 endif
+
+" Visualize tabs and newlines
+set listchars=tab:▸\ ,eol:¬
+" Uncomment this to enable by default:
+" set list " To enable by default
+" Or use your leader key + l to toggle on/off
+map <leader>l :set list!<CR>
 
 " Using vimdiff for 3-way merges: http://blog.binchen.org/?p=601
 " if you know the buffer number, you can use hot key like “,2″ (press comma

@@ -56,4 +56,6 @@ Added vim-airline: https://github.com/vim-airline/vim-airline
 Now using vim-dim as default colorscheme: https://github.com/jeffkreeftmeijer/vim-dim
 
 Added idris-vim: https://github.com/idris-hackers/idris-vim
+Disabled idris-vim (conflict)
+Added idris2-vim: https://github.com/edwinb/idris2-vim
 

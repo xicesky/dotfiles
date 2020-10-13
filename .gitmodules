@@ -20,3 +20,6 @@
 [submodule "vim/.vim/bundle/idris-vim"]
 	path = vim/.vim/bundle/idris-vim
 	url = https://github.com/idris-hackers/idris-vim.git
+[submodule "vim/.vim/bundle/idris2-vim"]
+	path = vim/.vim/bundle/idris2-vim
+	url = https://github.com/edwinb/idris2-vim
