@@ -84,6 +84,14 @@ let g:GPGPreferArmor = 0
 let g:GPGPreferSign = 1
 let g:GPGUsePipes = 0
 
+" idris2-vim plugin configuration (indentation)
+let g:idris_indent_if = 4
+let g:idris_indent_case = 4
+let g:idris_indent_let = 4
+let g:idris_indent_rewrite = 8
+let g:idris_indent_where = 4
+let g:idris_indent_do = 4
+
 " Mega-Auto-Indent paste
 ":nnoremap <F2> "+P=']
 ":inoremap <F2> <C-o>"+P<C-o>=']
