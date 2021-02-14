@@ -1,5 +1,5 @@
 typeset -U path
-path=(~/bin ~/.local/bin /usr/local/bin $path)
+path=(~/bin ~/.local/bin /usr/local/bin /usr/local/sbin $path)
 
 # Check if we can find android sdk or platform tools
 if [ -d "/usr/local/share/android-sdk" ] ; then
