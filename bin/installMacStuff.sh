@@ -89,3 +89,11 @@ do_sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.locate.plist
 
 # Make a symlink to launch sublime text from the command line
 #( cd ~/bin ; ln ln -s /Applications/Sublime\ Text.app/Contents/SharedSupport/bin/subl ; )
+
+echo "You probably want to set the PATH for application launched from the dock."
+echo "Do this (later, from zsh) via: "
+echo "    launchctl getenv PATH # Check that everything looks ok"
+echo "    launchctl setenv PATH \"$PATH\""
+echo "    killall Dock # Restart the dock"
+
+
