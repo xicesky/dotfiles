@@ -543,10 +543,19 @@ export MAIL=${MAIL:-/var/mail/$USER}
 export SHELL='/bin/zsh'
 
 # color setup for ls:
-check_com -c dircolors && eval $(dircolors -b)
+if check_com -c dircolors ; then
+    if [[ -e ~/.dircolors ]] ; then
+        eval $(dircolors -b ~/.dircolors)
+    else
+        eval $(dircolors -b)
+    fi
+fi
+
 # color setup for ls on OS X / FreeBSD:
-isdarwin && export CLICOLOR=1
-isfreebsd && export CLICOLOR=1
+if isdarwin || isfreebsd ; then
+    export CLICOLOR=1
+    export LSCOLORS=ExGxBxDxCxEgEdxbxgxcxd
+fi
 
 # do MacPorts setup on darwin
 if isdarwin && [[ -d /opt/local ]]; then
