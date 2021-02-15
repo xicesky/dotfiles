@@ -1,0 +1,44 @@
+[
+    { "keys": ["ctrl+7"], "command": "toggle_comment", "args": { "block": false } },
+    { "keys": ["ctrl+shift+7"], "command": "toggle_comment", "args": { "block": true } },
+    { "keys": ["super+0"], "command": "reset_font_size" },
+    // Go to matching bracket
+    {
+        "keys": ["ctrl+m"],
+        "command": "bh_key",
+        "args":
+        {
+            "no_outside_adj": true,
+            "lines" : true,
+            "plugin":
+            {
+                "type": ["__all__"],
+                "command": "bh_modules.bracketselect",
+                "args": {"select": "left", "alternate": true }
+            }
+        }
+    },
+    // Select text between brackets
+    {
+        "no_outside_adj": true,
+        "keys": ["ctrl+shift+m"],
+        "command": "bh_key",
+        "args":
+        {
+            "lines" : true,
+            "plugin":
+            {
+                "type": ["__all__"],
+                "command": "bh_modules.bracketselect"
+            }
+        }
+    },
+    // Open containing folder
+    {
+        "keys": ["ctrl+shift+y"],
+        "command": "open_dir",
+        "args": {
+            "dir": "$file_path"
+        }
+    }    
+]
