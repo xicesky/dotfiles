@@ -10,7 +10,7 @@ git config --global user.email "markus@q1cc.net"
 aptitude install console-setup ncurses-term
 
 ## Ferm is nice but impacts your network instantly upon installation
-#aptitude install ferm
+aptitude install ferm
 
 ## Then install this
 aptitude install \
@@ -22,8 +22,8 @@ aptitude install \
     subversion git git-svn gnupg2
 
 ## Comment this out if you mind larger downloads
-aptitude install \
-    linux-headers-amd64
+#aptitude install \
+#    linux-headers-amd64
 
 ## Maybe this
 #aptitude install \
@@ -41,9 +41,10 @@ aptitude install \
 #    byobu memtest86+ grub-invaders
 
 ## Required software for my X11 setup
-#aptitude install \
-#    xmonad xmobar trayer xsel \
-#    libghc-xmonad-contrib-dev \
-#    rxvt-unicode-256color suckless-tools gmrun \
-#    pavucontrol
+aptitude install \
+    xmonad xmobar trayer xsel \
+    libghc-xmonad-contrib-dev \
+    taffybar libghc-taffybar-dev \
+    rxvt-unicode-256color suckless-tools gmrun \
+    pavucontrol
 

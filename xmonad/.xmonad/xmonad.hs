@@ -34,6 +34,7 @@
  -      http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Hooks-Script.html
  -          Useless but inspires a dynamically loaded ("scripted") xmonad config
  -      http://hackage.haskell.org/package/xmonad-eval
+ -      https://wiki.archlinux.org/index.php/xmonad#X-Selection-Paste
  -
  - Panels / Bars:
  -      https://wiki.archlinux.org/index.php/PyPanel
@@ -136,6 +137,11 @@ myFocusedBorderColor = "#5555ff"        -- grayish light blue
 myTerminal      :: String
 myTerminal      = "urxvt"
 
+-- | What command to use to lock the screen
+myLockScreenCmd :: String
+--myLockScreenCmd = "lockscreen"
+myLockScreenCmd = "light-locker-command -l"
+
 -- | Whether focus follows the mouse pointer.
 myFocusFollowsMouse :: Bool
 myFocusFollowsMouse = False                 -- generally doesn't work well
@@ -225,8 +231,10 @@ myKeys conf@(XConfig { modMask = modm, terminal = terminal }) = mconcat $
     , M.fromList $  -- Custom keys
         -- Grab any windows key event
         [ ((0, xK_Super_L), return ())
+        -- Override some entries from the default config
+        , ((modm, xK_h ), return ())
         -- Screen lock
-        , ((modm, xK_l ), spawn "lockscreen")
+        , ((modm, xK_l ), spawn myLockScreenCmd)
         -- Swap the focused window and the master window
         , ((modm .|. shiftMask, xK_Return), windows W.swapMaster)
         -- Launch a terminal
@@ -237,17 +245,20 @@ myKeys conf@(XConfig { modMask = modm, terminal = terminal }) = mconcat $
         , ((modm, xK_b), sendMessage ToggleStruts)
         -- launch gmrun on mod+r
         , ((modm, xK_r), spawn "gmrun")
+        -- Resize master with normal +/-
+        , ((modm, xK_minus  ), sendMessage Shrink)
+        , ((modm, xK_plus   ), sendMessage Expand)
         -- Resize master with keypad +/-
         , ((modm, xK_KP_Subtract    ), sendMessage Shrink)
         , ((modm, xK_KP_Add         ), sendMessage Expand)
         -- WindowMenu (todo)
         , ((modm, xK_o ), windowMenu)
         -- "Multimedia keys"
-        , ((0, xF86XK_AudioLowerVolume  ), spawn "pactl set-sink-volume 0 -1.5%")
-        , ((0, xF86XK_AudioRaiseVolume  ), spawn "pactl set-sink-volume 0 +1.5%")
-        , ((0, xF86XK_AudioMute         ), spawn "pactl set-sink-mute 0 toggle")
+        , ((0, xF86XK_AudioLowerVolume  ), spawn "pactl set-sink-volume 1 -1.5%")
+        , ((0, xF86XK_AudioRaiseVolume  ), spawn "pactl set-sink-volume 1 +1.5%")
+        , ((0, xF86XK_AudioMute         ), spawn "pactl set-sink-mute 1 toggle")
         -- Map sleep key to screenlock
-        , ((0, xF86XK_Sleep             ), spawn "lockscreen")
+        , ((0, xF86XK_Sleep             ), spawn myLockScreenCmd)
         ]
     , M.fromList $  -- Workspace switching with numpad
         [ ((m .|. modm, k), windows $ f i)
@@ -366,6 +377,9 @@ myConfig rtcfg = XConfig
     , XMonad.handleEventHook    = myEventHook           <+> XMonad.handleEventHook      baseConfig
     , XMonad.focusFollowsMouse  = myFocusFollowsMouse   -- no merge
     , XMonad.clickJustFocuses   = myClickJustFocuses    -- no merge
+    , XMonad.clientMask         =                           XMonad.clientMask           baseConfig
+    , XMonad.rootMask           =                           XMonad.rootMask             baseConfig
+    , XMonad.handleExtraArgs    =                           XMonad.handleExtraArgs      baseConfig
     }
 
 ---------------------------------------------------------------------------------------------------
