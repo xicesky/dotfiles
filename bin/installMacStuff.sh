@@ -89,3 +89,10 @@ do_sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.locate.plist
 
 # Make a symlink to launch sublime text from the command line
 #( cd ~/bin ; ln ln -s /Applications/Sublime\ Text.app/Contents/SharedSupport/bin/subl ; )
+
+# Disable iTunes from hogging the media keys!
+# sudo chmod -x /Applications/iTunes.app/Contents/MacOS/iTunes
+# There are better ways to do this, but not automated yet:
+# Go to settings, search for "login items" (german "Anmeldeobjekte") and kill ituneshelper
+# https://apple.stackexchange.com/questions/58234/override-itunes-media-keys-play-pause-etc-for-spotify
+
