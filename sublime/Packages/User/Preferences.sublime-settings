@@ -11,6 +11,7 @@
 		"Markdown",
 		"Vintage"
 	],
+	"scroll_past_end": true,
 	"show_encoding": true,
 	"tab_completion": false,
 	"tab_size": 4,
