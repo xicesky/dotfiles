@@ -1,0 +1,227 @@
+{-# START_FILE package.yaml #-}
+{{! This is a template for stack: https://github.com/commercialhaskell/stack
+This template is based on my personal preferences for the project layout.
+Usage:
+    stack new project-name ~/_dotfiles/haskell/stack-templates/skys-default.hsfiles
+}}
+name:                {{name}}
+version:             0.1.0.0
+github:              "{{github-username}}{{^github-username}}githubuser{{/github-username}}/{{name}}"
+license:             MIT
+license-file:        LICENSE
+author:              "{{author-name}}{{^author-name}}Author name here{{/author-name}}"
+maintainer:          "{{author-email}}{{^author-email}}example@example.com{{/author-email}}"
+copyright:           "{{copyright}}{{^copyright}}{{year}}{{^year}}2019{{/year}} {{author-name}}{{^author-name}}Author name here{{/author-name}}{{/copyright}}"
+
+extra-source-files:
+- README.md
+- LICENSE
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            {{category}}{{^category}}Web{{/category}}
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/{{github-username}}{{^github-username}}githubuser{{/github-username}}/{{name}}#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+
+default-extensions:
+- DeriveFunctor
+- DeriveFoldable
+- DeriveTraversable
+- EmptyDataDecls
+- FlexibleContexts
+- FlexibleInstances
+- GADTs
+- InstanceSigs
+- KindSignatures
+- LambdaCase
+- ScopedTypeVariables
+- StandaloneKindSignatures
+- TypeApplications
+
+ghc-options:
+- -Wall
+
+library:
+  source-dirs: src
+
+executables:
+  {{name}}:
+    main:                Main.hs
+    source-dirs:         executable
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - {{name}}
+
+benchmarks:
+  {{name}}-benchmarks:
+    main:                Main.hs
+    source-dirs:         benchmark
+    ghc-options:
+    - -rtsopts
+    - -threaded
+    - -with-rtsopts=-N
+    dependencies:
+    - {{name}}
+    - criterion
+
+tests:
+  {{name}}-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - {{name}}
+    - QuickCheck
+    - hspec
+    - quickcheck-instances
+
+{-# START_FILE Setup.hs #-}
+import Distribution.Simple
+main = defaultMain
+
+{-# START_FILE benchmark/Main.hs #-}
+
+import Criterion.Main
+
+main :: IO ()
+main = defaultMain [bench "const" (whnf const ())]
+
+{-# START_FILE executable/Main.hs #-}
+
+import qualified Lib
+
+main :: IO ()
+main = Lib.someFunc
+
+{-# START_FILE test/Spec.hs #-}
+
+import Test.Hspec
+
+spec :: Spec
+spec = do
+    it "isn't implemented yet" $ pending
+
+main :: IO ()
+main = hspec spec
+
+{-# START_FILE src/Lib.hs #-}
+module Lib
+    ( someFunc
+    ) where
+
+someFunc :: IO ()
+someFunc = putStrLn "someFunc"
+
+{-# START_FILE README.md #-}
+# [{{ name }}][]
+
+This is a freshly generated project using the "skys-default" stack template.
+Before you get started, there are a few things that this template couldn't
+provide for you. You should:
+
+-   Add a synopsis to `package.yaml`. It should be a short (one sentence)
+    explanation of your project.
+
+-   Add a category to `package.yaml`. A list of categories is available on
+    Hackage at <http://hackage.haskell.org/packages>.
+
+-   Add the following lines to your stack.yaml to work with haskell-language-server:
+    ``` yaml
+    ghc-options:
+      "$everything": -haddock
+    ```
+
+Once you've done that, start working on your project with the Stack commands
+you know and love.
+
+``` sh
+# Build, test, generate docs and open them in a browser
+stack build --test --haddock --open
+
+# Run and report benchmarks
+stack bench --benchmark-arguments '--output=$benchmark.html'
+```
+
+[{{ name }}]: https://github.com/{{github-username}}{{^github-username}}githubuser{{/github-username}}/{{ name }}
+
+{-# START_FILE LICENSE #-}
+[The MIT License (MIT)][]
+
+Copyright (c) {{year}}{{^year}}2021{{/year}} {{author-name}}{{^author-name}}Author name here{{/author-name}}
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+[The MIT License (MIT)]: https://opensource.org/licenses/MIT
+
+{-# START_FILE .gitignore #-}
+# Note:
+#   Do not ignore the *.cabal files, they should be in git
+#   For further reading, see https://www.fpcomplete.com/blog/storing-generated-cabal-files/
+
+# General temporaries, backups, swapfiles...
+*~
+*.sw[pon]
+*.bak
+.DS_Store
+
+# Project specific temporaries, local and build directories
+/local
+.stack-work/
+*-benchmarks.html
+
+# IDE files
+*.sublime-project
+*.sublime-workspace
+
+# Haskell-specifics from https://github.com/github/gitignore/blob/master/Haskell.gitignore
+dist
+dist-*
+cabal-dev
+*.o
+*.hi
+*.hie
+*.chi
+*.chs.h
+*.dyn_o
+*.dyn_hi
+.hpc
+.hsenv
+.cabal-sandbox/
+cabal.sandbox.config
+*.prof
+*.aux
+*.hp
+*.eventlog
+.stack-work/
+cabal.project.local
+cabal.project.local~
+.HTF/
+.ghc.environment.*
