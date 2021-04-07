@@ -54,7 +54,9 @@
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Company auto-completion is completely annoying
+;;
 ;; (with-eval-after-load 'company
 ;;   (define-key company-active-map (kbd "<return>") nil)
 ;;   (define-key company-active-map (kbd "TAB" nil))
@@ -94,3 +96,11 @@
 ;; This doesn work AT ALL
 ;;(setq evil-want-Y-yank-to-eol nil)
 ;; instead had to use M-x customize-variable
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Minor settings
+
+(setq
+ ;; Auto search for projects in these directories
+ projectile-project-search-path '("~/Dev/")
+ )

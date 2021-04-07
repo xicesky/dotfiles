@@ -1,0 +1,102 @@
+#+TITLE: Emacs Notes
+
+* Useful key combos
+
+** Basics
+| Key           | Function                            |
+|---------------+-------------------------------------|
+| Space w w     | Switch window                       |
+| Space ,       | Switch buffer (list)                |
+| ???           | Switch buffer (quick)               |
+| M-i           | "Tab" (tab-to-tab-stop)             |
+| Super-Shift-7 | Toggle comment                      |
+| C-x C-Space   | Navigate back (pop-global-mark)     |
+| C-h k <KEY>   | Find command currently bound to key |
+| C-h b ...     | Keymap stuff                        |
+
+** Projects, files & coding
+| Key       | Function                |
+|-----------+-------------------------|
+| Space f r | Recent files            |
+| Space f R | Recent files in project |
+| Space o p | Project sidebar         |
+| Space o e | EShell???               |
+
+** Dired
+| Key       | Function       |
+|-----------+----------------|
+| Enter / o | Open file      |
+| '-'       | Dir up         |
+| g         | Refresh        |
+| s         | Sort           |
+| i / '+'   | New dir        |
+| d / D     | Delete / now   |
+| R         | Rename (move)  |
+| '(' / ')' | Toggle details |
+|           |                |
+
+** Open questions
+ - Window resizing keys?
+
+
+* Customizations & Fixes
+** Fix bad keys
+ - Space `           Switch to last buffer
+ - How to fix OSX deadkeys?
+
+** Fixing auto-complete / indent
+ I don't like how tab is handled when editing code.
+ Tab is handled by:
+   - emacs: weird indent behaviour
+     bound to indent-for-tab-command
+   - In org-mode tab has a lot of different meanings
+   - yasnippet (yas-expand)
+   - company ??
+
+ Globally override TAB?
+ (global-set-key (kbd "TAB") 'tab-to-tab-stop)
+ (global-set-key [tab] 'tab-to-tab-stop)
+
+ C-Mode
+ (define-key c-mode-base-map (kbd "<tab>") 'tab-to-tab-stop)
+ (define-key c-mode-base-map [tab] 'tab-to-tab-stop)
+
+ Other stuff
+ (setq-default c-tab-always-indent 'complete)
+ (define-key evil-insert-state-map (kbd "TAB") 'tab-to-tab-stop)
+
+** Window nagivation binds
+ - C-w <left> = evil-window-left
+ - C-w <right> = evil-window-right
+ - ...
+
+
+* Playground
+
+** Code evaluation
+*** Elisp
+C-c C-c to execute
+#+begin_src elisp
+(+ 2 3 4 5)
+
+#+end_src
+
+#+RESULTS:
+: 14
+
+*** Haskell
+Snipped for begin_src is '<s' but requires the snippet extension to be active...
+#+begin_src haskell
+1 + 2
+
+#+end_src
+
+#+RESULTS:
+: Prelude> 3
+
+
+* Things to have a look at
+- (company +childrame)
+
+* Resources
+- https://www.youtube.com/playlist?list=PLhXZp00uXBk4np17N39WvB80zgxlZfVwj
