@@ -30,6 +30,18 @@ if [ -r ~/.zshrc -a -r ~/.zshrc.global -a ! -r ~/.zshrc.local ] ; then
     printf '-!-\n'
 fi
 
+# Note: mingw/msys resets the path in /etc/profile
+# so the setting in .zshenv has no effect and we need to update it here
+if ismingw || ismsys ; then
+    if [ -r "${ZDOTDIR:-${HOME}}/.zsh.path" ] ; then
+        echo "SOURCING: ${ZDOTDIR:-${HOME}}/.zsh.path"
+        source "${ZDOTDIR:-${HOME}}/.zsh.path"
+    else
+        typeset -U path
+        path=(~/bin ~/.local/bin /usr/local/bin /usr/local/sbin $path)
+    fi
+fi
+
 ## Settings for umask
 #if (( EUID == 0 )); then
 #    umask 002
