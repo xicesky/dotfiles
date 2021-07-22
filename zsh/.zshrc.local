@@ -102,6 +102,14 @@ setopt interactivecomments
 
 ## compsys related snippets ##
 
+# on mingw/msys we need to augment autocompletion for windows drives
+# thanks, https://github.com/msys2/MSYS2-packages/issues/38#issuecomment-150131217
+if ismingw || ismsys ; then
+    drives=$(mount | sed -rn 's#^[A-Z]: on /([a-z]).*#\1#p' | tr '\n' ' ')
+    zstyle ':completion:*' fake-files /: "/:$drives"
+    unset drives
+fi
+
 ## changed completer settings
 #zstyle ':completion:*' completer _complete _correct _approximate
 #zstyle ':completion:*' expand prefix suffix
