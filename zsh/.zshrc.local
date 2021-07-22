@@ -34,7 +34,7 @@ fi
 # so the setting in .zshenv has no effect and we need to update it here
 if ismingw || ismsys ; then
     if [ -r "${ZDOTDIR:-${HOME}}/.zsh.path" ] ; then
-        echo "SOURCING: ${ZDOTDIR:-${HOME}}/.zsh.path"
+        # echo "msys/mingw now sourcing: ${ZDOTDIR:-${HOME}}/.zsh.path"
         source "${ZDOTDIR:-${HOME}}/.zsh.path"
     else
         typeset -U path

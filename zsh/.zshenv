@@ -17,11 +17,10 @@ typeset -U path
 # Note: mingw/msys resets the path later, thus it is defined in a separate file
 # so we can re-read it later
 if ismingw || ismsys ; then
-    echo "Detected mingw/msys: $GRML_OSTYPE"
-    echo "    -> not setting path early"
+    # echo "Detected mingw/msys: $GRML_OSTYPE"
+    # echo "    -> not setting path early"
     :
 else
-    echo "Neither: $GRML_OSTYPE"
     if [ -r "${ZDOTDIR:-${HOME}}/.zsh.path" ] ; then
         source "${ZDOTDIR:-${HOME}}/.zsh.path"
     else
