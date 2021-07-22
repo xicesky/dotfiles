@@ -20,10 +20,11 @@
 [mergetool "winmerge"]
     name = WinMerge
     trustExitCode = true
-    cmd = "/c/Program\\ Files/WinMerge/WinMergeU.exe" -u -e -dl \"Local\" -dr \"Remote\" $LOCAL $REMOTE $MERGED
+    cmd = "/c/Program\\ Files/WinMerge/WinMergeU.exe" -u -e -dl \"Local\" -dr \"Remote\" \"$LOCAL\" \"$BASE\" \"$REMOTE\" -o \"$MERGED\"
 [alias]
 	st = status
 	d = difftool
+	root = rev-parse --show-toplevel
 [push]
 	default = simple
 [color]
