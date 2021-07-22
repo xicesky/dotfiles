@@ -1,34 +1,5 @@
-# Filename:      /etc/skel/.zshrc
+# Filename:      ~/.zshrc.local
 # Purpose:       config file for zsh (z shell)
-# Authors:       (c) grml-team (grml.org)
-# Bug-Reports:   see http://grml.org/bugs/
-# License:       This file is licensed under the GPL v2 or any later version.
-################################################################################
-# Nowadays, grml's zsh setup lives in only *one* zshrc file.
-# That is the global one: /etc/zsh/zshrc (from grml-etc-core).
-# It is best to leave *this* file untouched and do personal changes to
-# your zsh setup via ${HOME}/.zshrc.local which is loaded at the end of
-# the global zshrc.
-#
-# That way, we enable people on other operating systems to use our
-# setup, too, just by copying our global zshrc to their ${HOME}/.zshrc.
-# Adjustments would still go to the .zshrc.local file.
-################################################################################
-
-## Inform users about upgrade path for grml's old zshrc layout, assuming that:
-## /etc/skel/.zshrc was installed as ~/.zshrc,
-## /etc/zsh/zshrc was installed as ~/.zshrc.global and
-## ~/.zshrc.local does not exist yet.
-if [ -r ~/.zshrc -a -r ~/.zshrc.global -a ! -r ~/.zshrc.local ] ; then
-    printf '-!-\n'
-    printf '-!- Looks like you are using the old zshrc layout of grml.\n'
-    printf '-!- Please read the notes in the grml-zsh-refcard, being'
-    printf '-!- available at: http://grml.org/zsh/\n'
-    printf '-!-\n'
-    printf '-!- If you just want to get rid of this warning message execute:\n'
-    printf '-!-        touch ~/.zshrc.local\n'
-    printf '-!-\n'
-fi
 
 # Note: mingw/msys resets the path in /etc/profile
 # so the setting in .zshenv has no effect and we need to update it here
@@ -48,9 +19,6 @@ fi
 #else
 #    umask 022
 #fi
-
-## Now, we'll give a few examples of what you might want to use in your
-## .zshrc.local file (just copy'n'paste and uncomment it there):
 
 ## Prompt theme extension ##
 
@@ -153,25 +121,6 @@ setopt interactivecomments
 #zstyle ':completion:*:my-accounts' users-hosts $my_accounts
 #zstyle ':completion:*:other-accounts' users-hosts $other_accounts
 
-## add grml.org to your list of hosts
-#hosts+=(grml.org)
-#zstyle ':completion:*:hosts' hosts $hosts
-
-## telnet on non-default ports? ...well:
-## specify specific port/service settings:
-#telnet_users_hosts_ports=(
-#  user1@host1:
-#  user2@host2:
-#  @mail-server:{smtp,pop3}
-#  @news-server:nntp
-#  @proxy-server:8000
-#)
-#zstyle ':completion:*:*:telnet:*' users-hosts-ports $telnet_users_hosts_ports
-
-## the default grml setup provides '..' as a completion. it does not provide
-## '.' though. If you want that too, use the following line:
-#zstyle ':completion:*' special-dirs true
-
 ## aliases ##
 
 ## translate
@@ -179,7 +128,6 @@ setopt interactivecomments
 
 ## ignore ~/.ssh/known_hosts entries
 #alias insecssh='ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -o "PreferredAuthentications=keyboard-interactive"'
-
 
 ## global aliases (for those who like them) ##
 
@@ -239,19 +187,6 @@ alias -g vi=vim
 #sameas() { diff -q "$*" $REPLY &>/dev/null }
 #ot () { [[ $REPLY -ot ${~1} ]] }
 
-## get_ic() - queries imap servers for capabilities; real simple. no imaps
-#ic_get() {
-#    emulate -L zsh
-#    local port
-#    if [[ ! -z $1 ]] ; then
-#        port=${2:-143}
-#        print "querying imap server on $1:${port}...\n";
-#        print "a1 capability\na2 logout\n" | nc $1 ${port}
-#    else
-#        print "usage:\n  $0 <imap-server> [port]"
-#    fi
-#}
-
 ## List all occurrences of programm in current PATH
 #plap() {
 #    emulate -L zsh
@@ -261,15 +196,6 @@ alias -g vi=vim
 #        echo "Lists all occurrences of program in the current PATH."
 #    else
 #        ls -l ${^path}/*$1*(*N)
-#    fi
-#}
-
-## Find out which libs define a symbol
-#lcheck() {
-#    if [[ -n "$1" ]] ; then
-#        nm -go /usr/lib/lib*.a 2>/dev/null | grep ":[[:xdigit:]]\{8\} . .*$1"
-#    else
-#        echo "Usage: lcheck <function>" >&2
 #    fi
 #}
 
@@ -315,10 +241,6 @@ alias -g vi=vim
 #else
 #    TMOUT=1800
 #fi
-
-## associate types and extensions (be aware with perl scripts and anwanted behaviour!)
-#check_com zsh-mime-setup || { autoload zsh-mime-setup && zsh-mime-setup }
-#alias -s pl='perl -S'
 
 ## ctrl-s will no longer freeze the terminal.
 #stty erase "^?"
