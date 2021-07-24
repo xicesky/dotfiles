@@ -345,7 +345,7 @@ GPG_TTY=$(tty)
 export GPG_TTY
 
 # Load torch
-[[ -s "$HOME/Dev/deep/torch/install/bin/torch-activate" ]] && source "$HOME/Dev/deep/torch/install/bin/torch-activate"
+#[[ -s "$HOME/Dev/deep/torch/install/bin/torch-activate" ]] && source "$HOME/Dev/deep/torch/install/bin/torch-activate"
 
 # Load gvm (Go Version Manager): https://github.com/moovweb/gvm
 [[ -s "$HOME/.gvm/scripts/gvm" ]] && source "$HOME/.gvm/scripts/gvm"
