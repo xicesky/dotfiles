@@ -5,7 +5,7 @@
 #set -x
 shopt -s nocasematch
 
-SOCKET="/tmp/.ssh-pageant"
+SOCKET="/tmp/.ssh-pageant-${USER}"
 
 sp() {
     /usr/bin/ssh-pageant -ra "$SOCKET"

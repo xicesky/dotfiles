@@ -1,29 +1,32 @@
+
+# Utility functions to detect system type
+# grml's zsh setup provides islinux, isdarwin, isfreebsd, ...
+
+GRML_OSTYPE=$(uname -s)
+
+function ismingw() {
+    [[ $GRML_OSTYPE = MINGW* ]]
+}
+
+function ismsys() {
+    [[ $GRML_OSTYPE = MSYS* ]]
+}
+
 typeset -U path
-path=(~/bin ~/.local/bin /usr/local/bin /usr/local/sbin $path)
 
-# Check if we can find android sdk or platform tools
-if [ -d "/usr/local/share/android-sdk" ] ; then
-    export ANDROID_SDK_ROOT="/usr/local/share/android-sdk"
-    path=($path "$ANDROID_SDK_ROOT/platform-tools")
-elif [[ -d "$HOME/Library/Android/sdk/platform-tools" ]] ; then
-    # No? Check if we have platform tools at least
-    path=($path "$HOME/Library/Android/sdk/platform-tools")
-fi
-
-# MAC specific
-# FIXME: Mac already has /etc/zshrc and /etc/zprofile - those mess with our paths
-#   So we need a way to load our paths AFTER the zprofile eval.
-if [ -x /usr/local/bin/brew ] ; then
-    # Mac with homebrew, use GNU stuff when available
-    LOC_COREUTILS="$(brew --prefix coreutils)/libexec/gnubin"
-    
-    # Doesn't work currently, see above
-    #echo "PATH=$PATH"
-    [[ -d "$LOC_COREUTILS" ]] && {
-        path=("$LOC_COREUTILS" $path)
-        #echo "PATH=$PATH"
-    }
-
+# Note: mingw/msys resets the path later, thus it is defined in a separate file
+# so we can re-read it later
+if ismingw || ismsys ; then
+    # echo "Detected mingw/msys: $GRML_OSTYPE"
+    # echo "    -> not setting path early"
+    :
+else
+    if [ -r "${ZDOTDIR:-${HOME}}/.zsh.path" ] ; then
+        source "${ZDOTDIR:-${HOME}}/.zsh.path"
+    else
+        typeset -U path
+        path=(~/bin ~/.local/bin /usr/local/bin /usr/local/sbin $path)
+    fi
 fi
 
 # For informing servers about our identity
