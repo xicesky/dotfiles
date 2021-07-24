@@ -6,6 +6,7 @@
     { "keys": ["f12"], "command": "lsp_symbol_definition" },
     { "keys": ["super+option+r"], "command": "lsp_document_symbols" },
     { "keys": ["super+option+h"], "command": "lsp_hover"},
+    { "keys": ["super+alt+,"], "command": "lsp_show_diagnostics_panel"},
     // Go to matching bracket
     {
         "keys": ["ctrl+m"],

@@ -16,7 +16,7 @@
 		"windows":
 		[
 			"wininet"
-		]
+		],
 	},
 	"in_process_packages":
 	[
@@ -31,6 +31,7 @@
 		"MarkdownLight",
 		"Package Control",
 		"SideBarEnhancements",
-		"SublimeREPL"
-	]
+		"SublimeREPL",
+		"TypeScript Syntax"
+	],
 }
