@@ -12,6 +12,11 @@ function ismsys() {
     [[ $GRML_OSTYPE = MSYS* ]]
 }
 
+isdarwin(){
+    [[ $OSTYPE == darwin* ]] && return 0
+    return 1
+}
+
 typeset -U path
 
 # Note: mingw/msys resets the path later, thus it is defined in a separate file

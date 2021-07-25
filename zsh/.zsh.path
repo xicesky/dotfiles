@@ -1,4 +1,7 @@
 
+# TODO: All those searches and checks eat time on login
+# Generate a fixed list instead
+
 path=(~/bin ~/.local/bin /usr/local/bin /usr/local/sbin $path)
 
 # Check if we can find android sdk or platform tools
@@ -25,4 +28,18 @@ if [ -x /usr/local/bin/brew ] ; then
     }
 
 fi
+
+# Rely on GNU coreutils sort for sorting version numbers
+# TODO: Maybe alias all coreutils if installed via homebrew?
+SORT=sort
+FIND=find
+if isdarwin; then
+    [ -x $(which gsort) ] && SORT=gsort
+    [ -x $(which gfind) ] && FIND=gfind
+fi
+
+# Add python user path
+$FIND ~/Library/Python -mindepth 1 -maxdepth 1 -type d -printf "%f\n" | $SORT --version-sort -r | while read i ; do
+    path+=~/Library/Python/$i/bin
+done
 
