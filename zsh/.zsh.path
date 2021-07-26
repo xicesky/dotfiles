@@ -39,7 +39,7 @@ if isdarwin; then
 fi
 
 # Add python user path
-$FIND ~/Library/Python -mindepth 1 -maxdepth 1 -type d -printf "%f\n" | $SORT --version-sort -r | while read i ; do
+[ -d ~/Library/Python ] && $FIND ~/Library/Python -mindepth 1 -maxdepth 1 -type d -printf "%f\n" | $SORT --version-sort -r | while read i ; do
     path+=~/Library/Python/$i/bin
 done
 
