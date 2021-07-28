@@ -29,3 +29,5 @@
 	default = simple
 [color]
 	ui = auto
+[pull]
+	ff = only
