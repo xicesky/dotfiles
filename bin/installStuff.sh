@@ -10,7 +10,7 @@ git config --global user.email "markus@q1cc.net"
 aptitude install console-setup ncurses-term
 
 ## Ferm is nice but impacts your network instantly upon installation
-#aptitude install ferm
+# aptitude install ferm
 
 ## Then install this
 aptitude install \
@@ -26,9 +26,9 @@ aptitude install \
     linux-headers-amd64
 
 ## Maybe this
-#aptitude install \
-#    sl vim-gtk screenie dosfstools cryptsetup gparted arora \
-#    cclive lshw hwinfo
+# aptitude install \
+#     sl vim-gtk screenie dosfstools cryptsetup gparted arora \
+#     cclive lshw hwinfo
 
 ## Services (have to decide on those)
 #aptitude install \
@@ -37,13 +37,16 @@ aptitude install \
     mlocate
 
 ## More stuff (i dont use that often)
-#aptitude install \
-#    byobu memtest86+ grub-invaders
+# aptitude install \
+#     byobu memtest86+ grub-invaders
 
 ## Required software for my X11 setup
-#aptitude install \
-#    xmonad xmobar trayer xsel \
-#    libghc-xmonad-contrib-dev \
-#    rxvt-unicode-256color suckless-tools gmrun \
-#    pavucontrol
+# aptitude install \
+#     xmonad xmobar trayer xsel \
+#     libghc-xmonad-contrib-dev \
+#     rxvt-unicode-256color suckless-tools gmrun \
+#     pavucontrol
 
+## Virtualbox only
+# aptitude install \
+#     virtualbox-guest-dkms virtualbox-guest-x11
