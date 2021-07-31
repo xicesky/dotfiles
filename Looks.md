@@ -1,8 +1,10 @@
 
 # Dotfiles identity
 
-Color scheme: _undecided_
-Font face: Source Code Pro
+|Setting                    |Value          |
+|---                        |---            |
+|Color scheme               |_undecided_    |
+|Font face                  |Source Code Pro|
 
 ## Notes
 
