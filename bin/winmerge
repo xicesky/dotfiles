@@ -1,0 +1,75 @@
+#!/bin/sh
+# This script finds winmerge on windows
+# This should be used by git
+
+set -e
+set -x
+
+WAIT=true
+
+main() {
+    #   Commands:
+    #       run         (default) just pass all options to winmerge
+    #       diff        asic git diff
+    #       merge       asic git merge
+    declare CMD=run
+    while [[ $# -gt 0 ]] ; do case "$1" in
+        diff|merge|run)
+            CMD="$1"
+            shift
+            ;;
+        --start|--no-wait)
+            WAIT=false
+            shift
+            ;;
+        --wait)
+            WAIT=true
+            shift
+            ;;
+        *)
+            # Don't shift, the rest are options
+            break
+            ;;
+    esac; done
+    "$CMD" "$@"
+}
+
+invoke() {
+    echo "$@"
+    "$@"
+}
+
+run() {
+    # Possible locations
+    # "$PROGRAMFILES"
+    PFILES="$(cygpath -u "$PROGRAMFILES")"
+    UAPPS="$(cygpath -u "$APPDATA\..")/Local/Programs"
+
+    for P in \
+        "$PFILES/WinMerge" \
+        "$UAPPS/WinMerge" \
+        ; do
+        if [ -f "$P/WinMergeU.exe" ]; then
+            if "$WAIT" ; then
+                invoke "$P/WinMergeU" "$@"
+            else
+                invoke start "$P/WinMergeU" "$@"
+            fi
+            return $?
+        fi
+    done
+    echo "ERROR: Can't find WinMergeU.exe" 1>&2
+    return 1
+}
+
+diff() {
+    run -e -u -dl "Local" -dr "Remote" "$@"
+}
+
+merge() {
+    #run -e -u -dl "Local" -dr "Remote" "$LOCAL" "$BASE" "$REMOTE" -o "$MERGED"
+    diff "$@"   # Doesn't make any diff (pun, haha)
+}
+
+main "$@"
+
