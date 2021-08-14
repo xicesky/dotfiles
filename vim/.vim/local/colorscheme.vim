@@ -4,7 +4,7 @@
 "colorscheme desert256 
 "colorscheme inkpot
 "colorscheme desert
-colorscheme dim
+"colorscheme dim
 
 if has("gui_running")
     colorscheme sky
