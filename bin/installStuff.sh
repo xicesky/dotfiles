@@ -15,7 +15,7 @@ aptitude install ferm
 ## Then install this
 aptitude install \
     vim htop iotop iptraf p7zip-full mc netcat curl wget \
-    nmap screen checkinstall cclive pigz gzrt \
+    nmap tmux checkinstall cclive pigz gzrt \
     gzip bzip2 hwinfo ltrace strace lvm2 lzma \
     ncftp netcat-openbsd parted p7zip-rar pv \
     gdisk bc xauth zsh sudo dnsutils tcpdump \
