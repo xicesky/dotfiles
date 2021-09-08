@@ -1,0 +1,23 @@
+#!/bin/bash
+
+PRINT_FILE=false
+
+[ "$1" == "-H" ] && { PRINT_FILE=true; shift; }
+declare file="$1"; shift
+
+fmt() {
+    if $PRINT_FILE ; then
+        while IFS= read -r line; do echo "${file}: $line"; done
+    else
+        cat
+    fi
+}
+
+# Sadly, xmllint --format puts everything in one line, idk why
+sed -e 's/xmlns="[^"]*"//g' "$file" | xmllint --xpath "$@" - 2>/dev/null | tr -d '\r' | fmt
+
+RET=${PIPESTATUS[1]}
+#RET=$pipestatus[2]  # zsh
+
+exit $RET
+

@@ -1,0 +1,100 @@
+#!/bin/bash
+
+##############################################################################
+# docker-wrapper
+# Wrapper for running Docker Desktop for Windows under MinGW
+# This command needs to understand docker arguments and convert only the
+# relevant ones (i.e. paths on the host).
+# Version             : 0.0.1
+
+# shellcheck disable=SC2034
+THIS_SCRIPT_NAME='docker-wrapper'
+# shellcheck disable=SC2034
+THIS_SCRIPT_VERSION='0.0.1'
+# shellcheck disable=SC2034,SC2164
+THIS_SCRIPT_DIR="$(cd "$(dirname "$0")"; pwd)"
+# shellcheck disable=SC2034
+THIS_SCRIPT="$THIS_SCRIPT_DIR/$(basename "$0")"
+# shellcheck disable=SC2034
+THIS_RUN_DIR="$(pwd)"
+
+##############################################################################
+
+DOCKER='/c/Program Files/Docker/Docker/resources/bin/docker'
+
+# Display error message and return error code
+# Use like this:
+#   error 23 "My special error" || return $?
+error() {
+    declare code="$1"; shift
+    declare message="$1"; shift
+    printf "Error %03d: %s\n" "$code" "$message" 1>&2
+    return "$code"
+}
+
+cmd_run() {
+    #docker run --rm -v ${PWD}:/mnt alpine ls //mnt
+
+    # Pass all arguments literally, except the listed ones
+    declare -a ARGS
+    declare arg
+    while [[ $# -gt 0 ]] ; do
+        arg="$1"; shift
+        case "$arg" in
+        -v|--volume)
+            declare list="$1"; shift
+            # Split at first colon
+            declare src="${list%:*}"
+            declare dst="${list#*:}"
+            src="$(cygpath -w "$src")"
+            ARGS+=( "$arg" "$src:$dst" )
+            ;;
+        *)
+            ARGS+=( "$arg" )
+            ;;
+        esac
+    done
+
+    MSYS2_ARG_CONV_EXCL="*" "$DOCKER" run "${ARGS[@]}"
+}
+
+main() {
+    declare command=
+    declare arg
+
+    # Parse arguments
+    while [[ $# -gt 0 ]] ; do
+        arg="$1"; shift
+        case "$arg" in
+        run)
+            command="$arg"
+            break
+            ;;
+        help)
+            # Just pass completely
+            "$DOCKER" "$arg" "$@"
+            retrun $?
+            ;;
+        -*)
+            error 1 "Unknown option: $arg"
+            error 1 "(Probably not supported yet)"
+            return 1
+            ;;
+        *)
+            error 1 "Unknown command: $arg"
+            error 1 "(Probably not supported yet)"
+            return 1
+            ;;
+        esac
+    done
+
+    if [[ -z "$command" ]] ; then
+        "$DOCKER" "$@"
+        return $?
+    fi
+
+    "cmd_$command" "$@"
+}
+
+main "$@"
+exit "$?"
