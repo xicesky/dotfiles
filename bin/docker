@@ -70,10 +70,10 @@ main() {
             command="$arg"
             break
             ;;
-        help)
+        help|login|build|image|container|stop|volume|inspect|plugin)
             # Just pass completely
             "$DOCKER" "$arg" "$@"
-            retrun $?
+            return $?
             ;;
         -*)
             error 1 "Unknown option: $arg"
