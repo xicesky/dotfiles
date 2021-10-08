@@ -1,0 +1,292 @@
+#!/bin/bash
+
+##############################################################################
+# gitlab-clone-group
+# Clone a group of gitlab reposistories from gitlab
+# Version             : 0.0-main-SNAPSHOT
+
+# shellcheck disable=SC2034
+THIS_SCRIPT_NAME='gitlab-clone-group'
+# shellcheck disable=SC2034
+THIS_SCRIPT_VERSION='0.0-main-SNAPSHOT'
+# shellcheck disable=SC2034,SC2164
+THIS_SCRIPT_DIR="$(cd "$(dirname "$0")"; pwd)"
+# shellcheck disable=SC2034
+THIS_SCRIPT="$THIS_SCRIPT_DIR/$(basename "$0")"
+# shellcheck disable=SC2034
+THIS_RUN_DIR="$(pwd)"
+
+##############################################################################
+# Error handling
+
+# Display error message and return error code
+# Use like this:
+#   error 23 "My special error" || return $?
+error() {
+    declare code="$1"; shift
+    declare message="$1"; shift
+    printf "Error %03d: %s\n" "$code" "$message" 1>&2
+    return "$code"
+}
+
+##############################################################################
+# Setup
+
+# Verbosity level, 0 is quiet, 1 is normal, 2 prints commands
+VERBOSITY="${VERBOSITY:-1}"
+
+# Prefix for logging text (logging a command overrides this)
+DEFAULT_LOG_PREFIX=${DEFAULT_LOG_PREFIX:-''}
+
+# Don't act, just check (and print commands)
+NO_ACT="${NO_ACT:-false}"
+
+# Formatting seperator
+SEPERATOR="$(printf -- '-%.0s' {1..78})"
+
+##############################################################################
+# Parameters
+
+declare -ga PARAMETERS
+PARAMETERS=( \
+    GITLAB_SERVER
+    GITLAB_TOKEN
+)
+
+GITLAB_SERVER="${GITLAB_SERVER:-"git.mobilexag.de"}"
+
+##############################################################################
+# Utilities for parameter handling
+
+# Show parameters in a user-readble format
+show-parameters() {
+    declare verbose=false
+    [[ $# -gt 0 && "$1" == "-v" ]] && { verbose=true; shift; }
+
+    if $verbose ; then
+        for name in \
+            THIS_SCRIPT THIS_SCRIPT_VERSION THIS_SCRIPT_DIR \
+            NO_ACT VERBOSITY DEFAULT_LOG_PREFIX SUDO; do
+            logf 1 "%-28s: %s\n" "$name" "$(printf "%q" "${!name}")"
+        done
+        log 1 ""
+    fi
+
+    for name in "${PARAMETERS[@]}" ; do
+        logf 1 "%-28s: %s\n" "$name" "${!name}"
+    done
+
+    # Array parameters are special
+    logf 1 "%-28s: %s\n" "DEPLOYMENTS" "${DEPLOYMENTS[*]}"
+}
+
+# Print parameters in a shell-readable format
+# shellcheck disable=SC2120
+print-parameters-script() {
+    declare name
+
+    for name in "${PARAMETERS[@]}" ; do
+        if [[ -z "${!name+x}" ]] ; then
+            true    # Ignore
+        else
+            echo "export $name"
+            echo "$name=$(printf "%q" "${!name}")"
+        fi
+    done
+
+    # Array parameters are special
+    echo "declare -gax DEPLOYMENTS"
+    echo "DEPLOYMENTS=( $(printf "%q " "${DEPLOYMENTS[@]}"))"
+
+    # -p "prepends" the parameters to stdin, e.g. for ssh
+    [[ "$1" == "-p" ]] && { shift; cat; }
+}
+
+##############################################################################
+# Utilities
+
+# Display a message if verbosity level allows
+log() {
+    declare prefix="$DEFAULT_LOG_PREFIX"
+    [[ "$1" = "-p" ]] && { shift; prefix="$1"; shift; }
+    declare level="$1"; shift
+    if [[ "$VERBOSITY" -ge "$level" ]] ; then
+        echo "$prefix$*"
+    fi
+}
+
+# Same but use printf
+logf() {
+    declare level="$1"; shift
+    # Passing a formatting string is exactly what we intend here
+    # shellcheck disable=SC2059
+    log "$level" "$(printf "$@")"
+}
+
+# Display warning message
+# TODO: Remove. Nobody reads warnings - it's an error or it's not.
+warn() {
+    printf "WARNING: %s\n" "$*" 1>&2
+}
+
+# Stores the last command executed by invoke()
+declare -a LAST_COMMAND
+LAST_COMMAND=()
+
+# ... and it's exit code
+declare -g LAST_COMMAND_EXITCODE
+LAST_COMMAND_EXITCODE=0
+
+# Log and invoke a command or skip it if NO_ACT is set
+# This actually works only for simple commands, you can't use it to:
+#   - Invoke commands that use pipes or redirections
+#   - Invoke compound commands (expressions)
+#   - Set variables
+invoke() {
+    LAST_COMMAND=("$@")
+    log -p "" 2 "$(printf "%q " "$@")"
+    $NO_ACT || {
+        LAST_COMMAND_EXITCODE=0
+        "$@" || LAST_COMMAND_EXITCODE="$?"
+        return $LAST_COMMAND_EXITCODE
+    }
+}
+
+# Report the last command, if it failed
+report_command_failure() {
+    if [[ "$LAST_COMMAND_EXITCODE" -ne 0 ]] ; then
+        log 1 ""
+        log 1 "Last command executed:"
+        log 1 "    $(printf "%q " "${LAST_COMMAND[@]}")"
+        log 1 "Returned exit code ${LAST_COMMAND_EXITCODE}"
+    fi
+}
+
+##############################################################################
+# Check parameters
+
+check-parameters() {
+    # Check environment variables
+    [ -n "$GITLAB_TOKEN" ] || error 1 "Environment variable GITLAB_TOKEN is unset."
+}
+
+##############################################################################
+# Command gitlab-clone-group
+
+cmd_gitlab-clone-group() {
+    check-parameters || return $?
+
+    [[ $# -gt 0 ]] || error 1 "Not enough arguments" || return $?
+    declare group="$1"; shift
+    [[ -n "$group" ]] || error 1 "No group specified." || return $?
+    [[ -e "$group" ]] && { error 1 "Directory $group already exists." || return $? ; }
+
+    declare savecwd
+    savecwd="$(pwd)"
+    invoke mkdir "$group"
+    invoke cd "$group"
+
+    # FIXME: urlencode $group
+    for repo in $(curl -s \
+        --header "Private-Token: $GITLAB_TOKEN" \
+        "https://git.mobilexag.de/api/v4/groups/$group" \
+        | jq ".projects[].ssh_url_to_repo" | tr -d '"\r' \
+        ); do
+        log 1 "$SEPERATOR"
+        invoke git clone "$repo"
+    done
+    cd "$savecwd" || true
+}
+
+##############################################################################
+# Main
+
+help() {
+    log 0 ""
+    log 0 "$THIS_SCRIPT_NAME v$THIS_SCRIPT_VERSION"
+    log 0 ""
+    log 0 "Usage:"
+    logf 0 "    %s [OPTIONS] <group-name>\n" "$THIS_SCRIPT_NAME"
+    log 0 ""
+    log 0 "Options:"
+    logf 0 "    %-20s %s\n" "--help" "Display command help"
+    logf 0 "    %-20s %s\n" "--version" "Show version and exit"
+    logf 0 "    %-20s %s\n" "-v|--verbose" "Increase verbosity level, repeatable"
+    logf 0 "    %-20s %s\n" "-q|--quiet" "Decrease verbosity level, repeatable"
+    logf 0 "    %-20s %s\n" "-x|--act" "Enable command execution"
+    logf 0 "    %-20s %s\n" "-n|--no-act" "Disable command execution, print commands instead"
+    log 0 ""
+}
+
+main() {
+    declare arg
+    declare -a mainargs=()
+
+    # Parse arguments
+    while [[ $# -gt 0 ]] ; do
+        arg="$1"; shift
+        case "$arg" in
+        --help|help)
+            help "$@"
+            return 0
+            ;;
+        --version|version)
+            # Display version and exit
+            echo "$THIS_SCRIPT_VERSION"
+            return 0
+            ;;
+        -v|--verbose)
+            (( VERBOSITY++ ))
+            ;;
+        -q|--quiet)
+            (( VERBOSITY-- ))
+            ;;
+        -x|--act)
+            NO_ACT=false
+            ;;
+        -n|--no-act)
+            NO_ACT=true
+            ;;
+        -*)
+            error 1 "Unknown option: $arg" || true
+            echo "    ... here's the help:" 1>&2
+            help
+            return 1
+            ;;
+        *)
+            # Main arguments
+            mainargs+=( "$arg" )
+            ;;
+        esac
+    done
+
+    if [[ "$NO_ACT" == "true" ]] ; then
+        # No-act without verbosity is pretty useless
+        [[ "$VERBOSITY" -lt 2 ]] && VERBOSITY=2
+        DEFAULT_LOG_PREFIX=${DEFAULT_LOG_PREFIX:-'# '}
+    fi
+
+    if [[ -z "${mainargs[0]}" ]] ; then
+        error 1 "No group specified" || true
+        echo "    ... here's the help:" 1>&2
+        help
+        return 1
+    fi
+
+    if [[ "$NO_ACT" == "true" && "$VERBOSITY" -gt 1 ]] ; then
+        log 1 "NO_ACT is set. Not executing commands, just printing them."
+    fi
+
+    declare exitcode=0
+    cmd_gitlab-clone-group "${mainargs[@]}"
+    exitcode="$?"
+    if [[ "$exitcode" -ne 0 ]] ; then
+        echo ""
+        report_command_failure
+        echo ""
+    fi
+    return $exitcode
+}
+
+main "$@"
+exit "$?"
