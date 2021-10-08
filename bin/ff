@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# Fast-find
+# speed up GNU find by excluding portions of the file tree
+
+declare -a gnufindargs=()
+declare path="$1"; shift
+
+invoke() {
+    echo "$@"
+    "$@"
+}
+
+while [[ $# -gt 0 ]] ; do
+    case "$1" in
+        -xpath)
+            shift
+            gnufindargs+=( -exec query-xml {} /"$1" \; )
+            shift
+            ;;
+        -grep)
+            shift
+            gnufindargs+=( -exec grep -H )
+            # optional single arg
+            if [[ "$1" = -* ]] ; then
+                gnufindargs+=( "$1" ); shift
+            fi
+            # pattern
+            gnufindargs+=( "$1" {} \; )
+            shift
+            ;;
+        *)
+            gnufindargs+=( "$1" )
+            shift
+            ;;
+    esac
+done
+
+invoke find "$path" \( -type d -iname 'target' -prune \) -o \
+    \( -type d -iname '.git' -prune \) -o \
+    \( "${gnufindargs[@]}" \)
+
