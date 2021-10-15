@@ -2,21 +2,50 @@
 
 # Fast-find
 # speed up GNU find by excluding portions of the file tree
+# TODO:
+#   - The argument parsing is completely wrong here and has to resort to hacks to make
+#       it even appear to work
+#   - In order to behave like GNU find, we need to actually parse our arguments correctly
+#       and keep track of any actions that were specified. If no action was specified, we
+#       should append the "-print" action automatically. For now, we inaccurately guess
+#       if an action was specified from the argument name as a workaround.
 
+declare -a gnufindpreargs=()
+declare -a gnufindskipargs=()
 declare -a gnufindargs=()
 declare path="$1"; shift
 
+if ! [[ -e "$path" ]] ; then
+    echo "Invalid directory: $path" 1>&2
+    exit 1
+fi
+
 invoke() {
-    echo "$@"
+    echo "$@" 1>&2
     "$@"
 }
 
+query-xml() {
+    declare print_filename=false
+    if [[ "$1" == "-H" ]] ; then print_filename=true; shift; fi
+    declare file="$1"; shift
+
+    # Note: sed won't work to prefix the filename here
+    sed -e 's/xmlns="[^"]*"//g' "$file" | xmllint --xpath "$@" - | tr -d '\r' \
+        | { if $print_filename; then while IFS= read -r line; do echo "$file: $line"; done; else cat; fi }
+    return "${PIPESTATUS[1]}"   # bash
+    #return $pipestatus[2]       # zsh
+}
+
+declare haveaction=false
 while [[ $# -gt 0 ]] ; do
+    # FIXME: Keep track of parentheses for preargs
     case "$1" in
         -xpath)
             shift
-            gnufindargs+=( -exec query-xml {} /"$1" \; )
+            gnufindargs+=( -exec query-xml -H {} /"$1" \; )
             shift
+            haveaction=true
             ;;
         -grep)
             shift
@@ -28,6 +57,20 @@ while [[ $# -gt 0 ]] ; do
             # pattern
             gnufindargs+=( "$1" {} \; )
             shift
+            haveaction=true
+            ;;
+        -maxdepth|-md)
+            shift
+            # FIXME: in rare cases, -maxdepth could be used in a subexpression
+            #   this means we need to know what we are currently parsing,
+            #   i.e. keeping track of the parentheses
+            gnufindpreargs+=( -maxdepth "$1" )
+            shift
+            ;;
+        -print|-fprint|-ls|-fls|-printf|-fprintf|-exec|-execdir|-ok|-okdir|-delete)
+            gnufindargs+=( "$1" )
+            shift
+            haveaction=true
             ;;
         *)
             gnufindargs+=( "$1" )
@@ -36,7 +79,12 @@ while [[ $# -gt 0 ]] ; do
     esac
 done
 
-invoke find "$path" \( -type d -iname 'target' -prune \) -o \
-    \( -type d -iname '.git' -prune \) -o \
+$haveaction || gnufindargs+=( -print )
+
+for i in 'target' '.git' 'wildfly-*' ; do
+    gnufindskipargs+=( \( -type d -iname "$i" -prune \) -o )
+done
+
+invoke find "$path" "${gnufindpreargs[@]}" "${gnufindskipargs[@]}" \
     \( "${gnufindargs[@]}" \)
 
