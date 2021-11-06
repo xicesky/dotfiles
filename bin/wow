@@ -1,4 +1,0 @@
-#!/bin/bash
-cd ~/Software/World\ of\ Warcraft
-wine Wow.exe
-
