@@ -53,9 +53,12 @@ while [[ $# -gt 0 ]] ; do
             # optional single arg
             if [[ "$1" = -* ]] ; then
                 gnufindargs+=( "$1" ); shift
+            else
+                # Default to case-insensitive
+                gnufindargs+=( -ie )
             fi
             # pattern
-            gnufindargs+=( "$1" {} \; )
+            gnufindargs+=( "$1" {} + )
             shift
             haveaction=true
             ;;
@@ -65,6 +68,16 @@ while [[ $# -gt 0 ]] ; do
             #   this means we need to know what we are currently parsing,
             #   i.e. keeping track of the parentheses
             gnufindpreargs+=( -maxdepth "$1" )
+            shift
+            ;;
+        -skipdir)
+            shift
+            gnufindskipargs+=( \( -type d -iname "$1" -prune \) -o )
+            shift
+            ;;
+        -skip)
+            shift
+            gnufindskipargs+=( \( -iname "$1" \) -o )
             shift
             ;;
         -print|-fprint|-ls|-fls|-printf|-fprintf|-exec|-execdir|-ok|-okdir|-delete)
@@ -81,7 +94,7 @@ done
 
 $haveaction || gnufindargs+=( -print )
 
-for i in 'target' '.git' 'wildfly-*' ; do
+for i in 'target' '.git' 'wildfly-*' '.idea' 'mip-home' ; do
     gnufindskipargs+=( \( -type d -iname "$i" -prune \) -o )
 done
 

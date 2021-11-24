@@ -70,21 +70,23 @@ main() {
             command="$arg"
             break
             ;;
-        help|login|build|image|container|stop|volume|inspect|plugin)
-            # Just pass completely
-            "$DOCKER" "$arg" "$@"
-            return $?
-            ;;
         -*)
             error 1 "Unknown option: $arg"
             error 1 "(Probably not supported yet)"
             return 1
             ;;
+        # This got too annoying. Default to pass-through instead.
+        #help|login|build|image|container|stop|volume|inspect|plugin|exec|system|logs|update)
         *)
-            error 1 "Unknown command: $arg"
-            error 1 "(Probably not supported yet)"
-            return 1
+            # Just pass completely
+            "$DOCKER" "$arg" "$@"
+            return $?
             ;;
+        #*)
+        #    error 1 "Unknown command: $arg"
+        #    error 1 "(Probably not supported yet)"
+        #    return 1
+        #    ;;
         esac
     done
 
