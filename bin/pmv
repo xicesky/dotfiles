@@ -1,0 +1,145 @@
+#!/bin/bash
+
+##############################################################################
+# pmv
+# Bash script for moving files and directories
+# Version             : 0.0-main-SNAPSHOT
+# Does what "cp --parents" does, just for mv
+# Status: incomplete but mostly works
+# TODO:
+#   - descend into target directories if they already exist, just like cp
+#       would copy files into existing dirs. this requires a recursive
+#       call on every file in the directory ... or maybe a smart call to
+#       gnu find?
+#   - option to prune empty directories after moving file(s)
+
+# shellcheck disable=SC2034
+THIS_SCRIPT_NAME='pmv'
+# shellcheck disable=SC2034
+THIS_SCRIPT_VERSION='0.0-main-SNAPSHOT'
+
+# Verbosity level, 0 is quiet, 1 is normal, 2 prints commands
+VERBOSITY="${VERBOSITY:-0}"
+
+declare -ga MVOTPS=()
+declare -ga SOURCES=()
+
+# Display error message and return error code
+# Use like this:
+#   error 23 "My special error" || return $?
+error() {
+    declare code="$1"; shift
+    declare message="$1"; shift
+    printf "%s: %s (error %d)\n" "$THIS_SCRIPT_NAME" "$message" "$code" 1>&2
+    return "$code"
+}
+
+cmd_help() {
+    echo "Sorry, help NYI"
+    echo "if you want to move a file that starts with a dash, use --"
+}
+
+main() {
+    declare arg lastarg lastarg_given dest dest_given
+    lastarg_given=false
+    dest_given=false
+    # Parse arguments
+    while [[ $# -gt 0 ]] ; do
+        arg="$1"; shift
+        case "$arg" in
+        --help|help)
+            cmd_help "$@"
+            return 0
+            ;;
+        --version|version)
+            # Display version and exit
+            echo "$THIS_SCRIPT_VERSION"
+            return 0
+            ;;
+        -v|--verbose)
+            (( VERBOSITY++ ))
+            ;;
+        -q|--quiet)
+            (( VERBOSITY-- ))
+            ;;
+        -f|-i|-n|--force|--interactive|--no-clobber)
+            # We might actually care about these
+            MVOTPS+=( "$arg" )
+            ;;
+        -t) # FIXME support long opt --target-directory=*
+            dest="$1"; shift
+            dest_given=true
+            ;;
+        -u)
+            # Just pass to mv
+            MVOTPS+=( "$arg" )
+            ;;
+        --)
+            # The rest of the arguments are non-option args
+            while [[ $# -gt 0 ]] ; do
+                # Either source or target
+                if $lastarg_given ; then
+                    SOURCES+=( "$lastarg" )
+                fi
+                lastarg="$1"; shift
+                lastarg_given=true
+            done
+            ;;
+        -*)
+            error 1 "Unknown option: $arg" || true
+            echo "" 1>&2
+            cmd_help
+            return 1
+            ;;
+        *)
+            # Either source or target
+            if $lastarg_given ; then
+                SOURCES+=( "$lastarg" )
+            fi
+            lastarg="$arg"
+            lastarg_given=true
+            ;;
+        esac
+    done
+
+    if $dest_given ; then
+        # Destination already given, last argument is also a source
+        SOURCES+=( "$lastarg" )
+    else
+        if $lastarg_given ; then
+            # Ok, last argument is the destination
+            dest="$lastarg"
+            dest_given=true
+        else
+            # No destination given
+            echo "$THIS_SCRIPT_NAME: No destination given" 1>&2
+            return 1
+        fi
+    fi
+
+    if [[ "${#SOURCES[@]}" -le 0 ]] ; then
+        # No source files given / too few arguments
+        echo "$THIS_SCRIPT_NAME: Too few arguments, no source files given" 1>&2
+        return 1
+    fi
+
+    if [[ $VERBOSITY -gt 0 ]] ; then
+        MVOTPS+=( -v )
+    fi
+
+    # FIXME: How does mv behave?
+    #   Does it check the destination dir exists?
+    #   Does it check all source files exist before moving?
+    #   Does it continue on error?
+
+    for src in "${SOURCES[@]}" ; do
+        targetdir="$dest/$(dirname -- "$src")"
+        # Make target directory
+        mkdir -p -- "$targetdir" || return $?
+        mv "${MVOTPS[@]}" -t "$targetdir" -- "$src" || return $?
+    done
+    return 0
+}
+
+main "$@"
+exit "$?"
