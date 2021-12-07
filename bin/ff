@@ -10,9 +10,10 @@
 #       should append the "-print" action automatically. For now, we inaccurately guess
 #       if an action was specified from the argument name as a workaround.
 
-declare -a gnufindpreargs=()
-declare -a gnufindskipargs=()
-declare -a gnufindargs=()
+declare -ga gnufindpreargs=()
+declare -ga gnufindskipargs=()
+declare -ga gnufindargs=()
+declare skip_target=true
 declare path="$1"; shift
 
 if ! [[ -e "$path" ]] ; then
@@ -23,6 +24,12 @@ fi
 invoke() {
     echo "$@" 1>&2
     "$@"
+}
+
+add-skip-dirs() {
+    for i in "$@" ; do
+        gnufindskipargs+=( \( -type d -iname "$i" -prune \) -o )
+    done
 }
 
 query-xml() {
@@ -80,6 +87,10 @@ while [[ $# -gt 0 ]] ; do
             gnufindskipargs+=( \( -iname "$1" \) -o )
             shift
             ;;
+        -no-skip-target)
+            skip_target=false
+            shift
+            ;;
         -print|-fprint|-ls|-fls|-printf|-fprintf|-exec|-execdir|-ok|-okdir|-delete)
             gnufindargs+=( "$1" )
             shift
@@ -94,9 +105,10 @@ done
 
 $haveaction || gnufindargs+=( -print )
 
-for i in 'target' '.git' 'wildfly-*' '.idea' 'mip-home' ; do
-    gnufindskipargs+=( \( -type d -iname "$i" -prune \) -o )
-done
+add-skip-dirs '.git' 'wildfly-*' '.idea' 'mip-home'
+if $skip_target ; then
+    add-skip-dirs 'target'
+fi
 
 invoke find "$path" "${gnufindpreargs[@]}" "${gnufindskipargs[@]}" \
     \( "${gnufindargs[@]}" \)
