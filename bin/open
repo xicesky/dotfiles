@@ -1,0 +1,18 @@
+#!/bin/sh
+declare target="$1"; shift
+
+if [[ "$MSYSTEM" = M* ]] ; then
+    # On MinGW / MSYS, convert paths
+    if echo "$target" | grep -qP '^\w+:' ; then
+        # Target is a URL
+        true
+    else
+        target="$(cygpath -w "$target")"
+    fi
+    #echo start "$target"
+    start "$target"
+else
+    # FIXME: Detect OSX
+    xdg-open "$target"
+fi
+
