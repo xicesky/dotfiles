@@ -19,5 +19,5 @@ sed -e 's/xmlns="[^"]*"//g' "$file" | xmllint --xpath "$@" - 2>/dev/null | tr -d
 RET=${PIPESTATUS[1]}
 #RET=$pipestatus[2]  # zsh
 
-exit $RET
+exit "$RET"
 
