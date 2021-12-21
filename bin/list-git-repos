@@ -1,0 +1,75 @@
+#!/bin/bash
+
+##############################################################################
+# list-git-repos
+# Find git repositories
+# Version             : 0.1
+
+# TODO:
+#   add option --absolute (to output absolute paths instead of basename)
+
+# shellcheck disable=SC2034
+THIS_SCRIPT_NAME='list-git-repos'
+# shellcheck disable=SC2034
+THIS_SCRIPT_VERSION='0.1'
+
+declare -g DEPTH=3
+declare -ga TARGETS=()
+
+##############################################################################
+
+# Display error message and return error code
+# Use like this:
+#   error 23 "My special error" || return $?
+error() {
+    declare code="$1"; shift
+    declare message="$1"; shift
+    printf "Error %03d: %s\n" "$code" "$message" 1>&2
+    return "$code"
+}
+
+##############################################################################
+
+help() {
+    echo ""
+    echo "$THIS_SCRIPT_NAME - find git repositories v$THIS_SCRIPT_VERSION"
+    echo ""
+    echo "Usage:"
+    printf "    %s [--depth n] [starting-point...]\n" "$THIS_SCRIPT_NAME"
+    echo ""
+    echo "Options:"
+    printf "    %-20s %s\n" "--depth"   "Maximum depth to search directories recursively,"
+    printf "    %-20s %s\n" ""          "defaults to 3"
+    echo ""
+}
+
+main() {
+
+    # Parse arguments
+    while [[ $# -gt 0 ]] ; do
+        case "$1" in
+        --maxdepth|--depth)
+            shift; DEPTH="$1"; shift
+            ;;
+        -*)
+            error 1 "Unknown option: $1" || true
+            echo "    ... here's the help:" 1>&2
+            help
+            return 1
+            ;;
+        *)
+            TARGETS+=( "$1" ); shift
+            ;;
+        esac
+    done
+
+    # Without targets, assume "."
+    if [[ "${#TARGETS}" -eq 0 ]] ; then
+        TARGETS=( . )
+    fi
+
+
+    find "${TARGETS[@]}" -maxdepth "$DEPTH" -type d -iname .git -printf '%h\n'
+}
+
+main "$@"
