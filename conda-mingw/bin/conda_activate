@@ -1,0 +1,16 @@
+#!/bin/bash
+_CONDA_ROOT="C:/tools/Anaconda3"
+
+# Copyright (C) 2012 Anaconda, Inc
+# SPDX-License-Identifier: BSD-3-Clause
+# Modified by Markus Dangl
+
+# original default
+#_CONDA_SH=${CONDA_SH:-"$_CONDA_ROOT/etc/profile.d/conda.sh"}
+
+# my default
+_CONDA_SH=${CONDA_SH:-"$HOME/_dotfiles/conda-mingw/bin/conda.sh"}
+
+# shellcheck source=conda.sh
+\. "$_CONDA_SH" || return $?
+conda activate "$@"
