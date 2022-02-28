@@ -23,3 +23,6 @@
 [submodule "vim/.vim/bundle/idris2-vim"]
 	path = vim/.vim/bundle/idris2-vim
 	url = https://github.com/edwinb/idris2-vim
+[submodule "thirdparty/grml/grml-etc-core"]
+	path = thirdparty/grml/grml-etc-core
+	url = git@github.com:grml/grml-etc-core

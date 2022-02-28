@@ -295,6 +295,11 @@ export GPG_TTY
 # Load iterm2 shell integration if available
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 
+# Load win-sudo (MSYS)
+#test -f "${HOME}/bin/win-sudo/s/path.sh" && source "${HOME}/bin/win-sudo/s/path.sh"
+# Win-Sudo fail: doesn't work with zsh
+[[ -d "${HOME}/bin/win-sudo/s" ]] && path+="${HOME}/bin/win-sudo/s"
+
 # Load system-dependent hacks, if any
 test -e "${HOME}/.zshrc.haxx" && source "${HOME}/.zshrc.haxx"
 
