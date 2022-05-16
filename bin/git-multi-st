@@ -13,7 +13,7 @@ THIS_SCRIPT_NAME='git-multi-st'
 # shellcheck disable=SC2034
 THIS_SCRIPT_VERSION='0.1'
 
-declare -g DEPTH=3 COLUMN_WIDTH=60
+declare -g DEPTH=3 COLUMN_WIDTH=60 COLOR=true
 declare -ga TARGETS=()
 
 ##############################################################################
@@ -26,6 +26,94 @@ error() {
     declare message="$1"; shift
     printf "ERROR %03d: %s\n" "$code" "$message" 1>&2
     return "$code"
+}
+
+##############################################################################
+
+# Color support via terminfo codes
+declare -g darkblue darkgrey red green blue normal
+load-colors() {
+    if $COLOR ; then
+        darkblue="$(tput setaf 4)"
+        darkgrey="$(tput setaf 8)"
+        red="$(tput setaf 9)"
+        green="$(tput setaf 10)"
+        blue="$(tput setaf 12)"
+        normal="$(tput sgr0)"
+    else
+        darkblue=""
+        darkgrey=""
+        red=""
+        green=""
+        blue=""
+        normal=""
+    fi
+}
+
+##############################################################################
+# These functions parse the info from git
+
+# Parse the output of git status into global variables
+declare -g GS_BRANCH=''
+declare -g GS_SYNC=''
+declare -g GS_SYNC_COLOR=''
+declare -g GS_UNCOMMITTED_FILES=''
+
+parse-git-status() {
+    declare temp thdr
+    temp="$(git status --branch --porcelain)" \
+        || { error 1 "git status failed"; return 1; }
+    thdr="$(echo "$temp" | grep '^##')"
+    GS_SYNC="$(echo "$thdr" | grep -oP '(?<=\[)[^\]]+')" || GS_SYNC='up to date'
+    
+    GS_BRANCH="$(echo "$thdr" | grep -oP '(?<=## )[\w-/]+')"
+    GS_SYNC_COLOR=''
+    case "$GS_SYNC" in
+    ahead*,\ behind*)
+        GS_SYNC_COLOR="$red"
+        ;;
+    ahead*|behind*)
+        GS_SYNC_COLOR="$blue"
+        ;;
+    up\ to\ date)
+        GS_SYNC_COLOR="$normal"
+        ;;
+    *)
+        GS_SYNC_COLOR="$red"
+        GS_SYNC="??? $GS_SYNC"
+        ;;
+    esac
+
+    if [[ -n "$(echo "$temp" | tail -n +2)" ]]; then
+        GS_UNCOMMITTED_FILES='uncommitted'
+    else
+        GS_UNCOMMITTED_FILES=''
+    fi
+}
+
+get-clean-status() {
+    declare temp
+    temp="$(git status --porcelain)" \
+        || { error 1 "git status failed"; return 1; }
+    if [[ -n "$temp" ]] ; then
+        echo "uncommitted"
+    else
+        echo ""
+    fi
+}
+
+get-sync-status() {
+    declare temp
+    git status | grep '^Your branch' | grep -oP '(?<=is ).*(?= with)'
+    if [[ "${PIPESTATUS[0]}" -ne 0 ]] ; then
+        error 1 "git status failed"
+        return 1
+    fi
+    true
+}
+
+get-current-branch() {
+    git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "?"
 }
 
 ##############################################################################
@@ -43,25 +131,11 @@ help() {
     echo ""
 }
 
-get-clean-status() {
-    declare temp
-    temp="$(git status --porcelain)" \
-        || { error 1 "git status failed"; return 1; }
-    if [[ -n "$temp" ]] ; then
-        echo uncommitted
-    else
-        echo ""
-    fi
-}
+declare -g GS_BRANCH=''
+declare -g GS_SYNC=''
+declare -g GS_SYNC_COLOR=''
+declare -g GS_UNCOMMITTED_FILES=''
 
-get-sync-status() {
-    git status | grep '^Your branch' | grep -oP '(?<=is ).*(?= with)'
-    if [[ "${PIPESTATUS[0]}" -ne 0 ]] ; then
-        error 1 "git status failed"
-        return 1
-    fi
-    true
-}
 
 print-git-status() {
     declare target="$1"
@@ -74,13 +148,12 @@ print-git-status() {
             echo "ERROR: Inaccessible ($err)"
             return "$err"
         }
-        branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "?")"
-        clean="$(get-clean-status)" || return "$?"
-        sync="$(get-sync-status)" || return "$?"
-        printf "%-44s %-12s %-40s\n" \
-            "$branch" \
-            "$clean" \
-            "$sync"
+        parse-git-status
+        # TODO: Check stash (non-zero stash=bad)
+        printf "$green%-44s$normal $red%-12s$normal $GS_SYNC_COLOR%-40s$normal\n" \
+            "$GS_BRANCH" \
+            "$GS_UNCOMMITTED_FILES" \
+            "$GS_SYNC"
     )
 }
 
@@ -117,6 +190,7 @@ main() {
         fi
     fi
 
+    load-colors
     for i in $(list-git-repos --depth "$DEPTH" "${TARGETS[@]}") ; do
         print-git-status "$i"
     done
