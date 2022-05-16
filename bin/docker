@@ -58,6 +58,28 @@ cmd_run() {
     MSYS2_ARG_CONV_EXCL="*" "$DOCKER" run "${ARGS[@]}"
 }
 
+# FIXME: Parse global options before commands
+# Options:
+#       --config string      Location of client config files (default
+#                            "C:\\Users\\dangl\\.docker")
+#   -c, --context string     Name of the context to use to connect to the
+#                            daemon (overrides DOCKER_HOST env var and
+#                            default context set with "docker context use")
+#   -D, --debug              Enable debug mode
+#   -H, --host list          Daemon socket(s) to connect to
+#   -l, --log-level string   Set the logging level
+#                            ("debug"|"info"|"warn"|"error"|"fatal")
+#                            (default "info")
+#       --tls                Use TLS; implied by --tlsverify
+#       --tlscacert string   Trust certs signed only by this CA (default
+#                            "C:\\Users\\dangl\\.docker\\ca.pem")
+#       --tlscert string     Path to TLS certificate file (default
+#                            "C:\\Users\\dangl\\.docker\\cert.pem")
+#       --tlskey string      Path to TLS key file (default
+#                            "C:\\Users\\dangl\\.docker\\key.pem")
+#       --tlsverify          Use TLS and verify the remote
+#   -v, --version            Print version information and quit
+
 main() {
     declare command=
     declare arg
@@ -69,6 +91,11 @@ main() {
         run)
             command="$arg"
             break
+            ;;
+        --help|-h|--version|-v)
+            # Just pass completely
+            "$DOCKER" "$arg" "$@"
+            return $?
             ;;
         -*)
             error 1 "Unknown option: $arg"
