@@ -5,6 +5,14 @@
 	editor = vim
 	autocrlf = false
 	symlinks = true
+[init]
+	defaultBranch = main
+[push]
+	default = simple
+[pull]
+	ff = only
+[color]
+	ui = auto
 [diff]
 	tool = vimdiff
 [merge]
@@ -25,9 +33,6 @@
 	st = status
 	d = difftool
 	root = rev-parse --show-toplevel
-[push]
-	default = simple
-[color]
-	ui = auto
-[pull]
-	ff = only
+	restor = restore
+    mini = log --format=oneline
+	mu = multi-st -c 90
