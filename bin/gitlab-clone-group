@@ -111,7 +111,7 @@ log() {
     [[ "$1" = "-p" ]] && { shift; prefix="$1"; shift; }
     declare level="$1"; shift
     if [[ "$VERBOSITY" -ge "$level" ]] ; then
-        echo "$prefix$*"
+        echo "$prefix$*" 1>&2
     fi
 }
 
@@ -162,6 +162,118 @@ report_command_failure() {
     fi
 }
 
+# Stores the name of the temporary directory, if it was created
+declare -g SCRIPT_TEMP_DIR=''
+
+# Create temporary directory (once) and return its name
+# This still works when NO_ACT is set, because the effect is only temporary
+require-temp-dir() {
+    if [[ -z "$SCRIPT_TEMP_DIR" ]] ; then
+        SCRIPT_TEMP_DIR="$(mktemp -d --tmpdir "$THIS_SCRIPT_NAME".XXXXXXXXXX)" \
+            || error 1 "Failed to create temporary directory."
+    fi
+}
+
+# Remove temporary directory if it was ever created
+remove-temp-dir() {
+    if [[ -n "$SCRIPT_TEMP_DIR" ]] ; then
+        log 1 "Removing temporary directory: $SCRIPT_TEMP_DIR"
+        # We can't use "error" here because this function is called from trap
+        rm -rf "$SCRIPT_TEMP_DIR" \
+            || echo "Error: Failed to remove temporary directory (exitcode $?): $SCRIPT_TEMP_DIR" 1>&2
+        SCRIPT_TEMP_DIR=''
+    fi
+}
+
+# Remove temporary directory when this script finishes
+trap 'remove-temp-dir' EXIT
+
+##############################################################################
+# Gitlab api
+
+creq() {
+    #require-temp-dir   # This is a precondition, but checking it here is too slow
+	declare method="$1"; shift
+	declare target="$1"; shift
+    declare -a curlargs=( \
+        -4 -k \
+		-X "$method" \
+        "$@" \
+        "$target" \
+    )
+    log 2 "$(printf "%q " curl -v "${curlargs[@]}")"
+
+    declare rc=0
+    curl -s -S \
+        -D "$SCRIPT_TEMP_DIR/response-header" \
+        -o "$SCRIPT_TEMP_DIR/response-body" \
+        -w "%{http_code}" \
+        "${curlargs[@]}" \
+        2>&1 || rc=$?
+    dos2unix -q "$SCRIPT_TEMP_DIR/response-header"
+    return $rc
+}
+
+GITLAB_BASE_URL="https://git.mobilexag.de/api/v4"
+gitlab_call() {
+	declare method="$1"; shift
+	declare target="$GITLAB_BASE_URL/$1"; shift
+    http_code=$(creq "$method" "$target" --header "Private-Token: $GITLAB_TOKEN")
+    declare curl_retval="$?"
+
+    if [[ "$curl_retval" -ne 0 ]] ; then
+        error 1 "Failed to connect to $target ($curl_retval)" || return $?
+    fi
+    declare msg
+    case "$http_code" in
+    4??)
+        msg="$(jq .message "$SCRIPT_TEMP_DIR/response-body")"
+        error 1 "API returned error $http_code ($msg)" || return $?
+        ;;
+    5??)
+        msg="$(jq .message "$SCRIPT_TEMP_DIR/response-body")"
+        error 1 "API server error $http_code ($msg)" || return $?
+        ;;
+    200)
+        ;;
+    *)
+        error 1 "API unexpected http code $http_code ($(head -n 1 "$SCRIPT_TEMP_DIR/response-body"))" || return $?
+    esac
+    jq "$@" "$SCRIPT_TEMP_DIR/response-body" | tr -d '"\r'
+    return 0
+}
+
+gitlab_namespace_kind() {
+    require-temp-dir
+    gitlab_call GET "namespaces/$1" -r ".kind" || return $?    
+}
+
+gitlab_group_projects() {
+    require-temp-dir
+    gitlab_call GET "groups/$1" ".projects[].ssh_url_to_repo" || return $?
+}
+
+gitlab_user_projects() {
+    require-temp-dir
+    gitlab_call GET "users/$1/projects" ".[].ssh_url_to_repo" || return $?
+}
+
+gitlab_namespace_projects() {
+    declare kind
+    kind="$(gitlab_namespace_kind "$1")" || return $?
+    case $kind in
+    group)
+        gitlab_group_projects "$1"
+        ;;
+    user)
+        gitlab_user_projects "$1"
+        ;;
+    *)
+        error 1 "Unknown namespace kind: $kind" || return $?
+        ;;
+    esac
+}
+
 ##############################################################################
 # Check parameters
 
@@ -181,18 +293,18 @@ cmd_gitlab-clone-group() {
     [[ -n "$group" ]] || error 1 "No group specified." || return $?
     [[ -e "$group" ]] && { error 1 "Directory $group already exists." || return $? ; }
 
+    # FIXME: urlencode $group
+    declare projects
+    projects="$(gitlab_namespace_projects "$group")" || return $?
+
     declare savecwd
     savecwd="$(pwd)"
     invoke mkdir "$group"
     invoke cd "$group"
 
-    # FIXME: urlencode $group
-    for repo in $(curl -s \
-        --header "Private-Token: $GITLAB_TOKEN" \
-        "https://git.mobilexag.de/api/v4/groups/$group" \
-        | jq ".projects[].ssh_url_to_repo" | tr -d '"\r' \
-        ); do
+    for repo in $projects; do
         log 1 "$SEPERATOR"
+        # FIXME: Check if dir already exists
         invoke git clone "$repo"
     done
     cd "$savecwd" || true
