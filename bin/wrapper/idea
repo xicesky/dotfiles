@@ -1,0 +1,2 @@
+#!/bin/bash
+"/c/Program Files/JetBrains/IntelliJ IDEA 2022.2.1/bin/idea64.exe" "$@"

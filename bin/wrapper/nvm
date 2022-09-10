@@ -1,0 +1,9 @@
+#!/bin/bash
+
+nvmdir="/c/Users/dangl/AppData/Roaming/nvm"
+export NVM_HOME
+NVM_HOME="$(cygpath -w "$nvmdir")"
+
+#/c/ProgramData/nvm/nvm "$@"
+"$nvmdir"/nvm "$@"
+
