@@ -14,10 +14,11 @@ fmt() {
 }
 
 # Sadly, xmllint --format puts everything in one line, idk why
-sed -e 's/xmlns="[^"]*"//g' "$file" | xmllint --xpath "$@" - 2>/dev/null | tr -d '\r' | fmt
+sed -e 's/xmlns="[^"]*"//g' "$file" \
+    | MSYS2_ARG_CONV_EXCL="*" xmllint --xpath "$@" - 2>/dev/null \
+    | tr -d '\r' | fmt
 
 RET=${PIPESTATUS[1]}
 #RET=$pipestatus[2]  # zsh
 
 exit "$RET"
-
