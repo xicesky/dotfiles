@@ -258,9 +258,19 @@ gitlab_user_projects() {
     gitlab_call GET "users/$1/projects" ".[].ssh_url_to_repo" || return $?
 }
 
+gitlab_group_exists() {
+    require-temp-dir
+    gitlab_call GET "groups/$1?with_projects=false" ".id" >/dev/null || return $?
+}
+
 gitlab_namespace_projects() {
     declare kind
-    kind="$(gitlab_namespace_kind "$1")" || return $?
+    kind="$(gitlab_namespace_kind "$1")" || {
+        # Gitlab API is weird and sometimes gives 404 for existing groups
+        if gitlab_group_exists "$1" ; then
+            kind=group
+        fi
+    }
     case $kind in
     group)
         gitlab_group_projects "$1"
