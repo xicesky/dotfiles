@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 declare target="$1"; shift
 
 if [[ "$MSYSTEM" = M* ]] ; then
@@ -11,6 +11,16 @@ if [[ "$MSYSTEM" = M* ]] ; then
     fi
     #echo start "$target"
     start "$target"
+elif grep -qi microsoft /proc/version ; then
+    # On WSL2
+    if echo "$target" | grep -qP '^\w+:' ; then
+        # Target is a URL
+        true
+    else
+        target="$(wslpath -w "$target")"
+    fi
+    # This works for directories, probably not for files
+    explorer.exe "$target"
 else
     # FIXME: Detect OSX
     xdg-open "$target"
