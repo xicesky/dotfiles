@@ -1,8 +1,0 @@
-#!/bin/bash
-
-if [ -x "./tool.py" ] ; then
-    ./tool.py "$@"
-else
-    echo "No tool.py in current directory."
-fi
-

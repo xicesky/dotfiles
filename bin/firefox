@@ -1,7 +1,0 @@
-#!/bin/bash
-
-# ftp://ftp.mozilla.org/pub/firefox/releases/26.0/linux-x86_64/de/firefox-26.0.tar.bz2
-
-cd ~/Software/firefox
-./firefox
-
