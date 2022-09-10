@@ -1,0 +1,19 @@
+#!/bin/bash
+
+declare UNSET_INTERNAL_REPOSITORY=false
+declare retval
+
+if [[ ( "$1" == "-u" ) || ( "$1" == "--unset-internal-repository" ) ]] ; then
+    shift
+    UNSET_INTERNAL_REPOSITORY=true
+    sed -i -e 's/^\(\s*\)\(<activeProfile>internal-repository<\/activeProfile>\)$/\1<!-- \2 -->/' ~/.m2/settings.xml
+fi
+
+JAVA_OPTS="-Dsun.stdout.encoding=UTF-8 -Dsun.err.encoding=UTF-8" /c/ProgramData/chocolatey/bin/quarkus "$@"
+retval="$?"
+
+if $UNSET_INTERNAL_REPOSITORY ; then
+    sed -i -e 's/^\(\s*\)<!-- \(<activeProfile>internal-repository<\/activeProfile>\) -->$/\1\2/' ~/.m2/settings.xml
+fi
+
+exit "$retval"
