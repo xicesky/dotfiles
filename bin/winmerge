@@ -1,75 +1,33 @@
-#!/bin/sh
-# This script finds winmerge on windows
-# This should be used by git
+#!/bin/bash
 
-set -e
-set -x
+# TODO: proper argparse
+WINMERGE="/mnt/c/Program Files/WinMerge/WinmergeU.exe"
 
-WAIT=true
-
-main() {
-    #   Commands:
-    #       run         (default) just pass all options to winmerge
-    #       diff        asic git diff
-    #       merge       asic git merge
-    declare CMD=run
-    while [[ $# -gt 0 ]] ; do case "$1" in
-        diff|merge|run)
-            CMD="$1"
-            shift
-            ;;
-        --start|--no-wait)
-            WAIT=false
-            shift
-            ;;
-        --wait)
-            WAIT=true
-            shift
-            ;;
-        *)
-            # Don't shift, the rest are options
-            break
-            ;;
-    esac; done
-    "$CMD" "$@"
+# Display error message and return error code
+# Use like this:
+#   error 23 "My special error" || return $?
+error() {
+    declare code="$1"; shift
+    declare message="$1"; shift
+    printf "Error %03d: %s\n" "$code" "$message" 1>&2
+    return "$code"
 }
 
-invoke() {
-    echo "$@"
-    "$@"
-}
+declare -a PARGS=("-e")
 
-run() {
-    # Possible locations
-    # "$PROGRAMFILES"
-    PFILES="$(cygpath -u "$PROGRAMFILES")"
-    UAPPS="$(cygpath -u "$APPDATA\..")/Local/Programs"
+# Parse arguments
+while [[ $# -gt 0 ]] ; do
+    arg="$1"; shift
+    case "$arg" in
+    -*)
+        PARGS+=("$arg")
+        ;;
+    *)
+        # Assume it's a path
+        PARGS+=("$(wslpath -aw "$arg")")
+        ;;
+    esac
+done
 
-    for P in \
-        "$PFILES/WinMerge" \
-        "$UAPPS/WinMerge" \
-        ; do
-        if [ -f "$P/WinMergeU.exe" ]; then
-            if "$WAIT" ; then
-                invoke "$P/WinMergeU" "$@"
-            else
-                invoke start "$P/WinMergeU" "$@"
-            fi
-            return $?
-        fi
-    done
-    echo "ERROR: Can't find WinMergeU.exe" 1>&2
-    return 1
-}
-
-diff() {
-    run -e -u -dl "Local" -dr "Remote" "$@"
-}
-
-merge() {
-    #run -e -u -dl "Local" -dr "Remote" "$LOCAL" "$BASE" "$REMOTE" -o "$MERGED"
-    diff "$@"   # Doesn't make any diff (pun, haha)
-}
-
-main "$@"
+"$WINMERGE" "${PARGS[@]}"
 

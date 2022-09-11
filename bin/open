@@ -13,16 +13,17 @@ if [[ "$MSYSTEM" = M* ]] ; then
     start "$target"
 elif grep -qi microsoft /proc/version ; then
     # On WSL2
-    if echo "$target" | grep -qP '^\w+:' ; then
+    if echo "$target" | grep -qP '^\w+://' ; then
         # Target is a URL
-        true
+        explorer.exe "$target"
+    elif [[ "$#" -eq 0 ]] ; then
+        # This works for directories and documents, not for programs with arguments
+        explorer.exe "$(wslpath -w "$target")"
     else
-        target="$(wslpath -w "$target")"
+        # Fallback to job mgmt - FIXME
+        nohup "$target" "$@" &
     fi
-    # This works for directories, probably not for files
-    explorer.exe "$target"
 else
     # FIXME: Detect OSX
     xdg-open "$target"
 fi
-

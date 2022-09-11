@@ -23,7 +23,7 @@ declare -ga seen_tests=()
 declare option=""
 
 invoke() {
-    $print_command && echo "$@" 1>&2
+    $print_command && echo "$(printf "%q " "$@")" 1>&2
     "$@"
 }
 

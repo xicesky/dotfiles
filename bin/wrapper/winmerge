@@ -1,4 +1,106 @@
-#!/bin/sh
+#!/bin/bash
+# This script finds winmerge on windows and wsl2
+# This should be used by git
 
-start WinMergeU -e "$@"
+#set -x
 
+WAIT=true
+WINMERGE="$(which WinMergeU.exe)"
+FIXPATH="identity"
+declare -a WINMERGE_ARGS=(-e -u -dl "Local" -dr "Remote")
+
+if [[ "$SCRIPT_DIR" = "" ]] ; then
+    SCRIPT_DIR="$(dirname "$(dirname "$(readlink -f "$0")")")"
+fi
+if [[ ! -x "$SCRIPT_DIR/system-detect.sh" ]] ; then
+    echo "Error: could not find script directory at $SCRIPT_DIR" 1>&2
+    exit 1
+fi
+system="$("$SCRIPT_DIR/system-detect.sh")"
+
+case "$system" in
+mingw64/*)
+    #FIXPATH="fix-path-cygpath"
+    # Not necessary msys should convert it (which usually leads to more problems than it's worth...)
+    ;;
+wsl2/*)
+    FIXPATH="fix-path-wslpath"
+    ;;
+esac
+
+invoke() {
+    echo "$(printf "%q " "$@")" 1>&2
+    "$@"
+}
+
+fix-path-wslpath() {
+    wslpath -aw "$1"
+}
+
+identity() {
+    echo "$1"
+}
+
+find-winmerge() {
+    declare system
+    declare programfiles
+    declare uapps
+    declare i
+    # Is it on path?
+    [[ -x "$WINMERGE" ]] && return 0
+    system="$("$SCRIPT_DIR/system-detect.sh")"
+    case "$system" in
+    MINGW64*)
+        programfiles="$(cygpath -u "$PROGRAMFILES")"
+        uapps="$(cygpath -u "$APPDATA\..")/Local/Programs"
+
+        for i in \
+            "$programfiles/WinMerge" \
+            "$uapps/WinMerge" \
+            ; do
+            if [ -x "$P/WinMergeU.exe" ]; then
+                WINMERGE="$P/WinMergeU.exe"
+                return 0
+            fi
+        done
+        ;;
+    *)
+        echo "Error: WinMergeU.exe is not on path and autodetection is NYI for: $system" 1>&2
+        return 1
+        ;;
+    esac
+    echo "Error: WinMergeU.exe is not on path and autodetection failed." 1>&2
+    return 1
+}
+
+run() {
+    if "$WAIT" ; then
+        invoke "$WINMERGE" "${WINMERGE_ARGS[@]}" || return $?
+    else
+        invoke open "$WINMERGE" "${WINMERGE_ARGS[@]}" || return $?
+    fi
+}
+
+main() {
+    find-winmerge || return $?
+    while [[ $# -gt 0 ]] ; do
+        arg="$1"; shift
+        case "$arg" in
+            --start|--no-wait)
+                WAIT=false
+                ;;
+            --wait)
+                WAIT=true
+                ;;
+            -*)
+                WINMERGE_ARGS+=("$arg")
+                ;;
+            *)
+                WINMERGE_ARGS+=("$($FIXPATH "$arg")")
+                ;;
+        esac
+    done
+    run
+}
+
+main "$@"
