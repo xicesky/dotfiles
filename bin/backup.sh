@@ -4,6 +4,18 @@ VERBOSITY="${VERBOSITY:-2}"
 NO_ACT="${NO_ACT:-false}"
 REMOVE=false
 
+if [[ "$SCRIPT_DIR" = "" ]] ; then
+    SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+fi
+if [[ ! -x "$SCRIPT_DIR/system-detect.sh" ]] ; then
+    echo "Error: could not find script directory at $SCRIPT_DIR" 1>&2
+    exit 1
+fi
+# case "$("$SCRIPT_DIR/system-detect.sh")" in
+#     MINGW64*)
+#         ;;
+# esac
+
 # Display a message if verbosity level allows
 log() {
     declare prefix="$DEFAULT_LOG_PREFIX"
@@ -85,9 +97,14 @@ help() {
 
 main() {
     BUPDIR="${BUPDIR:-/e/Backup/2022-09-10-Backup-MobileX-Notebook}"
+    if [[ ! -d "$BUPDIR" ]] ; then
+        echo "Error: could not find backup directory at $BUPDIR" 1>&2
+        exit 1
+    fi
+
     declare -a sources=()
 
-        # Parse arguments
+    # Parse arguments
     while [[ $# -gt 0 ]] ; do
         arg="$1"; shift
         case "$arg" in
