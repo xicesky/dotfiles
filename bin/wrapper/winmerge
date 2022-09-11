@@ -5,7 +5,7 @@
 #set -x
 
 WAIT=true
-WINMERGE="$(which WinMergeU.exe)"
+WINMERGE="$(which WinMergeU.exe 2>/dev/null)"
 FIXPATH="identity"
 declare -a WINMERGE_ARGS=(-e -u -dl "Local" -dr "Remote")
 

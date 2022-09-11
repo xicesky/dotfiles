@@ -1,6 +1,8 @@
 #!/bin/bash
 
-if ! lsb_release_desc="lsb:$($(which lsb_release) -sd 2>/dev/null)" ; then
+if lsb_release_executable="$(which lsb_release 2>/dev/null)" ; then
+    lsb_release_desc="lsb:$("lsb_release_executable" -sd 2>/dev/null)"
+else
     lsb_release_desc="lsb:unknown"
 fi
 
