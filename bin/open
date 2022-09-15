@@ -1,19 +1,27 @@
 #!/bin/bash
+# Open a file or url on the desktop
 declare target="$1"; shift
+
+# Check target type: file path or url?
+declare is_url
+if echo "$target" | grep -qP '^\w+://' ; then
+    is_url=true
+else
+    is_url=false
+    # Target must exist
+    [[ -e "$target" ]] || { echo "Error: File not found: $target" 1>&2; exit 1; }
+fi
 
 if [[ "$MSYSTEM" = M* ]] ; then
     # On MinGW / MSYS, convert paths
-    if echo "$target" | grep -qP '^\w+:' ; then
-        # Target is a URL
-        true
-    else
+    if ! $is_url ; then
         target="$(cygpath -w "$target")"
     fi
     #echo start "$target"
-    start "$target"
+    cmd //c start "${target//&/^&}" "${@//&/^&}"
 elif grep -qi microsoft /proc/version ; then
     # On WSL2
-    if echo "$target" | grep -qP '^\w+://' ; then
+    if $is_url ; then
         # Target is a URL
         explorer.exe "$target"
     elif [[ "$#" -eq 0 ]] ; then
