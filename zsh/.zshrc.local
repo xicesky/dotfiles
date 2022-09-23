@@ -18,7 +18,7 @@ if [[ -r /proc/version && "$(cat /proc/version)" = Linux\ *-microsoft*-WSL2\ * ]
     declare -a mu=()
     
     for i in "${path[@]}" ; do
-        if echo "$i" | grep -qiPe "(^|/)(mingw64|msys64|program[^/]*/git)(/usr)?(/local)?/bin" ; then
+        if echo "$i" | grep -qiPe "(^/mnt/.*(mingw64|msys64|program[^/]*/git|python|nodejs|nvm|AppData/Roaming/npm))" ; then
             continue;
         else
             mu+=("$i")
@@ -306,6 +306,13 @@ export GPG_TTY
 
 # Load gvm (Go Version Manager): https://github.com/moovweb/gvm
 [[ -s "$HOME/.gvm/scripts/gvm" ]] && source "$HOME/.gvm/scripts/gvm"
+
+# Load nvm (Node Version Manager): https://github.com/nvm-sh/nvm
+[[ -d "$HOME/.nvm" ]] && {
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+}
 
 # Load iterm2 shell integration if available
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
