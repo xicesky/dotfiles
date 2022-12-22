@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Examples:
+#   # Remove modules
+#   editpom pom.xml \
+#       -d "/p:project/p:modules/p:module[starts-with(text(),'project-webservice-')]" \
+#       -d "/p:project/p:modules/p:module[text()='project-standalone-ear']"
+
+declare target="$1"; shift
+MSYS2_ARG_CONV_EXCL="*" xmlstarlet ed -L -P -O -N "p=http://maven.apache.org/POM/4.0.0" "$@" "$target"
