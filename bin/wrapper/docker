@@ -49,6 +49,10 @@ cmd_run() {
             src="$(cygpath -w "$src")"
             ARGS+=( "$arg" "$src:$dst" )
             ;;
+        --env-file)
+            declare file="$1"; shift
+            ARGS+=( "$arg" "$(cygpath -w "$file")")
+            ;;
         *)
             ARGS+=( "$arg" )
             ;;
