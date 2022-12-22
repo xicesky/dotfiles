@@ -1,18 +1,25 @@
 #!/bin/bash
 
-declare type="day"
+main() {
+    declare type="day"
 
-if [[ $# -gt 0 ]] ; then
-    case "$1" in
-    -d|--day)       type="day"; shift ;;
-    -m|--minute)    type="minute"; shift ;;
-    -u|--unique)    type="unique"; shift ;;
-    *)  error 1 "Unknown argument: $1" || return $? ;;
+    if [[ $# -gt 0 ]] ; then
+        case "$1" in
+        -d|--day)       type="day"; shift ;;
+        -m|--minute)    type="minute"; shift ;;
+        -u|--unique)    type="unique"; shift ;;
+        -g|--git|--iso) type="iso"; shift ;;
+        *)  echo "Unknown argument: $1" 1>&2 || return $? ;;
+        esac
+    fi
+
+    case "$type" in
+    day)        date "+%Y%m%d" ;;
+    minute)     date "+%Y%m%d-%H%M" ;;
+    unique)     echo -n "$(date "+%Y%m%d-%H%M")-$(uuidgen)";  ;;
+    iso)        date --iso-8601=seconds ;;
     esac
-fi
+}
 
-case "$type" in
-day)        date "+%Y%m%d" ;;
-minute)     date "+%Y%m%d-%H%M" ;;
-unique)     echo -n "$(date "+%Y%m%d-%H%M")-$(uuidgen)";  ;;
-esac
+main "$@"
+

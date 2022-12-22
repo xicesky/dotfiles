@@ -22,9 +22,14 @@ declare -ga seen_actions=()
 declare -ga seen_tests=()
 declare option=""
 
+# Don't act, just check (and print commands)
+declare -g NO_ACT="${NO_ACT:-false}"
+
 invoke() {
+    # shellcheck disable=SC2005
+    # This echo is NOT useless, it's used to add the newline
     $print_command && echo "$(printf "%q " "$@")" 1>&2
-    "$@"
+    $NO_ACT || "$@"
 }
 
 add-skip-dirs() {
@@ -33,114 +38,139 @@ add-skip-dirs() {
     done
 }
 
-# TODO: Some options are allowed before path?
-declare path="$1"; shift
-
-if ! [[ -e "$path" ]] ; then
-    echo "Invalid directory: $path" 1>&2
-    exit 1
-fi
-
-while [[ $# -gt 0 ]] ; do
-    # FIXME: Keep track of parentheses for preargs
-    option="$1"
-    case "$1" in
-        -color|--color)
-            color="$1"; shift
-            ;;
-        -v|--print-command|--print_command)
-            print_command=true; shift
-            ;;
-        -maxdepth|-md)
-            shift
-            gnufindpreargs+=( -maxdepth "$1" ); shift
-            seen_tests+=( maxdepth )
-            ;;
-        -mindepth)
-            shift
-            gnufindpreargs+=( -mindepth "$1" ); shift
-            seen_tests+=( mindepth )
-            ;;
-        -exactdepth|-xd)
-            shift
-            gnufindpreargs+=( -mindepth "$1" -maxdepth "$1" ); shift
-            seen_tests+=( mindepth maxdepth )
-            ;;
-        -skipdir)
-            shift
-            gnufindskipargs+=( \( -type d -iname "$1" -prune \) -o )
-            shift
-            seen_tests+=( skipdir )
-            ;;
-        -skip)
-            shift
-            gnufindskipargs+=( \( -iname "$1" \) -o )
-            shift
-            seen_tests+=( skip )
-            ;;
-        -nst|-no-skip-target|-wt|-with-target)
-            skip_target=false
-            shift
-            ;;            
-        -xpath)
-            shift
-            gnufindargs+=( -exec query-xml -H {} "$1" \; )
-            shift
-            seen_actions+=( xpath )
-            ;;
-        -grep|-sgrep)
-            shift
-            gnufindargs+=( -exec grep --color="$color" )
-            # optional single arg
-            if [[ "$1" = -* ]] ; then
-                gnufindargs+=( "$1" ); shift
-            else
-                # Default to case-insensitive + perl-regexp + print filename
-                gnufindargs+=( -HiPe )
-            fi
-            # pattern
-            if [[ "$option" == "-grep" ]] ; then
-                gnufindargs+=( "$1" {} + )
-            else
-                gnufindargs+=( "$1" {} \; )
-            fi
-            shift
-            seen_actions+=( grep )
-            ;;
-        -print|-fprint|-ls|-fls|-printf|-fprintf|-exec|-execdir|-ok|-okdir|-delete)
-            gnufindargs+=( "$1" )
-            seen_actions+=( "$1" )
-            shift
-            ;;
-        -*)
-            gnufindargs+=( "$1" )
-            seen_tests+=( "$1" )
+main() {
+    # Some options are allowed before the path
+    while [[ $# -gt 0 ]] ; do
+        case "$1" in
+        -cmd)
+            # Print command and exit
+            print_command=true
+            NO_ACT=true
             shift
             ;;
         *)
-            gnufindargs+=( "$1" )
-            shift
+            break 
             ;;
-    esac
-done
+        esac
+    done
+    
+    # TODO: Some options are allowed before path?
+    declare path="$1"; shift
 
-if [[ "${#seen_actions[@]}" -eq 0 ]] ; then
-    # Append "print" as default action
-    gnufindargs+=( -print )
-elif [[ "${#seen_actions[@]}" -eq 1 && "${#seen_tests}" -eq 0 ]] ; then
-    case "${seen_actions[0]}" in
-    (xpath|grep)
-        # For "single actions" on files, prepend "-type f"
-        gnufindargs=( -type f "${gnufindargs[@]}" )
-    esac
-fi
+    if ! [[ -e "$path" ]] ; then
+        echo "Invalid directory: $path" 1>&2
+        return 1
+    fi
 
-add-skip-dirs '.git' '.idea' 'mip-home' 'venv'
-if $skip_target ; then
-    add-skip-dirs 'target'
-fi
-# Regex match for wildfly dir
-gnufindskipargs+=( \( -type d -iregex '.*/wildfly-([[:digit:]]+\.)*[[:digit:]]+(\.final)?' -prune \) -o )
+    while [[ $# -gt 0 ]] ; do
+        # FIXME: Keep track of parentheses for preargs
+        option="$1"
+        case "$1" in
+            -color|--color)
+                color="$1"; shift
+                ;;
+            -v|--print-command|--print_command)
+                print_command=true; shift
+                ;;
+            -maxdepth|-md)
+                shift
+                gnufindpreargs+=( -maxdepth "$1" ); shift
+                seen_tests+=( maxdepth )
+                ;;
+            -mindepth)
+                shift
+                gnufindpreargs+=( -mindepth "$1" ); shift
+                seen_tests+=( mindepth )
+                ;;
+            -exactdepth|-xd)
+                shift
+                gnufindpreargs+=( -mindepth "$1" -maxdepth "$1" ); shift
+                seen_tests+=( mindepth maxdepth )
+                ;;
+            -skipdir)
+                shift
+                gnufindskipargs+=( \( -type d -iname "$1" -prune \) -o )
+                shift
+                seen_tests+=( skipdir )
+                ;;
+            -skip)
+                shift
+                gnufindskipargs+=( \( -iname "$1" \) -o )
+                shift
+                seen_tests+=( skip )
+                ;;
+            -nst|-no-skip-target|-wt|-with-target)
+                skip_target=false
+                shift
+                ;;            
+            -xpath)
+                shift
+                gnufindargs+=( -exec query-xml -H {} "$1" \; )
+                shift
+                seen_actions+=( xpath )
+                ;;
+            -grep|-sgrep)
+                shift
+                gnufindargs+=( -exec grep --color="$color" )
+                # optional single arg
+                if [[ "$1" = -* ]] ; then
+                    gnufindargs+=( "$1" ); shift
+                else
+                    # Default to case-insensitive + perl-regexp + print filename
+                    gnufindargs+=( -HiPe )
+                fi
+                # pattern
+                if [[ "$option" == "-grep" ]] ; then
+                    gnufindargs+=( "$1" {} + )
+                else
+                    gnufindargs+=( "$1" {} \; )
+                fi
+                shift
+                seen_actions+=( grep )
+                ;;
+            -print|-fprint|-ls|-fls|-printf|-fprintf|-exec|-execdir|-ok|-okdir|-delete)
+                gnufindargs+=( "$1" )
+                seen_actions+=( "$1" )
+                shift
+                ;;
+            -*)
+                gnufindargs+=( "$1" )
+                seen_tests+=( "$1" )
+                shift
+                ;;
+            *)
+                gnufindargs+=( "$1" )
+                shift
+                ;;
+        esac
+    done
 
-invoke find "$path" "${gnufindpreargs[@]}" "${gnufindskipargs[@]}" \
-    \( "${gnufindargs[@]}" \)
+    if [[ "${#seen_actions[@]}" -eq 0 ]] ; then
+        # Append "print" as default action
+        gnufindargs+=( -print )
+    elif [[ "${#seen_actions[@]}" -eq 1 && "${#seen_tests}" -eq 0 ]] ; then
+        case "${seen_actions[0]}" in
+        (xpath|grep)
+            # For "single actions" on files, prepend "-type f"
+            gnufindargs=( -type f "${gnufindargs[@]}" )
+        esac
+    fi
+
+    add-skip-dirs '.git' '.idea' 'mip-home' 'venv'
+    if $skip_target ; then
+        add-skip-dirs 'target'
+    fi
+    # Regex match for wildfly dir
+    gnufindskipargs+=( \( -type d -iregex '.*/wildfly-([[:digit:]]+\.)*[[:digit:]]+(\.final)?' -prune \) -o )
+
+    # Debugging
+    # echo "path            = $path"                  1>&2
+    # echo "gnufindpreargs  = ${gnufindpreargs[*]}"   1>&2
+    # echo "gnufindskipargs = ${gnufindskipargs[*]}"  1>&2
+    # echo "gnufindargs     = ${gnufindargs[*]}"      1>&2
+
+    invoke find "$path" "${gnufindpreargs[@]}" "${gnufindskipargs[@]}" \
+        \( "${gnufindargs[@]}" \)
+}
+
+main "$@"
