@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Wrapper for running idris2 via docker
+docker run --rm -it \
+    -v "$(pwd)":/mnt -w /mnt \
+    xicesky/idris2 \
+    idris2 "$@"
+
