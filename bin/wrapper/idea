@@ -8,13 +8,13 @@ find-idea() {
         echo "$IDEA_EXECUTABLE"
         return 0
     fi
-    current="$(which idea64.exe)"
+    current="$(which idea64.exe 2>/dev/null)"
     [[ -x "$current" ]] && { echo "$current"; return 0; }
-    current="$(which idea.bat)"
+    current="$(which idea.bat 2>/dev/null)"
     current="$(dirname "$current")/idea64.exe"
     [[ -x "$current" ]] && { echo "$current"; return 0; }
 
-    current="$(get-windows-env PROGRAMFILES)/JetBrains"
+    current="$(get-windows-env -p PROGRAMFILES)/JetBrains"
     current="$(find "$current" -mindepth 1 -maxdepth 1 -iname '*IDEA*'|head -n 1)"
     current="$current/bin/idea64.exe"
     [[ -x "$current" ]] && { echo "$current"; return 0; }

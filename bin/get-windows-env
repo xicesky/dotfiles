@@ -1,11 +1,26 @@
 #!/bin/bash
 
+DO_PATHCONV=false
+if [[ "$1" == "-p" ]] ; then
+    shift
+    DO_PATHCONV=true
+fi
 if [[ -z "$1" ]] ; then
     echo "Usage: $0 <VARIABLENAME>" 1>&2
     exit 1
 fi
-powershell.exe -Command 'echo "$env:'"$1"'"'
 
 # Without powershell: This works almost as well, but prints bullshit if the variable is not set
 # cmd.exe /c echo "%$1%" 2>/dev/null
 
+result="$(powershell.exe -Command 'echo "$env:'"$1"'"')"
+
+if $DO_PATHCONV ; then
+    if grep -qi microsoft /proc/version ; then
+        wslpath -u "$result"
+    else
+        cygpath -u "$result"
+    fi
+else
+    echo "$result"
+fi
