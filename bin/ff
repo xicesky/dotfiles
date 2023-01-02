@@ -75,29 +75,24 @@ main() {
             -maxdepth|-md)
                 shift
                 gnufindpreargs+=( -maxdepth "$1" ); shift
-                seen_tests+=( maxdepth )
                 ;;
             -mindepth)
                 shift
                 gnufindpreargs+=( -mindepth "$1" ); shift
-                seen_tests+=( mindepth )
                 ;;
             -exactdepth|-xd)
                 shift
                 gnufindpreargs+=( -mindepth "$1" -maxdepth "$1" ); shift
-                seen_tests+=( mindepth maxdepth )
                 ;;
             -skipdir)
                 shift
                 gnufindskipargs+=( \( -type d -iname "$1" -prune \) -o )
                 shift
-                seen_tests+=( skipdir )
                 ;;
             -skip)
                 shift
                 gnufindskipargs+=( \( -iname "$1" \) -o )
                 shift
-                seen_tests+=( skip )
                 ;;
             -nst|-no-skip-target|-wt|-with-target)
                 skip_target=false
@@ -156,7 +151,7 @@ main() {
         esac
     fi
 
-    add-skip-dirs '.git' '.idea' 'mip-home' 'venv'
+    add-skip-dirs '.git' '.idea' 'mip-home' 'venv' '.vscode' '.terraform'
     if $skip_target ; then
         add-skip-dirs 'target'
     fi
