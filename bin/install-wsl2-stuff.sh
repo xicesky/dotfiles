@@ -140,7 +140,7 @@ install_tools() {
     # helm terraform
 
     # Install via go
-    invoke go install github.com/mikefarah/yq/v4@latest
+    invoke go install github.com/mikefarah/yq/v4@latest mvdan.cc/sh/v3/cmd/shfmt@latest
 }
 
 enable_wsl2_systemd() {
