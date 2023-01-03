@@ -1,8 +1,11 @@
 #!/bin/bash
 # Basic bash script scaffold
 
+################################################################################
+# Verbosity, command logging
+
 # Verbosity level, 0 is quiet, 1 is normal, 2 prints commands
-VERBOSITY="${VERBOSITY:-1}"
+VERBOSITY="${VERBOSITY:-2}"
 
 # Don't act, just check (and print commands)
 NO_ACT="${NO_ACT:-false}"
@@ -67,6 +70,9 @@ report_command_failure() {
     fi
 }
 
+################################################################################
+# Temp dir handling
+
 # Stores the name of the temporary directory, if it was created
 declare -g SCRIPT_TEMP_DIR=''
 
@@ -75,7 +81,7 @@ declare -g SCRIPT_TEMP_DIR=''
 require-temp-dir() {
     if [[ -z "$SCRIPT_TEMP_DIR" ]] ; then
         SCRIPT_TEMP_DIR="$(mktemp -d --tmpdir "$THIS_SCRIPT_NAME".XXXXXXXXXX)" \
-            || error 1 "Failed to create temporary directory." \
+            || echo "Error: Failed to create temporary directory." 1>&2 \
             || return $?
         # Remove temporary directory when this script finishes
         trap 'remove-temp-dir' EXIT
@@ -86,12 +92,24 @@ require-temp-dir() {
 remove-temp-dir() {
     if [[ -n "$SCRIPT_TEMP_DIR" ]] ; then
         log 1 "Removing temporary directory: $SCRIPT_TEMP_DIR"
-        # We can't use "error" here because this function is called from trap
         rm -rf "$SCRIPT_TEMP_DIR" \
             || echo "Error: Failed to remove temporary directory (exitcode $?): $SCRIPT_TEMP_DIR" 1>&2
         SCRIPT_TEMP_DIR=''
     fi
 }
+
+################################################################################
+# Utilities
+
+# Search for the given executable in PATH
+# avoids a dependency on the `which` command
+which() {
+  # Alias to Bash built-in command `type -P`
+  type -P "$@"
+}
+
+################################################################################
+# Command parts / installation steps
 
 install_prereqs() {
     invoke sudo apt-get update || return 1
@@ -166,6 +184,47 @@ update_dotfiles() {
     fi
 }
 
+install_homebrew() {
+    # Install homebrew
+    if [[ ! -d ~/_dotfiles ]] ; then
+        echo "Dotfiles are not in ~/_dotfiles (yet?)" 1>&2
+        return 1
+    fi
+    if [[ ! -f ~/_dotfiles/homebrew/install.sh ]] ; then
+        echo "~/_dotfiles/homebrew/install.sh is missing" 1>&2
+        return 1
+    fi
+
+    echo "################################################################################"
+    echo "# Starting homebrew install"
+    echo ""
+    /bin/bash ~/_dotfiles/homebrew/install.sh || return 1
+    if [[ ! -x /home/linuxbrew/.linuxbrew/bin/brew ]] ; then
+        echo "Homebrew did not install /home/linuxbrew/.linuxbrew/bin/brew ???" 1>&2
+        return 1
+    fi
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+    "$HOMEBREW_PREFIX"/bin/brew install gcc
+    echo ""
+    echo "# Homebrew install done"
+}
+
+change_shell() {
+    echo ""
+    echo "Changing shell to /usr/bin/zsh -- please enter your password:"
+    invoke chsh -s /usr/bin/zsh || return 1
+}
+
+reboot_message() {
+    echo ""
+    echo "Done. Now \"reboot\" wsl2 via:"
+    echo "    wsl --shutdown"
+    echo "    wsl"
+}
+
+################################################################################
+# Main, argparsing and commands
+
 cmd_install-ssh-pageant() {
     invoke install_prereqs || return 1
     invoke setup_wsl2_dirs || return 1
@@ -175,14 +234,16 @@ cmd_install-ssh-pageant() {
 cmd_install() {
     invoke install_prereqs || return 1
     invoke setup_wsl2_dirs || return 1
+    invoke enable_wsl2_systemd || return 1
     # Don't install by default, we need to deprecate this
     # invoke setup_wsl2-ssh-pageant || return 1
     invoke update_dotfiles || return 1
-    invoke chsh -s /usr/bin/zsh || return 1
+    invoke install_homebrew || return 1
+    reboot_message # reboot required for systemd
+}
 
-    echo "Done. Now \"reboot\" wsl2 via:"
-    echo "    wsl --shutdown"
-    echo "    wsl"
+cmd_install-homebrew() {
+    install_homebrew
 }
 
 cmd_help() {
@@ -198,6 +259,7 @@ usage() {
     echo "Available commands:"
     echo "    install"
     echo "    install-ssh-pageant"
+    echo "    install-homebrew"
     echo "    help"
     echo ""
 }

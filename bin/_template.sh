@@ -81,7 +81,7 @@ declare -g SCRIPT_TEMP_DIR=''
 require-temp-dir() {
     if [[ -z "$SCRIPT_TEMP_DIR" ]] ; then
         SCRIPT_TEMP_DIR="$(mktemp -d --tmpdir "$THIS_SCRIPT_NAME".XXXXXXXXXX)" \
-            || error 1 "Failed to create temporary directory." \
+            || echo "Error: Failed to create temporary directory." 1>&2 \
             || return $?
         # Remove temporary directory when this script finishes
         trap 'remove-temp-dir' EXIT
@@ -92,7 +92,6 @@ require-temp-dir() {
 remove-temp-dir() {
     if [[ -n "$SCRIPT_TEMP_DIR" ]] ; then
         log 1 "Removing temporary directory: $SCRIPT_TEMP_DIR"
-        # We can't use "error" here because this function is called from trap
         rm -rf "$SCRIPT_TEMP_DIR" \
             || echo "Error: Failed to remove temporary directory (exitcode $?): $SCRIPT_TEMP_DIR" 1>&2
         SCRIPT_TEMP_DIR=''
