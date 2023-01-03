@@ -1,6 +1,9 @@
 #!/bin/bash
 # Basic bash script scaffold
 
+################################################################################
+# Verbosity, command logging
+
 # Verbosity level, 0 is quiet, 1 is normal, 2 prints commands
 VERBOSITY="${VERBOSITY:-1}"
 
@@ -67,6 +70,9 @@ report_command_failure() {
     fi
 }
 
+################################################################################
+# Temp dir handling
+
 # Stores the name of the temporary directory, if it was created
 declare -g SCRIPT_TEMP_DIR=''
 
@@ -92,6 +98,19 @@ remove-temp-dir() {
         SCRIPT_TEMP_DIR=''
     fi
 }
+
+################################################################################
+# Utilities
+
+# Search for the given executable in PATH
+# avoids a dependency on the `which` command
+which() {
+  # Alias to Bash built-in command `type -P`
+  type -P "$@"
+}
+
+################################################################################
+# Main, argparsing and commands
 
 cmd_help() {
     usage
