@@ -16,11 +16,18 @@ config-for-local-k3d() {
     KUBE_NAMESPACE="default"
 }
 
+config-for-qub1c() {
+    KUBE_CONFIG_FILE="config-qub1c.yaml"
+    SPCUSTOMER=""
+    KUBE_NAMESPACE="default"
+}
+
 load-config() {
     case "$1" in
     harg*)      config-for-sp "customer-687399035" ;;
     ochs*)      config-for-sp "customer-687399036" ;;
     customer-*) config-for-sp "$1" ;;
+    qub1c)      config-for-qub1c "$1" ;;
     local*)     config-for-local-k3d "$1" ;;
     *)          return 1 ;;
     esac
@@ -154,6 +161,7 @@ main() {
             echo "    customer-*      Serviceplatform customer namespace"
             echo "    hargi           Shortcut for sp hargassner"
             echo "    ochsi           Shortcut for sp ochsner"
+            echo "    qub1c           qub1c.q1cc.net default namespace"
             echo "    local           Local k3d"
         } 1>&2
         return 0
