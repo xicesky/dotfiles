@@ -63,7 +63,6 @@ invoke() {
 # Report the last command, if it failed
 report_command_failure() {
     if [[ "$LAST_COMMAND_EXITCODE" -ne 0 ]] ; then
-        log 1 ""
         log 1 "Last command executed:"
         log 1 "    $(printf "%q " "${LAST_COMMAND[@]}")"
         log 1 "Returned exit code ${LAST_COMMAND_EXITCODE}"
@@ -75,6 +74,8 @@ report_command_failure() {
 
 # Stores the name of the temporary directory, if it was created
 declare -g SCRIPT_TEMP_DIR=''
+declare -g THIS_SCRIPT_NAME
+THIS_SCRIPT_NAME="$(basename "$0")"
 
 # Create temporary directory (once) and return its name
 # This still works when NO_ACT is set, because the effect is only temporary
@@ -91,7 +92,7 @@ require-temp-dir() {
 # Remove temporary directory if it was ever created
 remove-temp-dir() {
     if [[ -n "$SCRIPT_TEMP_DIR" ]] ; then
-        log 1 "Removing temporary directory: $SCRIPT_TEMP_DIR"
+        log 2 "# Removing temporary directory: $SCRIPT_TEMP_DIR"
         rm -rf "$SCRIPT_TEMP_DIR" \
             || echo "Error: Failed to remove temporary directory (exitcode $?): $SCRIPT_TEMP_DIR" 1>&2
         SCRIPT_TEMP_DIR=''
@@ -116,8 +117,8 @@ cmd_help() {
 }
 
 usage() {
-    echo "Usage: $0 [flags...] <command...>"
-    echo "Flags:"
+    echo "Usage: $0 [global flags...] <command...>"
+    echo "Global flags:"
     echo "    -v    Increase verbosity level"
     echo "    -q    Decrease verbosity level"
     echo ""
@@ -127,8 +128,6 @@ usage() {
 }
 
 main() {
-    declare -a args=()
-    declare -i argno=0
     declare cmd=""
     declare cmderr=0
     while [[ $# -gt 0 ]] ; do
@@ -136,28 +135,27 @@ main() {
         case "$arg" in
             -v) (( VERBOSITY++ )) ;;
             -q) (( VERBOSITY-- )) ;;
+            --help)
+                cmd=help
+                break
+                ;;
             -*)
                 { echo "Unknown flag: $arg"; usage; } 1>&2
                 ;;
             *)
-                (( argno++ ))
-                if [[ "$argno" -eq 1 ]] ; then
-                    cmd="$arg"
-                else
-                    args=( "$args" "$arg" )
-                fi
+                cmd="$arg"
+                break
                 ;;
         esac
     done
     if [[ -z "$cmd" ]] ; then
         usage
     elif [[ $(type -t "cmd_$cmd") == function ]] ; then
-        "cmd_$cmd" "$args"
+        "cmd_$cmd" "$@"
         cmderr="$?"
-        if [[ "$cmderr" -ne 0 ]] ; then
-            echo ""
-            report_command_failure
-            echo ""
+        if [[ "$cmderr" -ne 0 && "$LAST_COMMAND_EXITCODE" -ne 0 ]] ; then
+            report_command_failure 1>&2
+            echo "" 1>&2
         fi
         return "$cmderr"
     else
