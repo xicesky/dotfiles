@@ -1,0 +1,203 @@
+#!/bin/bash
+# https://stackoverflow.com/questions/2919878/git-rewrite-previous-commit-usernames-and-emails
+
+################################################################################
+# Verbosity, command logging
+
+# Verbosity level, 0 is quiet, 1 is normal, 2 prints commands
+VERBOSITY="${VERBOSITY:-1}"
+
+# Don't act, just check (and print commands)
+NO_ACT="${NO_ACT:-false}"
+
+# Display a message if verbosity level allows
+log() {
+    declare prefix="$DEFAULT_LOG_PREFIX"
+    [[ "$1" = "-p" ]] && { shift; prefix="$1"; shift; }
+    declare level="$1"; shift
+    if [[ "$VERBOSITY" -ge "$level" ]] ; then
+        echo "$prefix$*" 1>&2
+    fi
+}
+
+# Same but use printf
+logf() {
+    declare level="$1"; shift
+    # Passing a formatting string is exactly what we intend here
+    # shellcheck disable=SC2059
+    log "$level" "$(printf "$@")"
+}
+
+# Stores the last command executed by invoke()
+declare -a LAST_COMMAND
+LAST_COMMAND=()
+
+# ... and it's exit code
+declare -g LAST_COMMAND_EXITCODE
+LAST_COMMAND_EXITCODE=0
+
+# Log and invoke a command or skip it if NO_ACT is set
+# This actually works only for simple commands, you can't use it to:
+#   - Invoke commands that use pipes or redirections
+#   - Invoke compound commands (expressions)
+#   - Set variables
+invoke() {
+    declare redir=""
+    while [[ $# -gt 0 ]] ; do
+        case "$1" in
+            "-o")   shift; redir="$1"; shift ;;
+            -*)     echo "invoke: Unknown flag: $arg" 1>&2; return 1 ;;
+            *)      break ;;
+        esac
+    done
+    LAST_COMMAND=("$@")
+    log -p "" 2 "$(printf "%q " "$@")"
+    if ! "$NO_ACT" ; then
+        LAST_COMMAND_EXITCODE=0
+        if [[ -z "$redir" ]] ; then "$@"; else "$@" >"$redir"; fi
+        LAST_COMMAND_EXITCODE="$?"
+        return $LAST_COMMAND_EXITCODE
+    fi
+}
+
+# Report the last command, if it failed
+report_command_failure() {
+    if [[ "$LAST_COMMAND_EXITCODE" -ne 0 ]] ; then
+        log 1 "Last command executed:"
+        log 1 "    $(printf "%q " "${LAST_COMMAND[@]}")"
+        log 1 "Returned exit code ${LAST_COMMAND_EXITCODE}"
+    fi
+}
+
+################################################################################
+# Utilities
+
+# Search for the given executable in PATH
+# avoids a dependency on the `which` command
+which() {
+  # Alias to Bash built-in command `type -P`
+  type -P "$@"
+}
+
+################################################################################
+# Old variant using git filter-branch
+# This isn't really good because it only changes one branch and effs
+# up all references
+
+# To change the author name:
+#   git change-commits GIT_AUTHOR_NAME "old name" "new name"
+# or the email for only the last 10 commits:
+#   git change-commits GIT_AUTHOR_EMAIL "old@email.com" "new@email.com" HEAD~10..HEAD
+
+# usage() {
+#     echo "Usage: $0 <variable-name> <old-value> <new-value> [...]"
+#     echo "e.g.:"
+#     echo "    git change-commits GIT_AUTHOR_NAME \"old name\" \"new name\""
+#     echo "    git change-commits GIT_AUTHOR_EMAIL \"old@email.com\" \"new@email.com\" HEAD~10..HEAD"
+#     echo "    git change-commits GIT_COMMITTER_EMAIL \"old@email.com\" \"new@email.com\""
+# }
+
+# main() {
+#     if [[ "$#" -lt 3 ]]; then
+#         {
+#             echo "ERROR: This tool requires three arguments."
+#             usage
+#         } 1>&2
+#         return 1
+#     fi
+#     VAR=$1
+#     shift
+#     OLD=$1
+#     shift
+#     NEW=$1
+#     shift
+#     FILTER_BRANCH_SQUELCH_WARNING=1 \
+#     git filter-branch --env-filter \
+#         "if [ \"\$$VAR\" = '$OLD' ]; then echo \"replacing $VAR \$$VAR with $NEW\" 1>&2; export $VAR='$NEW'; fi" "$@"
+# }
+
+################################################################################
+# New variant, requires git-filter-repo
+# hint: brew install git-filter-repo
+
+check_prereqs() {
+    which git-filter-repo >/dev/null
+}
+
+cmd_help() {
+    usage
+}
+
+cmd_email() {
+    if ! check_prereqs ; then
+        echo "Error: This utility requires git-filter-repo which is currently not installed!" 1>&2
+        return 1
+    fi
+    if [[ $# -lt 2 ]] ; then
+        invoke false
+        { echo "Error: This command takes two arguments."; echo ""; usage; } 1>&2
+        return 1
+    fi
+    OLD="$1"; shift
+    NEW="$1"; shift
+    git filter-repo --email-callback '
+        return email if email != b"'"$OLD"'" else b"'"$NEW"'"
+    ' "$@"
+}
+
+usage() {
+    echo "Usage: $0 [global flags...] <command...>"
+    echo "Global flags:"
+    echo "    -v    Increase verbosity level"
+    echo "    -q    Decrease verbosity level"
+    echo ""
+    echo "Available commands:"
+    echo "    help"
+    echo "    email <old-mail> <new-mail> [git-filter-repo-args...]"
+    echo ""
+    echo "Usage example:"
+    echo "    git change-commits email \"markus.r.dangl@gmail.com\" \"663399+xicesky@users.noreply.github.com\""
+    if ! check_prereqs ; then
+        echo "Warning: This utility requires git-filter-repo which is currently not installed!"
+        echo ""
+    fi
+}
+
+main() {
+    declare cmd=""
+    declare cmderr=0
+    while [[ $# -gt 0 ]] ; do
+        arg="$1"; shift
+        case "$arg" in
+            -v) (( VERBOSITY++ )) ;;
+            -q) (( VERBOSITY-- )) ;;
+            --help)
+                cmd=help
+                break
+                ;;
+            -*)
+                { echo "Unknown flag: $arg"; usage; } 1>&2
+                ;;
+            *)
+                cmd="$arg"
+                break
+                ;;
+        esac
+    done
+    if [[ -z "$cmd" ]] ; then
+        usage
+    elif [[ $(type -t "cmd_$cmd") == function ]] ; then
+        "cmd_$cmd" "$@"
+        cmderr="$?"
+        if [[ "$cmderr" -ne 0 && "$LAST_COMMAND_EXITCODE" -ne 0 ]] ; then
+            report_command_failure 1>&2
+            echo "" 1>&2
+        fi
+        return "$cmderr"
+    else
+        { echo "Unknown command: $cmd"; usage; } 1>&2
+        return 1
+    fi
+}
+
+main "$@"
