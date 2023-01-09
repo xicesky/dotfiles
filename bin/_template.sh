@@ -73,7 +73,7 @@ report_command_failure() {
 # Temp dir handling
 
 # Stores the name of the temporary directory, if it was created
-declare -g SCRIPT_TEMP_DIR=''
+declare -g SCRIPT_TEMP_DIR="${SCRIPT_TEMP_DIR:-}"
 declare -g THIS_SCRIPT_NAME
 THIS_SCRIPT_NAME="$(basename "$0")"
 
