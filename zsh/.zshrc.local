@@ -330,7 +330,7 @@ export SDKMAN_DIR="$HOME/.sdkman"
 [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
 
 # quarkus autocompletion
-if which quarkus 2>/dev/null 1>&2 ; then
+if which java 2>/dev/null 1>&2 && which quarkus 2>/dev/null 1>&2 ; then
     source <(quarkus completion)
 fi
 
