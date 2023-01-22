@@ -119,11 +119,12 @@ cmd_help() {
 usage() {
     echo "Usage: $0 [global flags...] <command...>"
     echo "Global flags:"
-    echo "    -v    Increase verbosity level"
-    echo "    -q    Decrease verbosity level"
+    echo "    -v      Increase verbosity level"
+    echo "    -q      Decrease verbosity level"
+    echo "    --help  Show usage and exit"
     echo ""
     echo "Available commands:"
-    echo "    help"
+    echo "    help    Show usage and exit"
     echo ""
 }
 
