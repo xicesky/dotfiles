@@ -63,7 +63,6 @@ invoke() {
 # Report the last command, if it failed
 report_command_failure() {
     if [[ "$LAST_COMMAND_EXITCODE" -ne 0 ]] ; then
-        log 1 ""
         log 1 "Last command executed:"
         log 1 "    $(printf "%q " "${LAST_COMMAND[@]}")"
         log 1 "Returned exit code ${LAST_COMMAND_EXITCODE}"
@@ -74,7 +73,9 @@ report_command_failure() {
 # Temp dir handling
 
 # Stores the name of the temporary directory, if it was created
-declare -g SCRIPT_TEMP_DIR=''
+declare -g SCRIPT_TEMP_DIR="${SCRIPT_TEMP_DIR:-}"
+declare -g THIS_SCRIPT_NAME
+THIS_SCRIPT_NAME="$(basename "$0")"
 
 # Create temporary directory (once) and return its name
 # This still works when NO_ACT is set, because the effect is only temporary
@@ -91,7 +92,7 @@ require-temp-dir() {
 # Remove temporary directory if it was ever created
 remove-temp-dir() {
     if [[ -n "$SCRIPT_TEMP_DIR" ]] ; then
-        log 1 "Removing temporary directory: $SCRIPT_TEMP_DIR"
+        log 2 "# Removing temporary directory: $SCRIPT_TEMP_DIR"
         rm -rf "$SCRIPT_TEMP_DIR" \
             || echo "Error: Failed to remove temporary directory (exitcode $?): $SCRIPT_TEMP_DIR" 1>&2
         SCRIPT_TEMP_DIR=''
@@ -104,8 +105,33 @@ remove-temp-dir() {
 # Search for the given executable in PATH
 # avoids a dependency on the `which` command
 which() {
-  # Alias to Bash built-in command `type -P`
-  type -P "$@"
+    # Alias to Bash built-in command `type -P`
+    type -P "$@"
+}
+
+# Put (multiple) relative symlink(s) in a target directory
+# Skips without error if file exists
+# Sources are relative to the target directory, not the current directory!
+lins() {
+    declare -a sources=()
+    while [[ $# -gt 1 ]] ; do
+        sources+=( "$1" ); shift
+    done
+    declare target="$1"; shift
+    if [[ ! -d "$target" ]] ; then
+        echo "Error: Target must be a directory, but is: $target" 1>&2
+        return 1
+    fi
+    declare i
+    declare bn
+    for i in "${sources[@]}" ; do
+        bn="$(basename "$i")"
+        if [[ -e "$target/$bn" ]] ; then
+            echo "$target/$bn already exists." 1>&2
+            continue
+        fi
+        invoke ln -s "$i" "$target/$bn" || return 1
+    done
 }
 
 ################################################################################
@@ -124,6 +150,8 @@ setup_wsl2_dirs() {
     invoke ln -fs "$WIN_HOME" ~/win-home || return 1
     invoke ln -fs win-home/.m2 ~/.m2 || return 1
     invoke ln -fs win-home/.npmrc ~/.npmrc || return 1
+    invoke ln -fs win-home/Documents Documents || return 1
+    invoke ln -fs win-home/Downloads Downloads || return 1
 }
 
 setup_wsl2-ssh-pageant() {
@@ -168,7 +196,7 @@ init_wsl2-ssh-pageant() {
     fi
 }
 
-install_tools() {
+install_tools_debian() {
     invoke sudo apt-get install -y \
         pigz gzrt gzip bzip2 lzma p7zip-full p7zip-rar \
         bc pv netcat-openbsd curl wget nmap ncftp \
@@ -177,13 +205,6 @@ install_tools() {
         apt-transport-https aptitude asciidoctor ruby-rouge \
         ca-certificates jq shellcheck xmlstarlet golang \
         || return 1
-
-    # TODO: Packages requiring apt sources
-    # helm terraform
-
-    # Install via go
-    invoke go install github.com/mikefarah/yq/v4@latest
-    invoke go install mvdan.cc/sh/v3/cmd/shfmt@latest
 }
 
 enable_wsl2_systemd() {
@@ -209,12 +230,29 @@ update_dotfiles() {
     fi
 }
 
+install_dotfiles() {
+    # Binaries first
+    for i in \
+        datetag ff git-multi-st git-showtool kube-helper.sh list-git-repos \
+        open query-xml ry where-is-java winmerge \
+        ; do
+        lins "../_dotfiles/bin/$i" ~/bin || return 1
+    done
+    # FIXME?
+    if [[ ! -e "bin/my-ssh-pageant.sh" ]] ; then
+        invoke ln -s ../_dotfiles/bin/wsl2-ssh-pageant.sh bin/my-ssh-pageant.sh || return 1
+    fi
+    # Others config
+    lins "_dotfiles"/{vim/.vim,vim/.vimrc,git/.gitconfig,tmux/.tmux.conf} ~ || return 1
+    lins "_dotfiles/zsh"/{.zprofile,.zsh.path,.zshenv,.zshrc,.zshrc.local} ~ || return 1
+}
+
 install_homebrew() {
     # Install homebrew
-    # if [[ -e /home/linuxbrew ]] ; then
-    #     echo "/home/linuxbrew already exists - not installing homebrew"
-    #     return 0
-    # fi
+    if [[ -e /home/linuxbrew ]] ; then
+        echo "/home/linuxbrew already exists - not installing homebrew"
+        return 0
+    fi
     if [[ ! -d ~/_dotfiles ]] ; then
         echo "Dotfiles are not in ~/_dotfiles (yet?)" 1>&2
         return 1
@@ -232,10 +270,13 @@ install_homebrew() {
         echo "Homebrew did not install /home/linuxbrew/.linuxbrew/bin/brew ???" 1>&2
         return 1
     fi
-    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-    "$HOMEBREW_PREFIX"/bin/brew install gcc
-    echo ""
     echo "# Homebrew install done"
+}
+
+install_tools_homebrew() {
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" || return 1
+    invoke "$HOMEBREW_PREFIX"/bin/brew install \
+        yq shfmt gcc helm terraform hadolint kubectl
 }
 
 change_shell() {
@@ -268,14 +309,22 @@ cmd_install() {
     # Don't install by default, we need to deprecate this
     # invoke setup_wsl2-ssh-pageant || return 1
     invoke update_dotfiles || return 1
-    install_tools || return 1
+    install_dotfiles || return 1
+    install_tools_debian || return 1
     invoke install_homebrew || return 1
     reboot_message # reboot required for systemd
 }
 
 cmd_install-tools() {
-    install_tools || return 1
+    invoke update_dotfiles || return 1
+    install_dotfiles || return 1
+    install_tools_debian || return 1
     install_homebrew || return 1
+    install_tools_homebrew || return 1
+}
+
+cmd_install_dotfiles() {
+    install_dotfiles
 }
 
 cmd_help() {
@@ -283,23 +332,22 @@ cmd_help() {
 }
 
 usage() {
-    echo "Usage: $0 [flags...] <command...>"
-    echo "Flags:"
+    echo "Usage: $0 [global flags...] <command...>"
+    echo "Global flags:"
     echo "    -v    Increase verbosity level"
     echo "    -q    Decrease verbosity level"
+    echo "    --help  Show usage and exit"
     echo ""
     echo "Available commands:"
-    echo "    install"
     echo "    init-ssh-pageant"
+    echo "    install"
     echo "    install-tools"
-    echo "    help"
+    echo "    help    Show usage and exit"
     echo ""
 }
 
 main() {
-    declare -a args=()
-    declare -i argno=0
-    declare cmd="install"
+    declare cmd=""
     declare cmderr=0
     while [[ $# -gt 0 ]] ; do
         arg="$1"; shift
@@ -315,24 +363,19 @@ main() {
                 return 1
                 ;;
             *)
-                (( argno++ ))
-                if [[ "$argno" -eq 1 ]] ; then
                     cmd="$arg"
-                else
-                    args=( "$args" "$arg" )
-                fi
+                break
                 ;;
         esac
     done
     if [[ -z "$cmd" ]] ; then
         usage
     elif [[ $(type -t "cmd_$cmd") == function ]] ; then
-        "cmd_$cmd" "$args"
+        "cmd_$cmd" "$@"
         cmderr="$?"
-        if [[ "$cmderr" -ne 0 ]] ; then
-            echo ""
-            report_command_failure
-            echo ""
+        if [[ "$cmderr" -ne 0 && "$LAST_COMMAND_EXITCODE" -ne 0 ]] ; then
+            report_command_failure 1>&2
+            echo "" 1>&2
         fi
         return "$cmderr"
     else

@@ -10,17 +10,14 @@ Markus Dangl
 
 == TODO
 
-Currently i still use https://github.com/BlackReloaded/wsl2-ssh-pageant[wsl2-ssh-pageant], but i plan to replace this by https://blog.mayflower.de/12736-git-wsl2.html[forwarding the ssh-agent directly to my windows host].
-
-Useful links:
-
-* https://www.cylindric.net/pki/yubikey/wsl
+* Currently i still use https://github.com/BlackReloaded/wsl2-ssh-pageant[wsl2-ssh-pageant], but i plan to replace this by https://blog.mayflower.de/12736-git-wsl2.html[forwarding the ssh-agent directly to my windows host].
+* I intend to fully migrate to homebrew-on-whatever (works on osx and multiple linux distros)
 
 == Installer script
 
 [source,bash]
 ----
-curl -LO "https://raw.githubusercontent.com/xicesky/dotfiles/main/bin/install-wsl2-stuff.sh"
+curl -LO "https://raw.githubusercontent.com/xicesky/dotfiles/main/installer/install-wsl2-stuff.sh"
 chmod +x install-wsl2-stuff.sh
 
 # Since we still use the old solution, we need to setup wsl2-ssh-pagent first:
@@ -35,15 +32,17 @@ ssh-add -l
 # wsl --shutdown
 # Then launch a new wsl2 terminal (the old one will be defunct)
 
-# Install all the toolz
-./install-wsl2-stuff.sh install-tools
-
-# And symlink our stuff (not automated yet)
-cd ~
-ln -s _dotfiles/vim/.vimrc
-ln -s _dotfiles/vim/.vim
-find _dotfiles/zsh -mindepth 1 -maxdepth 1 -iname ".*" \
-    -exec ln -s {} \;
+# Change shell (purposely not automated)
 chsh -s /usr/bin/zsh
+zsh
 
+----
+
+== Other tips
+
+* To share a directory between different wsl2 distros, simply bind-mount it in /mnt/wsl
++
+[source,bash]
+----
+mkdir -p /mnt/wsl/share-OLD-Ubuntu-22.04/ && wsl.exe -d "Ubuntu-22.04" -u root mount --bind / /mnt/wsl/share-Ubuntu-22.04/
 ----
