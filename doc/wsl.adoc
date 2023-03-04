@@ -1,0 +1,49 @@
+= Installation on WSL2
+:experimental:
+:source-highlighter: rouge
+:source-language: shell
+:icons: font
+:toc: left
+:sectanchors:
+:star: *
+Markus Dangl
+
+== TODO
+
+Currently i still use https://github.com/BlackReloaded/wsl2-ssh-pageant[wsl2-ssh-pageant], but i plan to replace this by https://blog.mayflower.de/12736-git-wsl2.html[forwarding the ssh-agent directly to my windows host].
+
+Useful links:
+
+* https://www.cylindric.net/pki/yubikey/wsl
+
+== Installer script
+
+[source,bash]
+----
+curl -LO "https://raw.githubusercontent.com/xicesky/dotfiles/main/bin/install-wsl2-stuff.sh"
+chmod +x install-wsl2-stuff.sh
+
+# Since we still use the old solution, we need to setup wsl2-ssh-pagent first:
+./install-wsl2-stuff.sh init-ssh-pageant
+export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"
+ssh-add -l
+
+# Now run the installer
+./install-wsl2-stuff.sh install
+
+# Reboot wsl2 from powershell, as the script tells you
+# wsl --shutdown
+# Then launch a new wsl2 terminal (the old one will be defunct)
+
+# Install all the toolz
+./install-wsl2-stuff.sh install-tools
+
+# And symlink our stuff (not automated yet)
+cd ~
+ln -s _dotfiles/vim/.vimrc
+ln -s _dotfiles/vim/.vim
+find _dotfiles/zsh -mindepth 1 -maxdepth 1 -iname ".*" \
+    -exec ln -s {} \;
+chsh -s /usr/bin/zsh
+
+----

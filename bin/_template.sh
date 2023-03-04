@@ -142,6 +142,7 @@ main() {
                 ;;
             -*)
                 { echo "Unknown flag: $arg"; usage; } 1>&2
+                return 1
                 ;;
             *)
                 cmd="$arg"

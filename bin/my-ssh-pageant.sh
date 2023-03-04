@@ -35,4 +35,3 @@ ERR="`sp 2>&1 1>$FN`" || {
 
 cat $FN
 rm $FN
-

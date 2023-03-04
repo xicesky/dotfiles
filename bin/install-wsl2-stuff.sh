@@ -134,14 +134,38 @@ setup_wsl2-ssh-pageant() {
     linux_destination="$HOME/bin/wsl2-ssh-pageant.exe"
 
     if [[ ! -f "$windows_destination" ]] ; then
-        invoke curl -L -o "$windows_destination" "https://github.com/xicesky/dotfiles/raw/main/windows/wsl2-ssh-pageant/wsl2-ssh-pageant.exe"
-        invoke chmod +x "$windows_destination"
+        invoke curl -L -o "$windows_destination" "https://github.com/xicesky/dotfiles/raw/main/windows/wsl2-ssh-pageant/wsl2-ssh-pageant.exe" || return 1
+        invoke chmod +x "$windows_destination" || return 1
     fi
     # Symlink to linux for ease of use later
-    invoke ln -fs "$windows_destination" "$linux_destination"
+    invoke ln -fs "$windows_destination" "$linux_destination" || return 1
     # .zshrc.local will pick it up from here... hopefully.
     # debug using:
     #   ss -a | grep .ssh/agent.sock
+}
+
+# During the initial installtion, we don't have bashrc and zshrc to load
+# the wsl2-ssh-pageant support - so we use this function will enable this once
+init_wsl2-ssh-pageant() {
+    # .zshrc.local does this:
+    #test -e "${HOME}/bin/my-ssh-pageant.sh" && eval $(${HOME}/bin/my-ssh-pageant.sh)
+    # But we don't have "my-ssh-pageant.ssh" either...
+    SOCK="$HOME/.ssh/agent.sock"
+    WSL2_SSH_PAGEANT_BIN="$HOME/bin/wsl2-ssh-pageant.exe"
+
+    if [[ ! -x "$WSL2_SSH_PAGEANT_BIN" ]] ; then
+        echo >&2 "ERROR: $WSL2_SSH_PAGEANT_BIN is not executable."
+        return 1
+    else
+        # FIXME: This also detects the socket on another wsl instance
+        if ! ss -a | grep -q "$SOCK"; then
+            rm -f "$SOCK"
+            ( setsid nohup socat UNIX-LISTEN:"$SOCK,fork" EXEC:"$WSL2_SSH_PAGEANT_BIN" >/dev/null 2>&1 & )
+        fi
+        export SSH_AUTH_SOCK="$SOCK"
+        echo "Please now run the following command:"
+        printf 'export SSH_AUTH_SOCK=%q\n' "$SOCK"
+    fi
 }
 
 install_tools() {
@@ -158,7 +182,8 @@ install_tools() {
     # helm terraform
 
     # Install via go
-    invoke go install github.com/mikefarah/yq/v4@latest mvdan.cc/sh/v3/cmd/shfmt@latest
+    invoke go install github.com/mikefarah/yq/v4@latest
+    invoke go install mvdan.cc/sh/v3/cmd/shfmt@latest
 }
 
 enable_wsl2_systemd() {
@@ -186,6 +211,10 @@ update_dotfiles() {
 
 install_homebrew() {
     # Install homebrew
+    # if [[ -e /home/linuxbrew ]] ; then
+    #     echo "/home/linuxbrew already exists - not installing homebrew"
+    #     return 0
+    # fi
     if [[ ! -d ~/_dotfiles ]] ; then
         echo "Dotfiles are not in ~/_dotfiles (yet?)" 1>&2
         return 1
@@ -225,10 +254,11 @@ reboot_message() {
 ################################################################################
 # Main, argparsing and commands
 
-cmd_install-ssh-pageant() {
+cmd_init-ssh-pageant() {
     invoke install_prereqs || return 1
     invoke setup_wsl2_dirs || return 1
     invoke setup_wsl2-ssh-pageant || return 1
+    invoke init_wsl2-ssh-pageant || return 1
 }
 
 cmd_install() {
@@ -238,12 +268,14 @@ cmd_install() {
     # Don't install by default, we need to deprecate this
     # invoke setup_wsl2-ssh-pageant || return 1
     invoke update_dotfiles || return 1
+    install_tools || return 1
     invoke install_homebrew || return 1
     reboot_message # reboot required for systemd
 }
 
-cmd_install-homebrew() {
-    install_homebrew
+cmd_install-tools() {
+    install_tools || return 1
+    install_homebrew || return 1
 }
 
 cmd_help() {
@@ -258,8 +290,8 @@ usage() {
     echo ""
     echo "Available commands:"
     echo "    install"
-    echo "    install-ssh-pageant"
-    echo "    install-homebrew"
+    echo "    init-ssh-pageant"
+    echo "    install-tools"
     echo "    help"
     echo ""
 }
@@ -274,8 +306,13 @@ main() {
         case "$arg" in
             -v) (( VERBOSITY++ )) ;;
             -q) (( VERBOSITY-- )) ;;
+            --help)
+                cmd=help
+                break
+                ;;
             -*)
                 { echo "Unknown flag: $arg"; usage; } 1>&2
+                return 1
                 ;;
             *)
                 (( argno++ ))

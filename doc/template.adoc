@@ -1,0 +1,10 @@
+= Template
+:experimental:
+:source-highlighter: rouge
+:source-language: shell
+:icons: font
+:toc: left
+:sectanchors:
+:star: *
+Markus Dangl
+

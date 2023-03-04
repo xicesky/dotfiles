@@ -1,0 +1,21 @@
+= Sky's dotfiles
+:experimental:
+:source-highlighter: rouge
+:source-language: shell
+:icons: font
+:toc: left
+:sectanchors:
+:star: *
+Markus Dangl
+
+== Overview
+
+Personal settings and stuff.
+
+This repo uses git submodules (e.g. for vim plugins). You probably want to
+fetch them:
+```
+git submodule update --init
+```
+
+include::doc/wsl.adoc[leveloffset=1]
