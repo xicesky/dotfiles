@@ -7,7 +7,7 @@
 WAIT=true
 WINMERGE="$(which WinMergeU.exe 2>/dev/null)"
 FIXPATH="identity"
-declare -a WINMERGE_ARGS=(-e -u -dl "Local" -dr "Remote")
+declare -a WINMERGE_ARGS=(-e -u)
 
 if [[ "$SCRIPT_DIR" = "" ]] ; then
     SCRIPT_DIR="$(dirname "$(dirname "$(readlink -f "$0")")")"
