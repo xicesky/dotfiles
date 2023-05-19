@@ -11,7 +11,7 @@ Markus Dangl
 == TODO
 
 * Currently i still use https://github.com/BlackReloaded/wsl2-ssh-pageant[wsl2-ssh-pageant], but i plan to replace this by https://blog.mayflower.de/12736-git-wsl2.html[forwarding the ssh-agent directly to my windows host].
-* I intend to fully migrate to homebrew-on-whatever (works on osx and multiple linux distros)
+* I intend to fully migrate to homebrew-on-whatever (works on osx and multiple linux distros) and https://scoop-docs.vercel.app/docs/guides/SSH-on-Windows.html[scoop on windows]
 
 == Installer script
 
