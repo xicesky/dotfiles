@@ -10,6 +10,12 @@ config-for-sp() {
     KUBE_NAMESPACE="$SPCUSTOMER"
 }
 
+config-for-sp-prod() {
+    KUBE_CONFIG_FILE="config-az-mx-prod.yaml"
+    SPCUSTOMER="$1"
+    KUBE_NAMESPACE="$SPCUSTOMER"
+}
+
 config-for-local-k3d() {
     KUBE_CONFIG_FILE="config-local-k3d-default.yaml"
     SPCUSTOMER=""
@@ -24,8 +30,9 @@ config-for-qub1c() {
 
 load-config() {
     case "$1" in
-    harg*)      config-for-sp "customer-687399035" ;;
+    flsa*)      config-for-sp "customer-687399035" ;;
     ochs*)      config-for-sp "customer-687399036" ;;
+    harg*-qa)   config-for-sp-prod "customer-687399110" ;;
     customer-*) config-for-sp "$1" ;;
     qub1c)      config-for-qub1c "$1" ;;
     local*)     config-for-local-k3d "$1" ;;
@@ -83,26 +90,44 @@ ship-bash-function() {
 kube() { kubectl -n "$KUBE_NAMESPACE" "$@"; }
 
 kmipexec_usage() {
-    echo "Usage: kmipexec [-p <podname>|--pod <podname>] <command ...>"
-    echo "    e.g.: kmipexec -p mipserver-customer-687399036-0 bash"
-    [[ -n "$1" ]] && echo "    podname defaults to: $pod"
+    echo "Usage: kmipexec [-p <podname>|--pod <podname>] [-c <container>|--container <container>] <command ...>"
+    echo "    e.g.: kmipexec -p mipserver-customer-687399036-0 -c dispatchx-mipserver bash"
+    [[ -n "$1" ]] && { echo "    podname defaults to: $1"; shift; }
+    [[ -n "$1" ]] && { echo "    container defaults to: $1"; shift; }
 }
 
 # execute command on mipserver pod
 kmipexec() {
     declare pod=""
-    [[ "$1" = --pod || "$1" == -p ]] && { shift; pod="$1"; shift; }
+    declare container=""    # previously always "dispatchx-mipserver", now varies
+
+    # Parse arguments
+    while [[ $# -gt 0 ]] ; do
+        if [[ "$1" == '--' || "$1" != -* ]] ; then break; fi
+        arg="$1"; shift
+        case "$arg" in
+        --pod|-p)           pod="$1"; shift ;;
+        --container|-c)     container="$1"; shift ;;
+        esac
+    done
+
     [[ -z "$pod" && -n "$SPCUSTOMER" ]] && pod="mipserver-${SPCUSTOMER}-0"
     if [[ -z "$pod" ]] ; then
         echo "No pod name provided and no serviceplatform customer (SPCUSTOMER variable) set." 1>&2
         kmipexec_usage 1>&2
         return 1
     fi
+    [[ -z "$container" && -n "$SPCUSTOMER" ]] && container="mipserver-fla"
+    if [[ -z "$container" ]] ; then
+        echo "No container name provided and no serviceplatform customer (SPCUSTOMER variable) set." 1>&2
+        kmipexec_usage 1>&2
+        return 1
+    fi
     [[ "$#" -lt 1 ]] && {
-        kmipexec_usage "$pod" 1>&2
+        kmipexec_usage "$pod" "$container" 1>&2
         return 1
     }
-    MSYS2_ARG_CONV_EXCL="*" kube exec "$pod" -it -c dispatchx-mipserver -- "$@"; 
+    MSYS2_ARG_CONV_EXCL="*" kube exec "$pod" -it -c "$container" -- "$@";
 }
 
 kmipdebug() {
