@@ -73,7 +73,7 @@ ohai() {
 }
 
 warn() {
-  printf "${tty_red}Warning${tty_reset}: %s\n" "$(chomp "$1")"
+  printf "${tty_red}Warning${tty_reset}: %s\n" "$(chomp "$1")" >&2
 }
 
 # Check if script is run non-interactively (e.g. CI)
@@ -304,6 +304,7 @@ check_run_command_as_root() {
 
   # Allow Azure Pipelines/GitHub Actions/Docker/Concourse/Kubernetes to do everything as root (as it's normal there)
   [[ -f /.dockerenv ]] && return
+  [[ -f /run/.containerenv ]] && return
   [[ -f /proc/1/cgroup ]] && grep -E "azpl_job|actions_job|docker|garden|kubepods" -q /proc/1/cgroup && return
 
   abort "Don't run this as root!"
@@ -384,7 +385,12 @@ test_git() {
 
   local git_version_output
   git_version_output="$("$1" --version 2>/dev/null)"
-  version_ge "$(major_minor "${git_version_output##* }")" "$(major_minor "${REQUIRED_GIT_VERSION}")"
+  if [[ "${git_version_output}" =~ "git version "([^ ]*).* ]]
+  then
+    version_ge "$(major_minor "${BASH_REMATCH[1]}")" "$(major_minor "${REQUIRED_GIT_VERSION}")"
+  else
+    abort "Unexpected Git version: '${git_version_output}'!"
+  fi
 }
 
 # Search for the given executable in PATH (avoids a dependency on the `which` command)
@@ -405,7 +411,10 @@ find_tool() {
   local executable
   while read -r executable
   do
-    if "test_$1" "${executable}"
+    if [[ "${executable}" != /* ]]
+    then
+      warn "Ignoring ${executable} (relative paths don't work)"
+    elif "test_$1" "${executable}"
     then
       echo "${executable}"
       break
@@ -447,64 +456,6 @@ fi
 cd "/usr" || exit 1
 
 ####################################################################### script
-if ! command -v git >/dev/null
-then
-  abort "$(
-    cat <<EOABORT
-You must install Git before installing Homebrew. See:
-  ${tty_underline}https://docs.brew.sh/Installation${tty_reset}
-EOABORT
-  )"
-elif [[ -n "${HOMEBREW_ON_LINUX-}" ]]
-then
-  USABLE_GIT="$(find_tool git)"
-  if [[ -z "${USABLE_GIT}" ]]
-  then
-    abort "$(
-      cat <<EOABORT
-The version of Git that was found does not satisfy requirements for Homebrew.
-Please install Git ${REQUIRED_GIT_VERSION} or newer and add it to your PATH.
-EOABORT
-    )"
-  elif [[ "${USABLE_GIT}" != /usr/bin/git ]]
-  then
-    export HOMEBREW_GIT_PATH="${USABLE_GIT}"
-    ohai "Found Git: ${HOMEBREW_GIT_PATH}"
-  fi
-fi
-
-if ! command -v curl >/dev/null
-then
-  abort "$(
-    cat <<EOABORT
-You must install cURL before installing Homebrew. See:
-  ${tty_underline}https://docs.brew.sh/Installation${tty_reset}
-EOABORT
-  )"
-elif [[ -n "${HOMEBREW_ON_LINUX-}" ]]
-then
-  USABLE_CURL="$(find_tool curl)"
-  if [[ -z "${USABLE_CURL}" ]]
-  then
-    abort "$(
-      cat <<EOABORT
-The version of cURL that was found does not satisfy requirements for Homebrew.
-Please install cURL ${REQUIRED_CURL_VERSION} or newer and add it to your PATH.
-EOABORT
-    )"
-  elif [[ "${USABLE_CURL}" != /usr/bin/curl ]]
-  then
-    export HOMEBREW_CURL_PATH="${USABLE_CURL}"
-    ohai "Found cURL: ${HOMEBREW_CURL_PATH}"
-  fi
-fi
-
-# Set HOMEBREW_DEVELOPER on Linux systems where usable Git/cURL is not in /usr/bin
-if [[ -n "${HOMEBREW_ON_LINUX-}" && (-n "${HOMEBREW_CURL_PATH-}" || -n "${HOMEBREW_GIT_PATH-}") ]]
-then
-  ohai "Setting HOMEBREW_DEVELOPER to use Git/cURL not in /usr/bin"
-  export HOMEBREW_DEVELOPER=1
-fi
 
 # shellcheck disable=SC2016
 ohai 'Checking for `sudo` access (which may request your password)...'
@@ -754,10 +705,10 @@ then
   additional_shellenv_commands+=("export HOMEBREW_CORE_GIT_REMOTE=\"${HOMEBREW_CORE_GIT_REMOTE}\"")
 fi
 
-if [[ -n "${HOMEBREW_INSTALL_FROM_API-}" ]]
+if [[ -n "${HOMEBREW_NO_INSTALL_FROM_API-}" ]]
 then
-  ohai "HOMEBREW_INSTALL_FROM_API is set."
-  echo "Homebrew/homebrew-core will not be tapped during this ${tty_bold}install${tty_reset} run."
+  ohai "HOMEBREW_NO_INSTALL_FROM_API is set."
+  echo "Homebrew/homebrew-core will be tapped during this ${tty_bold}install${tty_reset} run."
 fi
 
 if [[ -z "${NONINTERACTIVE-}" ]]
@@ -882,27 +833,89 @@ EOABORT
   )"
 fi
 
+USABLE_GIT=/usr/bin/git
+if [[ -n "${HOMEBREW_ON_LINUX-}" ]]
+then
+  USABLE_GIT="$(find_tool git)"
+  if [[ -z "$(command -v git)" ]]
+  then
+    abort "$(
+      cat <<EOABORT
+  You must install Git before installing Homebrew. See:
+    ${tty_underline}https://docs.brew.sh/Installation${tty_reset}
+EOABORT
+    )"
+  fi
+  if [[ -z "${USABLE_GIT}" ]]
+  then
+    abort "$(
+      cat <<EOABORT
+  The version of Git that was found does not satisfy requirements for Homebrew.
+  Please install Git ${REQUIRED_GIT_VERSION} or newer and add it to your PATH.
+EOABORT
+    )"
+  fi
+  if [[ "${USABLE_GIT}" != /usr/bin/git ]]
+  then
+    export HOMEBREW_GIT_PATH="${USABLE_GIT}"
+    ohai "Found Git: ${HOMEBREW_GIT_PATH}"
+  fi
+fi
+
+if ! command -v curl >/dev/null
+then
+  abort "$(
+    cat <<EOABORT
+You must install cURL before installing Homebrew. See:
+  ${tty_underline}https://docs.brew.sh/Installation${tty_reset}
+EOABORT
+  )"
+elif [[ -n "${HOMEBREW_ON_LINUX-}" ]]
+then
+  USABLE_CURL="$(find_tool curl)"
+  if [[ -z "${USABLE_CURL}" ]]
+  then
+    abort "$(
+      cat <<EOABORT
+The version of cURL that was found does not satisfy requirements for Homebrew.
+Please install cURL ${REQUIRED_CURL_VERSION} or newer and add it to your PATH.
+EOABORT
+    )"
+  elif [[ "${USABLE_CURL}" != /usr/bin/curl ]]
+  then
+    export HOMEBREW_CURL_PATH="${USABLE_CURL}"
+    ohai "Found cURL: ${HOMEBREW_CURL_PATH}"
+  fi
+fi
+
+# Set HOMEBREW_DEVELOPER on Linux systems where usable Git/cURL is not in /usr/bin
+if [[ -n "${HOMEBREW_ON_LINUX-}" && (-n "${HOMEBREW_CURL_PATH-}" || -n "${HOMEBREW_GIT_PATH-}") ]]
+then
+  ohai "Setting HOMEBREW_DEVELOPER to use Git/cURL not in /usr/bin"
+  export HOMEBREW_DEVELOPER=1
+fi
+
 ohai "Downloading and installing Homebrew..."
 (
   cd "${HOMEBREW_REPOSITORY}" >/dev/null || return
 
   # we do it in four steps to avoid merge errors when reinstalling
-  execute "git" "init" "-q"
+  execute "${USABLE_GIT}" "-c" "init.defaultBranch=master" "init" "--quiet"
 
   # "git remote add" will fail if the remote is defined in the global config
-  execute "git" "config" "remote.origin.url" "${HOMEBREW_BREW_GIT_REMOTE}"
-  execute "git" "config" "remote.origin.fetch" "+refs/heads/*:refs/remotes/origin/*"
+  execute "${USABLE_GIT}" "config" "remote.origin.url" "${HOMEBREW_BREW_GIT_REMOTE}"
+  execute "${USABLE_GIT}" "config" "remote.origin.fetch" "+refs/heads/*:refs/remotes/origin/*"
 
   # ensure we don't munge line endings on checkout
-  execute "git" "config" "--bool" "core.autocrlf" "false"
+  execute "${USABLE_GIT}" "config" "--bool" "core.autocrlf" "false"
 
   # make sure symlinks are saved as-is
-  execute "git" "config" "--bool" "core.symlinks" "true"
+  execute "${USABLE_GIT}" "config" "--bool" "core.symlinks" "true"
 
-  execute "git" "fetch" "--force" "origin"
-  execute "git" "fetch" "--force" "--tags" "origin"
+  execute "${USABLE_GIT}" "fetch" "--force" "origin"
+  execute "${USABLE_GIT}" "fetch" "--force" "--tags" "origin"
 
-  execute "git" "reset" "--hard" "origin/master"
+  execute "${USABLE_GIT}" "reset" "--hard" "origin/master"
 
   if [[ "${HOMEBREW_REPOSITORY}" != "${HOMEBREW_PREFIX}" ]]
   then
@@ -914,30 +927,23 @@ ohai "Downloading and installing Homebrew..."
     fi
   fi
 
-  if [[ -n "${HOMEBREW_INSTALL_FROM_API-}" ]]
+  if [[ -n "${HOMEBREW_NO_INSTALL_FROM_API-}" && ! -d "${HOMEBREW_CORE}" ]]
   then
+    # Always use single-quoted strings with `exp` expressions
     # shellcheck disable=SC2016
-    ohai 'Skip tapping homebrew/core because `$HOMEBREW_INSTALL_FROM_API` is set.'
-    # Unset HOMEBREW_DEVELOPER since it is no longer needed and causes warnings during brew update below
-    if [[ -n "${HOMEBREW_ON_LINUX-}" && (-n "${HOMEBREW_CURL_PATH-}" || -n "${HOMEBREW_GIT_PATH-}") ]]
-    then
-      export -n HOMEBREW_DEVELOPER
-    fi
-  elif [[ ! -d "${HOMEBREW_CORE}" ]]
-  then
-    ohai "Tapping homebrew/core"
+    ohai 'Tapping homebrew/core because `$HOMEBREW_NO_INSTALL_FROM_API` is set.'
     (
       execute "${MKDIR[@]}" "${HOMEBREW_CORE}"
       cd "${HOMEBREW_CORE}" >/dev/null || return
 
-      execute "git" "init" "-q"
-      execute "git" "config" "remote.origin.url" "${HOMEBREW_CORE_GIT_REMOTE}"
-      execute "git" "config" "remote.origin.fetch" "+refs/heads/*:refs/remotes/origin/*"
-      execute "git" "config" "--bool" "core.autocrlf" "false"
-      execute "git" "config" "--bool" "core.symlinks" "true"
-      execute "git" "fetch" "--force" "origin" "refs/heads/master:refs/remotes/origin/master"
-      execute "git" "remote" "set-head" "origin" "--auto" >/dev/null
-      execute "git" "reset" "--hard" "origin/master"
+      execute "${USABLE_GIT}" "-c" "init.defaultBranch=master" "init" "--quiet"
+      execute "${USABLE_GIT}" "config" "remote.origin.url" "${HOMEBREW_CORE_GIT_REMOTE}"
+      execute "${USABLE_GIT}" "config" "remote.origin.fetch" "+refs/heads/*:refs/remotes/origin/*"
+      execute "${USABLE_GIT}" "config" "--bool" "core.autocrlf" "false"
+      execute "${USABLE_GIT}" "config" "--bool" "core.symlinks" "true"
+      execute "${USABLE_GIT}" "fetch" "--force" "origin" "refs/heads/master:refs/remotes/origin/master"
+      execute "${USABLE_GIT}" "remote" "set-head" "origin" "--auto" >/dev/null
+      execute "${USABLE_GIT}" "reset" "--hard" "origin/master"
 
       cd "${HOMEBREW_REPOSITORY}" >/dev/null || return
     ) || exit 1
@@ -979,8 +985,8 @@ EOS
 
 (
   cd "${HOMEBREW_REPOSITORY}" >/dev/null || return
-  execute "git" "config" "--replace-all" "homebrew.analyticsmessage" "true"
-  execute "git" "config" "--replace-all" "homebrew.caskanalyticsmessage" "true"
+  execute "${USABLE_GIT}" "config" "--replace-all" "homebrew.analyticsmessage" "true"
+  execute "${USABLE_GIT}" "config" "--replace-all" "homebrew.caskanalyticsmessage" "true"
 ) || exit 1
 
 ohai "Next steps:"
@@ -1001,17 +1007,23 @@ case "${SHELL}" in
     ;;
 esac
 
-# `which` is a shell function defined above.
-# shellcheck disable=SC2230
-if [[ "$(which brew)" != "${HOMEBREW_PREFIX}/bin/brew" ]]
+if grep -qs "eval \"\$(${HOMEBREW_PREFIX}/bin/brew shellenv)\"" "${shell_profile}"
 then
+  if ! [[ -x "$(command -v brew)" ]]
+  then
+    cat <<EOS
+- Run this command in your terminal to add Homebrew to your ${tty_bold}PATH${tty_reset}:
+    eval "\$(${HOMEBREW_PREFIX}/bin/brew shellenv)"
+EOS
+  fi
+else
   cat <<EOS
-- Run these three commands in your terminal to add Homebrew to your ${tty_bold}PATH${tty_reset}:
-    echo '# Set PATH, MANPATH, etc., for Homebrew.' >> ${shell_profile}
-    echo 'eval "\$(${HOMEBREW_PREFIX}/bin/brew shellenv)"' >> ${shell_profile}
+- Run these two commands in your terminal to add Homebrew to your ${tty_bold}PATH${tty_reset}:
+    (echo; echo 'eval "\$(${HOMEBREW_PREFIX}/bin/brew shellenv)"') >> ${shell_profile}
     eval "\$(${HOMEBREW_PREFIX}/bin/brew shellenv)"
 EOS
 fi
+
 if [[ -n "${non_default_repos}" ]]
 then
   plural=""
