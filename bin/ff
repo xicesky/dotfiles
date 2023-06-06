@@ -151,7 +151,7 @@ main() {
         esac
     fi
 
-    add-skip-dirs '.git' '.idea' 'mip-home' 'venv' '.vscode' '.terraform'
+    add-skip-dirs '.git' '.idea' 'mip-home' 'venv' '.venv' '.vscode' '.terraform'
     if $skip_target ; then
         add-skip-dirs 'target'
     fi
