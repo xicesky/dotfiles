@@ -258,6 +258,7 @@ install_homebrew() {
         return 1
     fi
     if [[ ! -f ~/_dotfiles/homebrew/install.sh ]] ; then
+        #shellcheck disable=SC2088
         echo "~/_dotfiles/homebrew/install.sh is missing" 1>&2
         return 1
     fi
