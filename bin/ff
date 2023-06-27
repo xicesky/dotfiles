@@ -152,6 +152,7 @@ main() {
     fi
 
     add-skip-dirs '.git' '.idea' 'mip-home' 'venv' '.venv' '.vscode' '.terraform'
+    add-skip-dirs 'OneDrive*'
     if $skip_target ; then
         add-skip-dirs 'target'
     fi
