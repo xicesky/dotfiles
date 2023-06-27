@@ -3,29 +3,34 @@
 KUBE_CONFIG_FILE="${KUBE_CONFIG_FILE:-config}"
 KUBE_NAMESPACE="${KUBE_NAMESPACE:-default}"
 SPCUSTOMER="${SPCUSTOMER:-"customer-687399035"}"
+MIPSERVER_DEFAULT_CONTAINER="mipserver-fla"
 
 config-for-sp() {
     KUBE_CONFIG_FILE="config-az-mx-dev.yaml"
     SPCUSTOMER="$1"
     KUBE_NAMESPACE="$SPCUSTOMER"
+    MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver-fla}"
 }
 
 config-for-sp-prod() {
     KUBE_CONFIG_FILE="config-az-mx-prod.yaml"
     SPCUSTOMER="$1"
     KUBE_NAMESPACE="$SPCUSTOMER"
+    MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver-fla}"
 }
 
 config-for-local-k3d() {
     KUBE_CONFIG_FILE="config-local-k3d-default.yaml"
     SPCUSTOMER=""
     KUBE_NAMESPACE="default"
+    MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver-fla}"
 }
 
 config-for-qub1c() {
     KUBE_CONFIG_FILE="config-qub1c.yaml"
     SPCUSTOMER=""
     KUBE_NAMESPACE="default"
+    MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver-fla}"
 }
 
 load-config() {
@@ -33,6 +38,7 @@ load-config() {
     flsa*)      config-for-sp "customer-687399035" ;;
     ochs*)      config-for-sp "customer-687399036" ;;
     harg*-qa)   config-for-sp-prod "customer-687399110" ;;
+    kalt*)      config-for-sp-prod "customer-687399150" kaltenbach-mipserver ;;
     customer-*) config-for-sp "$1" ;;
     qub1c)      config-for-qub1c "$1" ;;
     local*)     config-for-local-k3d "$1" ;;
@@ -117,7 +123,7 @@ kmipexec() {
         kmipexec_usage 1>&2
         return 1
     fi
-    [[ -z "$container" && -n "$SPCUSTOMER" ]] && container="mipserver-fla"
+    [[ -z "$container" && -n "$SPCUSTOMER" ]] && container="$MIPSERVER_DEFAULT_CONTAINER"
     if [[ -z "$container" ]] ; then
         echo "No container name provided and no serviceplatform customer (SPCUSTOMER variable) set." 1>&2
         kmipexec_usage 1>&2
@@ -142,6 +148,7 @@ cmd_print() {
     echo "export KUBECONFIG=~/.kube/$KUBE_CONFIG_FILE"
     echo "export KUBE_NAMESPACE=\"$KUBE_NAMESPACE\""
     echo "export SPCUSTOMER=\"$SPCUSTOMER\""
+    echo "export MIPSERVER_DEFAULT_CONTAINER=\"$MIPSERVER_DEFAULT_CONTAINER\""
 
     ship-bash-function kube "kubctl alias with namespace"
     ship-bash-function kmipexec_usage "usage for kmipexec"
