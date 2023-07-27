@@ -1,0 +1,4 @@
+#!/bin/bash
+# Get n-th line
+tail -n+"$1" | head -n1
+
