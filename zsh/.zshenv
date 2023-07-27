@@ -39,5 +39,5 @@ export REAL_USER=markus
 
 # Default options for less
 export PAGER=less
-export LESS=RS#.2
+export LESS=RSI#.2
 
