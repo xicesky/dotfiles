@@ -36,13 +36,27 @@ config-for-qub1c() {
 load-config() {
     case "$1" in
     flsa*)      config-for-sp "customer-687399035" ;;
-    ochs*)      config-for-sp "customer-687399036" ;;
-    harg*-qa)   config-for-sp-prod "customer-687399110" ;;
-    kalt*)      config-for-sp-prod "customer-687399150" kaltenbach-mipserver ;;
-    customer-*) config-for-sp "$1" ;;
-    qub1c)      config-for-qub1c "$1" ;;
-    local*)     config-for-local-k3d "$1" ;;
-    *)          return 1 ;;
+
+    ochs*-qa)   config-for-sp-prod  "customer-687399031" ;;
+    ochs*-prod) config-for-sp-prod  "customer-687399036" ;;
+    ochs*)      config-for-sp       "customer-687399036" ;;
+
+    harg*-qa)   config-for-sp-prod  "customer-687399110" ;;
+    #harg*-prd)  config-for-sp-prod  "customer-687399111" ;;
+    #harg*)      config-for-sp      "customer-687399110" ;;
+
+    kalt*-qa)   config-for-sp-prod  "customer-687399150" kaltenbach-mipserver ;;
+    #kalt*-prod) config-for-sp-prod  "customer-687399151" kaltenbach-mipserver ;;
+    gewo*-qa)   config-for-sp-prod  "customer-687399170" gewofag-mipserver ;;
+    #gewo*-prod) config-for-sp-prod  "customer-687399171" gewofag-mipserver ;;
+
+    customer-*-qa)      config-for-sp-prod "$1" ;;
+    customer-*-prod)    config-for-sp-prod "$1" ;;
+    customer-*)         config-for-sp "$1" ;;
+
+    qub1c)              config-for-qub1c "$1" ;;
+    local*)             config-for-local-k3d "$1" ;;
+    *)                  return 1 ;;
     esac
 }
 
@@ -93,7 +107,10 @@ ship-bash-function() {
 }
 
 # kubectl alias with namespace
-kube() { kubectl -n "$KUBE_NAMESPACE" "$@"; }
+kube() {
+    echo "> $(printf "%q " kubectl -n "$KUBE_NAMESPACE" "$@")" 1>&2
+    kubectl -n "$KUBE_NAMESPACE" "$@";
+}
 
 kmipexec_usage() {
     echo "Usage: kmipexec [-p <podname>|--pod <podname>] [-c <container>|--container <container>] <command ...>"
