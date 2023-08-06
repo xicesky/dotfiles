@@ -5,6 +5,5 @@
 :icons: font
 :toc: left
 :sectanchors:
-:star: *
 Markus Dangl
 
