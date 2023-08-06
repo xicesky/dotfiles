@@ -51,10 +51,13 @@ if ismingw || ismsys ; then
     _sky_loadenv
 fi
 
+# To customize prompt, run `p10k configure` or edit ~/.config/zsh/.p10k.zsh.
+[[ ! -f ~/.config/zsh/.p10k.zsh ]] || source ~/.config/zsh/.p10k.zsh
+
+# Load system-dependent hacks, if any
+[[ -r "$HOME/.zshrc.haxx" ]] && source "$HOME/.zshrc.haxx"
+
 # Temporary, just for timing zsh startup
 [[ -z "$ZPROFRC" ]] || echo "$(date +"%T.%N") EXIT  \$ZDOTDIR/.zshrc"
 
 true
-
-# To customize prompt, run `p10k configure` or edit ~/.config/zsh/.p10k.zsh.
-[[ ! -f ~/.config/zsh/.p10k.zsh ]] || source ~/.config/zsh/.p10k.zsh

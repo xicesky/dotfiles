@@ -14,8 +14,12 @@ function ismsys() {
     [[ $MY_OSTYPE = MSYS* ]]
 }
 
-function isdarwin(){
+function isdarwin() {
     [[ $OSTYPE == darwin* ]]
+}
+
+function iswsl2() {
+    [[ -r /proc/version && "$(cat /proc/version)" = Linux\ *-microsoft*-WSL2\ * ]]
 }
 
 declare -f ismingw
