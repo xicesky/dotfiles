@@ -1,6 +1,8 @@
 # Filename:      ~/.zshrc.local
 # Purpose:       config file for zsh (z shell)
 
+echo ".zshrc.local"
+
 # Note: mingw/msys resets the path in /etc/profile
 # so the setting in .zshenv has no effect and we need to update it here
 if ismingw || ismsys ; then
@@ -262,7 +264,7 @@ fi
 #getanames ()  { perl -ne 'while ( m/a name="([^"]*)"/gc ) { print $1, "\n"; }' $* }
 #getforms ()   { perl -ne 'while ( m:(\</?(input|form|select|option).*?\>):gic ) { print $1, "\n"; }' $* }
 #getstrings () { perl -ne 'while ( m/"(.*?)"/gc ) { print $1, "\n"; }' $*}
-#getanchors () { perl -ne 'while ( m/«([^«»\n]+)»/gc ) { print $1, "\n"; }' $* }
+#getanchors () { perl -ne 'while ( m/ï¿½([^ï¿½ï¿½\n]+)ï¿½/gc ) { print $1, "\n"; }' $* }
 #showINC ()    { perl -e 'for (@INC) { printf "%d %s\n", $i++, $_ }' }
 #vimpm ()      { vim `perldoc -l $1 | sed -e 's/pod$/pm/'` }
 #vimhelp ()    { vim -c "help $1" -c on -c "au! VimEnter *" }
@@ -319,3 +321,5 @@ test -e "${HOME}/.zshrc.haxx" && source "${HOME}/.zshrc.haxx"
 vi() { vim "$@" }
 
 ## END OF FILE #################################################################
+
+zprof

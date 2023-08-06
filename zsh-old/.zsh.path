@@ -1,4 +1,6 @@
 
+echo ".zsh.path"
+
 # TODO: All those searches and checks eat time on login
 # Generate a fixed list instead
 

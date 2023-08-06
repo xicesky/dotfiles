@@ -1,0 +1,58 @@
+#
+# .zplugins - antidote plugins file
+#
+
+# Pre-reqs
+mattmc3/zephyr path:plugins/zfunctions
+
+# Clone-only utils
+# mbadolato/iTerm2-Color-Schemes kind:clone
+
+# Zephyr
+# mattmc3/zephyr path:plugins/clipboard
+mattmc3/zephyr path:plugins/color
+
+# replaces mattmc3/zephyr path:plugins/directory
+$SKY_DOTFILES/zsh/plugins/directory
+
+# mattmc3/zephyr path:plugins/editor
+# replaces mattmc3/zephyr path:plugins/history
+$SKY_DOTFILES/zsh/plugins/history
+
+mattmc3/zephyr path:plugins/homebrew
+# mattmc3/zephyr path:plugins/macos conditional:is-darwin
+# mattmc3/zephyr path:plugins/prompt
+# replaces mattmc3/zephyr path:plugins/utility
+$SKY_DOTFILES/zsh/plugins/utility
+$SKY_DOTFILES/zsh/plugins/todo
+
+# omz
+# ohmyzsh/ohmyzsh path:plugins/magic-enter
+# ohmyzsh/ohmyzsh path:plugins/fancy-ctrl-z
+
+# my custom plugins
+# $ZDOTDIR/plugins/xdg
+# $ZDOTDIR/plugins/abbreviations
+# $ZDOTDIR/plugins/git
+# $ZDOTDIR/plugins/otp
+# $ZDOTDIR/plugins/python
+
+# prompts
+romkatv/powerlevel10k kind:fpath
+# $ZDOTDIR/plugins/prompt
+$SKY_DOTFILES/zsh/plugins/prompt
+
+# utilities
+# romkatv/zsh-bench kind:path
+# rupa/z
+# mattmc3/zman
+
+# final
+zsh-users/zsh-completions kind:fpath path:src
+mattmc3/zephyr path:plugins/completion
+# mattmc3/zephyr path:plugins/confd
+
+# deferred plugins
+zdharma-continuum/fast-syntax-highlighting kind:defer
+zsh-users/zsh-autosuggestions kind:defer
+zsh-users/zsh-history-substring-search kind:defer

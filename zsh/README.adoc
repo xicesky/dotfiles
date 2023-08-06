@@ -1,0 +1,40 @@
+= zsh Configuration
+:experimental:
+:source-highlighter: rouge
+:source-language: shell
+:icons: font
+:toc: left
+:sectanchors:
+Markus Dangl
+
+== Installation
+
+This configuration should reside in your respective home directory only, _not_ in `/etc`.
+The only file required to be in your home directory is the `.zshenv`, which sets the `ZDOTDIR` variable.
+
+[source,bash]
+----
+cd ~
+[[ -f .zshenv ]] || ln -s ~/_dotfiles/zsh/.zshenv
+
+mkdir -p ~/.config/zsh
+while IFS= read -r -d $'\0' target ; do
+    link=~/.config/zsh/$(basename "$target")
+    echo "$link" "->" "$target"
+    rm -rf "$link"
+    ln -s -t ~/.config/zsh "$target"
+done < <(
+    find ~/_dotfiles/zsh/zdotdir -mindepth 1 -maxdepth 1 -print0 | sort -z
+)
+
+# See https://github.com/mattmc3/zephyr/tree/main/plugins/zfunctions
+# We might want to add this to _dotfiles later...
+mkdir .config/zsh/functions
+
+----
+
+== TODO
+
+* Try https://starship.rs/
+* Incorporate stuff from plugins/todo (old grml stuff)
+* Fix laggy typing ... probably syntax highlighting?

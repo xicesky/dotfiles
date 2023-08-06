@@ -1,4 +1,6 @@
 
+echo ".zprofile"
+
 # Activate homebrew if installed
 if [[ -d /home/linuxbrew/.linuxbrew/bin ]] ; then
     export HOMEBREW_PREFIX="/home/linuxbrew/.linuxbrew"

@@ -1,0 +1,36 @@
+#!/usr/bin/zsh
+#
+# .zstyles - zstyle settings for features/plugins that need them.
+#
+
+#
+# Antidote
+#
+
+zstyle ':antidote:bundle' file ${ZDOTDIR:-~}/.zplugins
+zstyle ':antidote:static' file ${ZDOTDIR:-~}/.zplugins.zsh
+zstyle ':antidote:bundle' use-friendly-names 'yes'
+zstyle ':antidote:plugin:*' defer-options '-p'
+
+#
+# Editor
+#
+
+# Set this to whatever you want to use to edit a command
+# zstyle :zle:edit-command-line editor hx
+
+#
+# Zephyr
+#
+
+#zstyle ':zephyr:plugin:prompt' theme zephyr
+#zstyle ':zephyr:plugin:prompt' theme prezto
+zstyle ':zephyr:plugin:prompt' theme powerlevel10k
+
+#
+# Local
+#
+
+# if [[ -r $DOTFILES/local/zsh/zstyles.local.zsh ]]; then
+#     . $DOTFILES/local/zsh/zstyles.local.zsh
+# fi
