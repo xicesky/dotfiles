@@ -6,30 +6,40 @@ echo "# SHELL_TYPE=$SHELL_TYPE"
 MY_OSTYPE=$(uname -s)
 echo "export MY_OSTYPE=$(printf "%q" "$MY_OSTYPE")"
 
-function ismingw() {
-    [[ $MY_OSTYPE = MINGW* ]]
-}
+case "$MY_OSTYPE" in
+    MINGW*) function ismsystem() { true; }; function ismingw() { true; }; function ismsys() { false; }  ;;
+    MSYS*)  function ismsystem() { true; }; function ismingw() { false; }; function ismsys() { true; } ;;
+    *)      function ismsystem() { false; }; function ismingw() { false; }; function ismsys() { false; }  ;;
+esac
 
-function ismsys() {
-    [[ $MY_OSTYPE = MSYS* ]]
-}
+if [[ $OSTYPE == darwin* ]] ; then
+    function isdarwin() { true; }
+else
+    function isdarwin() { false; }
+fi
 
-function isdarwin() {
-    [[ $OSTYPE == darwin* ]]
-}
+if [[ -r /proc/version ]] ; then
+    case "$(cat /proc/version)" in
+        *-microsoft*-WSL2*)
+            function iswsl2() { true; }
+            ;;
+        *)
+            function iswsl2() { false; }
+            ;;
+    esac
+fi
 
-function iswsl2() {
-    [[ -r /proc/version && "$(cat /proc/version)" = Linux\ *-microsoft*-WSL2\ * ]]
-}
-
+declare -f ismsystem
 declare -f ismingw
 declare -f ismsys
 declare -f isdarwin
+declare -f iswsl2
 
 # Shell type
 if [ -z "$SHELL_TYPE" ] ; then
     SHELL_TYPE="$(basename "$SHELL")"
 fi
+echo "SHELL_TYPE=$(printf "%q" "$SHELL_TYPE")"
 
 function regenerate_env() {
     declare gensh
