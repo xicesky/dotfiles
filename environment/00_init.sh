@@ -36,7 +36,9 @@ function regenerate_env() {
     echo "Generating $XDG_CACHE_HOME/environment/$SHELL_TYPE" 1>&2
     mkdir -p "$XDG_CACHE_HOME/environment"
     gensh="${SKY_DOTFILES:-$HOME/_dotfiles}/environment/_generate.sh"
+    # shellcheck disable=SC2097
     SHELL_TYPE=$SHELL_TYPE "$gensh" "$XDG_CACHE_HOME/environment/$SHELL_TYPE"
+    # shellcheck disable=SC1090
     . "$XDG_CACHE_HOME/environment/$SHELL_TYPE"
 }
 

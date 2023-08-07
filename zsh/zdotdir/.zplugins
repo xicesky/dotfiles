@@ -2,8 +2,13 @@
 # .zplugins - antidote plugins file
 #
 
+# See:
+#   https://getantidote.github.io/usage
+
+
 # Pre-reqs
-mattmc3/zephyr path:plugins/zfunctions
+# replaces mattmc3/zephyr path:plugins/zfunctions
+$SKY_DOTFILES/zsh/plugins/zfunctions
 
 # Clone-only utils
 # mbadolato/iTerm2-Color-Schemes kind:clone
