@@ -15,6 +15,14 @@ The only file required to be in your home directory is the `.zshenv`, which sets
 [source,bash]
 ----
 cd ~
+
+# Step 1: Backup...
+backupdir=_backup/$(datetag)-zsh
+mkdir -p "$backupdir"
+find . -maxdepth 1 -iname ".z*" -type l -exec mv {} "$backupdir" \;
+cp .z* "$backupdir"
+
+# Step 2: Install
 [[ -f .zshenv ]] || ln -s ~/_dotfiles/zsh/.zshenv
 
 mkdir -p ~/.config/zsh
@@ -30,6 +38,10 @@ done < <(
 # See https://github.com/mattmc3/zephyr/tree/main/plugins/zfunctions
 # We might want to add this to _dotfiles later...
 mkdir .config/zsh/functions
+
+# Step 3: Restore history
+mkdir -p ~/.local/share/zsh
+mv .zsh_history .local/share/zsh/zsh_history
 
 ----
 
