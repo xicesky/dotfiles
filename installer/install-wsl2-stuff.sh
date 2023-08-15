@@ -155,6 +155,8 @@ setup_wsl2_dirs() {
 }
 
 setup_wsl2-ssh-pageant() {
+    # DEPRECATED, using ssh-agent instead
+
     # FIXME: https://polansky.co/blog/a-better-windows-wsl-openssh-experience/
     # Make pageant available via
     # https://github.com/BlackReloaded/wsl2-ssh-pageant
@@ -175,9 +177,8 @@ setup_wsl2-ssh-pageant() {
 # During the initial installtion, we don't have bashrc and zshrc to load
 # the wsl2-ssh-pageant support - so we use this function will enable this once
 init_wsl2-ssh-pageant() {
-    # .zshrc.local does this:
-    #test -e "${HOME}/bin/my-ssh-pageant.sh" && eval $(${HOME}/bin/my-ssh-pageant.sh)
-    # But we don't have "my-ssh-pageant.ssh" either...
+    # DEPRECATED, using ssh-agent instead
+
     SOCK="$HOME/.ssh/agent.sock"
     WSL2_SSH_PAGEANT_BIN="$HOME/bin/wsl2-ssh-pageant.exe"
 
@@ -239,8 +240,8 @@ install_dotfiles() {
         lins "../_dotfiles/bin/$i" ~/bin || return 1
     done
     # FIXME?
-    if [[ ! -e "bin/my-ssh-pageant.sh" ]] ; then
-        invoke ln -s ../_dotfiles/bin/wsl2-ssh-pageant.sh bin/my-ssh-pageant.sh || return 1
+    if [[ ! -e "bin/my-ssh-agent.eval.sh" ]] ; then
+        invoke ln -s ../_dotfiles/ssh/ssh-agent-scripts/wsl2-ssh-agent-relay.eval.sh bin/my-ssh-agent.eval.sh || return 1
     fi
     # Others config
     lins "_dotfiles"/{vim/.vim,vim/.vimrc,git/.gitconfig,tmux/.tmux.conf} ~ || return 1
@@ -296,19 +297,17 @@ reboot_message() {
 ################################################################################
 # Main, argparsing and commands
 
-cmd_init-ssh-pageant() {
-    invoke install_prereqs || return 1
-    invoke setup_wsl2_dirs || return 1
-    invoke setup_wsl2-ssh-pageant || return 1
-    invoke init_wsl2-ssh-pageant || return 1
-}
+# cmd_init-ssh-pageant() {
+#     invoke install_prereqs || return 1
+#     invoke setup_wsl2_dirs || return 1
+#     invoke setup_wsl2-ssh-pageant || return 1
+#     invoke init_wsl2-ssh-pageant || return 1
+# }
 
 cmd_install() {
     invoke install_prereqs || return 1
     invoke setup_wsl2_dirs || return 1
     invoke enable_wsl2_systemd || return 1
-    # Don't install by default, we need to deprecate this
-    # invoke setup_wsl2-ssh-pageant || return 1
     invoke update_dotfiles || return 1
     install_dotfiles || return 1
     install_tools_debian || return 1
@@ -340,7 +339,6 @@ usage() {
     echo "    --help  Show usage and exit"
     echo ""
     echo "Available commands:"
-    echo "    init-ssh-pageant"
     echo "    install"
     echo "    install-tools"
     echo "    help    Show usage and exit"

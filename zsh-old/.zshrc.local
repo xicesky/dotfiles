@@ -273,9 +273,10 @@ fi
 HISTSIZE=10000
 SAVEHIST=10000
 
-# ssh-pageant
+# OLD ssh-pageant behaviour - DEPRECATED
 #eval $(/usr/bin/ssh-pageant -ra /tmp/.ssh-pageant)
-test -e "${HOME}/bin/my-ssh-pageant.sh" && eval $(${HOME}/bin/my-ssh-pageant.sh)
+#test -e "${HOME}/bin/my-ssh-pageant.sh" && eval $(${HOME}/bin/my-ssh-pageant.sh)
+test -e "${HOME}/bin/my-ssh-agent.eval.sh" && eval $(${HOME}/bin/my-ssh-agent.eval.sh)
 
 # gpg tty - see man 1 gpg-agent
 GPG_TTY=$(tty)
