@@ -21,14 +21,14 @@
 	prompt = false
 [difftool "winmerge"]
 	name = WinMerge
-	trustExitCode = true
-	cmd = "/c/Program\\ Files/WinMerge/WinMergeU.exe" -u -e $LOCAL $REMOTE
+    trustExitCode = true
+    cmd = "winmerge" -u -e $LOCAL $REMOTE
 [difftool "vimdiff"]
 	cmd = vim -f -d -c \"wincmd l\" -c 'cd \"$GIT_PREFIX\"' \"$LOCAL\" \"$REMOTE\"
 [mergetool "winmerge"]
     name = WinMerge
     trustExitCode = true
-    cmd = "/c/Program\\ Files/WinMerge/WinMergeU.exe" -u -e -dl \"Local\" -dr \"Remote\" \"$LOCAL\" \"$BASE\" \"$REMOTE\" -o \"$MERGED\"
+    cmd = "winmerge" -u -e -dl \"Local\" -dr \"Remote\" \"$LOCAL\" \"$BASE\" \"$REMOTE\" -o \"$MERGED\"
 [alias]
 	st = status
 	d = difftool
