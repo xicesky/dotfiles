@@ -48,7 +48,7 @@ load-config() {
     kalt*-qa)   config-for-sp-prod  "customer-687399150" kaltenbach-mipserver ;;
     #kalt*-prod) config-for-sp-prod  "customer-687399151" kaltenbach-mipserver ;;
     gewo*-qa)   config-for-sp-prod  "customer-687399170" gewofag-mipserver ;;
-    #gewo*-prod) config-for-sp-prod  "customer-687399171" gewofag-mipserver ;;
+    gewo*-prod) config-for-sp-prod  "customer-687399171" gewofag-mipserver ;;
     solu*-qa)   config-for-sp-prod  "customer-687399180" soluvia-mipserver ;;
     #solu*-prod) config-for-sp-prod  "customer-687399181" soluvia-mipserver ;;
 
