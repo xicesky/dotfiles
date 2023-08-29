@@ -1,6 +1,6 @@
 [submodule "fonts/source-code-pro"]
 	path = fonts/source-code-pro
-	url = git@github.com:adobe-fonts/source-code-pro.git
+	url = https://github.com/adobe-fonts/source-code-pro.git
 	branch = release
 [submodule "vim/.vim/bundle/vim-pathogen"]
 	path = vim/.vim/bundle/vim-pathogen
@@ -25,4 +25,4 @@
 	url = https://github.com/edwinb/idris2-vim
 [submodule "thirdparty/grml/grml-etc-core"]
 	path = thirdparty/grml/grml-etc-core
-	url = git@github.com:grml/grml-etc-core
+	url = https://github.com/grml/grml-etc-core
