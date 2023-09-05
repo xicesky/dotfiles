@@ -214,6 +214,13 @@ enable_wsl2_systemd() {
         echo "[boot]"
         echo "systemd=true"
     } | sudo sh -c 'cat >/etc/wsl.conf'
+
+    # FIXME: Do this via sed
+    # Fix max open files in wsl2
+    # https://stackoverflow.com/questions/63960859/how-can-i-raise-the-limit-for-open-files-in-ubuntu-20-04-on-wsl2
+    # vi /etc/systemd/user.conf
+    # Add the following line
+    # DefaultLimitNOFILE=65535
 }
 
 update_dotfiles() {
