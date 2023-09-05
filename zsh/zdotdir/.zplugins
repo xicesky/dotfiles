@@ -20,7 +20,7 @@ mattmc3/zephyr path:plugins/color
 # replaces mattmc3/zephyr path:plugins/directory
 $SKY_DOTFILES/zsh/plugins/directory
 
-# mattmc3/zephyr path:plugins/editor
+mattmc3/zephyr path:plugins/editor
 # replaces mattmc3/zephyr path:plugins/history
 $SKY_DOTFILES/zsh/plugins/history
 
