@@ -27,6 +27,8 @@ elif grep -qi microsoft /proc/version ; then
     elif [[ "$#" -eq 0 ]] ; then
         # This works for directories and documents, not for programs with arguments
         explorer.exe "$(wslpath -w "$target")"
+        # Ignore exit code, see https://github.com/microsoft/WSL/issues/6565
+        true
     else
         # Fallback to job mgmt - FIXME
         nohup "$target" "$@" &
