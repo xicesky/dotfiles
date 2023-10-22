@@ -5,6 +5,20 @@
 #
 
 #
+# Requirements
+#
+
+# Return if requirements are not found.
+[[ "$TERM" != 'dumb' ]] || return 1
+0=${(%):-%N}
+
+#
+# External
+#
+
+source ${0:A:h}/external/prezto_directory.zsh
+
+#
 # Options
 #
 
@@ -33,12 +47,10 @@ setopt multios                 # Write to multiple descriptors.
 
 if ! zstyle -t ':zephyr:plugin:directory:alias' skip; then
   # directory aliases
-  alias -- -='cd -'
+  unalias d 2>/dev/null
   alias dirh='dirs -v'
 
   for index in {1..9}; do
-    # dirstack aliases (eg: "2"="cd 2")
-    alias "$index"="cd +${index}"
     # backref aliases (eg: "..3"="../../..")
     alias -g "..$index"=$(printf '../%.0s' {1..$index})
   done
