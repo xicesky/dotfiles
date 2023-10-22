@@ -47,10 +47,10 @@ setopt NO_flow_control      # Disable start/stop characters in shell editor.
 
 fpath=(
   # Add curl completions from homebrew.
-  /{usr/local,opt/homebrew}/opt/curl/share/zsh/site-functions(-/FN)
+  /{usr/local,opt/homebrew,home/linuxbrew/.linuxbrew}/opt/curl/share/zsh/site-functions(-/FN)
 
   # Add zsh completions.
-  /{usr/local,opt/homebrew}/share/zsh/site-functions(-/FN)
+  /{usr/local,opt/homebrew,home/linuxbrew/.linuxbrew}/share/zsh/site-functions(-/FN)
 
   # Add custom completions.
   ${ZDOTDIR:-${XDG_CONFIG_HOME:-$HOME/.config}/zsh}/completions(-/FN)
