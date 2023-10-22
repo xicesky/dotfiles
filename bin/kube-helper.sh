@@ -2,13 +2,15 @@
 
 KUBE_CONFIG_FILE="${KUBE_CONFIG_FILE:-config}"
 KUBE_NAMESPACE="${KUBE_NAMESPACE:-default}"
-SPCUSTOMER="${SPCUSTOMER:-"customer-687399035"}"
-MIPSERVER_DEFAULT_CONTAINER="mipserver-fla"
+SPCUSTOMER=""
+MIPSERVER_STS=""
+MIPSERVER_DEFAULT_CONTAINER=""
 
 config-for-sp() {
     KUBE_CONFIG_FILE="config-az-mx-dev.yaml"
     SPCUSTOMER="$1"
     KUBE_NAMESPACE="$SPCUSTOMER"
+    MIPSERVER_STS="${2:-mipserver-$SPCUSTOMER}"
     MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver-fla}"
 }
 
@@ -16,6 +18,7 @@ config-for-sp-prod() {
     KUBE_CONFIG_FILE="config-az-mx-prod.yaml"
     SPCUSTOMER="$1"
     KUBE_NAMESPACE="$SPCUSTOMER"
+    MIPSERVER_STS="${2:-mipserver-$SPCUSTOMER}"
     MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver-fla}"
 }
 
@@ -23,38 +26,48 @@ config-for-local-k3d() {
     KUBE_CONFIG_FILE="config-local-k3d-default.yaml"
     SPCUSTOMER=""
     KUBE_NAMESPACE="default"
-    MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver-fla}"
+    MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver}"
 }
 
 config-for-qub1c() {
     KUBE_CONFIG_FILE="config-qub1c.yaml"
     SPCUSTOMER=""
     KUBE_NAMESPACE="default"
-    MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver-fla}"
+    MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver}"
+}
+
+config-for-nbb() {
+    KUBE_CONFIG_FILE="config-az-nbb.yaml"
+    SPCUSTOMER=""
+    KUBE_NAMESPACE="$1"
+    MIPSERVER_STS="${2:-mipserver-mwm-dev}"
+    MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver-mwm-dev}"
 }
 
 load-config() {
     case "$1" in
-    flsa*)      config-for-sp "customer-687399035" ;;
+    flsa*)              config-for-sp "customer-687399035" ;;
 
-    ochs*-qa)   config-for-sp-prod  "customer-687399031" ;;
-    ochs*-prod) config-for-sp-prod  "customer-687399036" ;;
-    ochs*)      config-for-sp       "customer-687399036" ;;
+    ochs*-qa)           config-for-sp-prod  "customer-687399031" ;;
+    ochs*-prod)         config-for-sp-prod  "customer-687399036" ;;
+    ochs*)              config-for-sp       "customer-687399036" ;;
 
-    harg*-qa)   config-for-sp-prod  "customer-687399110" ;;
-    #harg*-prd)  config-for-sp-prod  "customer-687399111" ;;
-    #harg*)      config-for-sp      "customer-687399110" ;;
+    harg*-qa)           config-for-sp-prod  "customer-687399110" ;;
+    #harg*-prd)          config-for-sp-prod  "customer-687399111" ;;
+    #harg*)              config-for-sp      "customer-687399110" ;;
 
-    kalt*-qa)   config-for-sp-prod  "customer-687399150" kaltenbach-mipserver ;;
-    #kalt*-prod) config-for-sp-prod  "customer-687399151" kaltenbach-mipserver ;;
-    gewo*-qa)   config-for-sp-prod  "customer-687399170" gewofag-mipserver ;;
-    gewo*-prod) config-for-sp-prod  "customer-687399171" gewofag-mipserver ;;
-    solu*-qa)   config-for-sp-prod  "customer-687399180" soluvia-mipserver ;;
-    #solu*-prod) config-for-sp-prod  "customer-687399181" soluvia-mipserver ;;
+    kalt*-qa)           config-for-sp-prod  "customer-687399150" kaltenbach-mipserver ;;
+    #kalt*-prod)         config-for-sp-prod  "customer-687399151" kaltenbach-mipserver ;;
+    gewo*-qa)           config-for-sp-prod  "customer-687399170" gewofag-mipserver ;;
+    gewo*-prod)         config-for-sp-prod  "customer-687399171" gewofag-mipserver ;;
+    solu*-qa)           config-for-sp-prod  "customer-687399180" soluvia-mipserver ;;
+    #solu*-prod)         config-for-sp-prod  "customer-687399181" soluvia-mipserver ;;
 
     customer-*-qa)      config-for-sp-prod "$1" ;;
     customer-*-prod)    config-for-sp-prod "$1" ;;
     customer-*)         config-for-sp "$1" ;;
+
+    nbb-dev)            config-for-nbb "mwm-dev" "mipserver-mwm-dev" ;;
 
     qub1c)              config-for-qub1c "$1" ;;
     local*)             config-for-local-k3d "$1" ;;
@@ -137,12 +150,13 @@ kmipexec() {
     done
 
     [[ -z "$pod" && -n "$SPCUSTOMER" ]] && pod="mipserver-${SPCUSTOMER}-0"
+    [[ -z "$pod" && -n "$MIPSERVER_STS" ]] && pod="${MIPSERVER_STS}-0"
     if [[ -z "$pod" ]] ; then
         echo "No pod name provided and no serviceplatform customer (SPCUSTOMER variable) set." 1>&2
         kmipexec_usage 1>&2
         return 1
     fi
-    [[ -z "$container" && -n "$SPCUSTOMER" ]] && container="$MIPSERVER_DEFAULT_CONTAINER"
+    [[ -z "$container" && -n "$MIPSERVER_DEFAULT_CONTAINER" ]] && container="$MIPSERVER_DEFAULT_CONTAINER"
     if [[ -z "$container" ]] ; then
         echo "No container name provided and no serviceplatform customer (SPCUSTOMER variable) set." 1>&2
         kmipexec_usage 1>&2
@@ -167,6 +181,7 @@ cmd_print() {
     echo "export KUBECONFIG=~/.kube/$KUBE_CONFIG_FILE"
     echo "export KUBE_NAMESPACE=\"$KUBE_NAMESPACE\""
     echo "export SPCUSTOMER=\"$SPCUSTOMER\""
+    echo "export MIPSERVER_STS=\"$MIPSERVER_STS\""
     echo "export MIPSERVER_DEFAULT_CONTAINER=\"$MIPSERVER_DEFAULT_CONTAINER\""
 
     ship-bash-function kube "kubctl alias with namespace"
