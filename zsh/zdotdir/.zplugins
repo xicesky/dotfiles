@@ -58,6 +58,7 @@ mattmc3/zephyr path:plugins/completion
 # mattmc3/zephyr path:plugins/confd
 
 # deferred plugins
-zdharma-continuum/fast-syntax-highlighting kind:defer
+#zdharma-continuum/fast-syntax-highlighting kind:defer # Too slow
+#zsh-users/zsh-syntax-highlighting kind:defer # Also somewhat slow
 zsh-users/zsh-autosuggestions kind:defer
 zsh-users/zsh-history-substring-search kind:defer
