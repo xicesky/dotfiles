@@ -50,14 +50,19 @@ load-config() {
 
     ochs*-qa)           config-for-sp-prod  "customer-687399031" ;;
     ochs*-prod)         config-for-sp-prod  "customer-687399036" ;;
-    ochs*)              config-for-sp       "customer-687399036" ;;
+    ochs*-dev)          config-for-sp       "customer-687399036" ;;
+
+    bwtd*-qa)           config-for-sp-prod  "customer-687399060" "bwt-de-mipserver" ;;
+    bwtd*-prod)         config-for-sp-prod  "customer-687399061" "bwt-de-mipserver" ;;
+    bwta*-qa)           config-for-sp-prod  "customer-687399200" "bwt-at-mipserver" ;;
+    bwta*-prod)         config-for-sp-prod  "customer-687399201" "bwt-at-mipserver" ;;
 
     harg*-qa)           config-for-sp-prod  "customer-687399110" ;;
-    #harg*-prd)          config-for-sp-prod  "customer-687399111" ;;
+    #harg*-prpd)         config-for-sp-prod  "customer-687399111" ;;
     #harg*)              config-for-sp      "customer-687399110" ;;
 
     kalt*-qa)           config-for-sp-prod  "customer-687399150" kaltenbach-mipserver ;;
-    #kalt*-prod)         config-for-sp-prod  "customer-687399151" kaltenbach-mipserver ;;
+    kalt*-prod)         config-for-sp-prod  "customer-687399151" kaltenbach-mipserver ;;
     gewo*-qa)           config-for-sp-prod  "customer-687399170" gewofag-mipserver ;;
     gewo*-prod)         config-for-sp-prod  "customer-687399171" gewofag-mipserver ;;
     solu*-qa)           config-for-sp-prod  "customer-687399180" soluvia-mipserver ;;
