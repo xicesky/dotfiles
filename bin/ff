@@ -38,6 +38,12 @@ add-skip-dirs() {
     done
 }
 
+add-skip-files() {
+    for i in "$@" ; do
+        gnufindskipargs+=( \( -type f -iname "$i" -prune \) -o )
+    done
+}
+
 main() {
     # Some options are allowed before the path
     while [[ $# -gt 0 ]] ; do
@@ -156,6 +162,7 @@ main() {
     if $skip_target ; then
         add-skip-dirs 'target'
     fi
+    add-skip-files '*.cjs'
     # Regex match for wildfly dir
     gnufindskipargs+=( \( -type d -iregex '.*/wildfly-([[:digit:]]+\.)*[[:digit:]]+(\.final)?' -prune \) -o )
 
