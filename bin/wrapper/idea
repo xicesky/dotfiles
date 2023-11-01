@@ -2,29 +2,37 @@
 
 declare -g IDEA_EXECUTABLE="${IDEA_EXECUTABLE:-}"
 
+if ! type -P get-windows-env >/dev/null 2>&1 ; then
+    get-windows-env() {
+        return 1
+    }
+fi
+
 find-idea() {
     declare current
     if [[ -x "$IDEA_EXECUTABLE" ]] ; then
         echo "$IDEA_EXECUTABLE"
         return 0
     fi
-    current="$(which idea64.exe 2>/dev/null)"
+    current="$(type -P idea64.exe 2>/dev/null)" && \
     [[ -x "$current" ]] && { echo "$current"; return 0; }
-    current="$(which idea.bat 2>/dev/null)"
-    current="$(dirname "$current")/idea64.exe"
+    current="$(type -P idea.bat 2>/dev/null)" && \
+    current="$(dirname "$current")/idea64.exe" && \
     [[ -x "$current" ]] && { echo "$current"; return 0; }
 
-    current="$(get-windows-env -p PROGRAMFILES)/JetBrains"
-    current="$(find "$current" -mindepth 1 -maxdepth 1 -iname '*IDEA*'|head -n 1)"
-    current="$current/bin/idea64.exe"
-    [[ -x "$current" ]] && { echo "$current"; return 0; }
+    current="$(get-windows-env -p PROGRAMFILES)/JetBrains" && \
+    if [[ -d "$current" ]] ; then
+        current="$(find "$current" -mindepth 1 -maxdepth 1 -iname '*IDEA*'|head -n 1)"
+        current="$current/bin/idea64.exe"
+        [[ -x "$current" ]] && { echo "$current"; return 0; }
+    fi
 
     return 1
 }
 
 IDEA_EXECUTABLE="$(find-idea)" || {
     echo "Could not find idea executable." 1>&2
-    return 1
+    exit 1
 }
 
 # On wsl2 we need to use the windows environment via powershell

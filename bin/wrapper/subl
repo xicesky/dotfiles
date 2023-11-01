@@ -1,4 +1,41 @@
-#!/bin/sh
+#!/bin/bash
+set -x
 
-"/c/Program Files/Sublime Text 3/subl.exe" "$@"
+declare -g SUBLIME_TEXT_EXECUTABLE="${SUBLIME_TEXT_EXECUTABLE:-}"
 
+if ! type -P get-windows-env >/dev/null 2>&1 ; then
+    get-windows-env() {
+        return 1
+    }
+fi
+
+find-sublime-text() {
+    declare current
+    if [[ -x "$SUBLIME_TEXT_EXECUTABLE" ]] ; then
+        echo "$SUBLIME_TEXT_EXECUTABLE"
+        return 0
+    fi
+    current="$(type -P subl.exe 2>/dev/null)" && \
+    [[ -x "$current" ]] && { echo "$current"; return 0; }
+    current="$(type -P sublime_text.exe 2>/dev/null)" && \
+    current="$(dirname "$current")/subl.exe" && \
+    [[ -x "$current" ]] && { echo "$current"; return 0; }
+
+    current="$(get-windows-env -p PROGRAMFILES)/Sublime Text 3/subl.exe" && \
+    [[ -x "$current" ]] && { echo "$current"; return 0; }
+
+    return 1
+}
+
+SUBLIME_TEXT_EXECUTABLE="$(find-sublime-text)" || {
+    echo "Could not find sublime text executable." 1>&2
+    exit 1
+}
+
+# On wsl2 we need to use the windows environment via powershell
+if grep -qi microsoft /proc/version ; then
+    # FIXME: We might need to escape the arguments properly here
+    powershell.exe -Command "Start-Process" \""$(wslpath -wa "$SUBLIME_TEXT_EXECUTABLE")"\" "$@"
+else
+    "$SUBLIME_TEXT_EXECUTABLE" "$@"
+fi
