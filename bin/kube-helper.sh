@@ -22,6 +22,13 @@ config-for-sp-prod() {
     MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver-fla}"
 }
 
+config-for-mx-internal() {
+    KUBE_CONFIG_FILE="config-mx-internal.yaml"
+    KUBE_NAMESPACE="vt-integration"
+    MIPSERVER_STS="prd-vt-integration-dispatchx-mipserver"
+    MIPSERVER_DEFAULT_CONTAINER="dispatchx-mipserver"
+}
+
 config-for-local-k3d() {
     KUBE_CONFIG_FILE="config-local-k3d-default.yaml"
     SPCUSTOMER=""
@@ -74,6 +81,7 @@ load-config() {
 
     nbb-dev)            config-for-nbb "mwm-dev" "mipserver-mwm-dev" ;;
 
+    prd-vti)            config-for-mx-internal "vt-integration" ;;
     qub1c)              config-for-qub1c "$1" ;;
     local*)             config-for-local-k3d "$1" ;;
     *)                  return 1 ;;
