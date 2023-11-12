@@ -43,6 +43,9 @@ mkdir .config/zsh/functions
 mkdir -p ~/.local/share/zsh
 mv .zsh_history .local/share/zsh/zsh_history
 
+# Configure to taste
+p10k configure
+
 ----
 
 == TODO
