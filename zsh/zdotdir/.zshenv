@@ -51,7 +51,7 @@ function _sky_loadenv() {
     fi
 }
 
-# May have to run this again later on some systems (e.g. OSX)
+# May have to run this again later on some systems (e.g. OSX, mingw, msys2)
 _sky_loadenv
 
 # Temporary, just for timing zsh startup

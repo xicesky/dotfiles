@@ -10,7 +10,7 @@ exec_all() {
         # shellcheck disable=SC1090
         source "$file"
     done < <(
-        find "$SRC_DIR" -mindepth 1 -maxdepth 1 \( -iname "_*" \) -o \( -print0 \) | sort -z
+        find "$SRC_DIR" -mindepth 1 -maxdepth 1 -iname "*.sh" -a \( \( -iname "_*" \) -o \( -print0 \) \) | sort -z
     )
 }
 

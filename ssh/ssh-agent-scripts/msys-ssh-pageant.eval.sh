@@ -37,5 +37,12 @@ ERR=$(sp 2>&1 1>"$FN") || {
     fi
 }
 
-cat "$FN"
+# The output of ssh-pageant is something like:
+#     SSH_AUTH_SOCK='/tmp/.ssh-pageant-dangl'; export SSH_AUTH_SOCK;
+#     SSH_PAGEANT_PID=2890; export SSH_PAGEANT_PID;
+#     echo ssh-pageant pid 2890;
+#     ssh-pageant pid 2890
+# We'd like to omit the 'echo' command
+cat "$FN" | sed -E -e '/^echo ssh-pageant pid [0-9]+;/d'
+#echo "$FN" 1>&2
 rm "$FN"

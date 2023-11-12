@@ -57,6 +57,9 @@ fi
 # Load system-dependent hacks, if any
 [[ -r "$HOME/.zshrc.haxx" ]] && source "$HOME/.zshrc.haxx"
 
+# Load ssh-agent
+load-ssh-agent
+
 # Temporary, just for timing zsh startup
 [[ -z "$ZPROFRC" ]] || echo "$(date +"%T.%N") EXIT  \$ZDOTDIR/.zshrc"
 
