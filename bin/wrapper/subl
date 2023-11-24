@@ -1,5 +1,4 @@
 #!/bin/bash
-set -x
 
 declare -g SUBLIME_TEXT_EXECUTABLE="${SUBLIME_TEXT_EXECUTABLE:-}"
 
