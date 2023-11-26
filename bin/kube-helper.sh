@@ -147,6 +147,28 @@ kmipexec_usage() {
     [[ -n "$1" ]] && { echo "    container defaults to: $1"; shift; }
 }
 
+_kmip_pod_name() {
+    declare pod="$1"
+    [[ -z "$pod" && -n "$SPCUSTOMER" ]] && pod="mipserver-${SPCUSTOMER}-0"
+    [[ -z "$pod" && -n "$MIPSERVER_STS" ]] && pod="${MIPSERVER_STS}-0"
+    if [[ -z "$pod" ]] ; then
+        echo "No pod name provided and no serviceplatform customer (SPCUSTOMER variable) set." 1>&2
+        return 1
+    fi
+    echo "$pod"
+}
+
+_kmip_container_name() {
+    declare container="$1"
+    [[ -z "$container" && -n "$MIPSERVER_DEFAULT_CONTAINER" ]] && container="$MIPSERVER_DEFAULT_CONTAINER"
+
+    if [[ -z "$container" ]] ; then
+        echo "No container name provided and no serviceplatform customer (SPCUSTOMER variable) set." 1>&2
+        return 1
+    fi
+    echo "$container"
+}
+
 # execute command on mipserver pod
 kmipexec() {
     declare pod=""
@@ -162,31 +184,48 @@ kmipexec() {
         esac
     done
 
-    [[ -z "$pod" && -n "$SPCUSTOMER" ]] && pod="mipserver-${SPCUSTOMER}-0"
-    [[ -z "$pod" && -n "$MIPSERVER_STS" ]] && pod="${MIPSERVER_STS}-0"
-    if [[ -z "$pod" ]] ; then
-        echo "No pod name provided and no serviceplatform customer (SPCUSTOMER variable) set." 1>&2
-        kmipexec_usage 1>&2
-        return 1
-    fi
-    [[ -z "$container" && -n "$MIPSERVER_DEFAULT_CONTAINER" ]] && container="$MIPSERVER_DEFAULT_CONTAINER"
-    if [[ -z "$container" ]] ; then
-        echo "No container name provided and no serviceplatform customer (SPCUSTOMER variable) set." 1>&2
-        kmipexec_usage 1>&2
-        return 1
-    fi
+    pod="$(_kmip_pod_name "$pod")" || { kmipexec_usage 1>&2; return 1; }
+    container="$(_kmip_container_name "$container")" || { kmipexec_usage 1>&2; return 1; }
+
     [[ "$#" -lt 1 ]] && {
         kmipexec_usage "$pod" "$container" 1>&2
         return 1
     }
-    MSYS2_ARG_CONV_EXCL="*" kube exec "$pod" -it -c "$container" -- "$@";
+    kube exec "$pod" -it -c "$container" -- "$@";
 }
 
 kmipdebug() {
     declare pod=""
     [[ "$1" = --pod || "$1" == -p ]] && { shift; pod="$1"; shift; }
-    [[ -z "$pod" && -n "$SPCUSTOMER" ]] && pod="mipserver-${SPCUSTOMER}-0"
+    pod="$(_kmip_pod_name "$pod")" || { return 1; }
+    #[[ -z "$pod" && -n "$SPCUSTOMER" ]] && pod="mipserver-${SPCUSTOMER}-0"
     kube port-forward "$pod" 8787:8787
+}
+
+kmiplogs() {
+    declare pod=""
+    declare container=""    # previously always "dispatchx-mipserver", now varies
+    # TODO: handle --since and --tail, defaulting to --tail=1000 --since=10m
+    declare -a kubectl_args=()
+
+    # Parse arguments
+    while [[ $# -gt 0 ]] ; do
+        if [[ "$1" == '--' || "$1" != -* ]] ; then break; fi
+        arg="$1"; shift
+        case "$arg" in
+        --pod|-p)           pod="$1"; shift ;;
+        --container|-c)     container="$1"; shift ;;
+        --since*|--tail*|-f)
+                            kubectl_args+=("$arg")
+            ;;
+        esac
+    done
+
+    pod="$(_kmip_pod_name "$pod")" || { return 1; }
+    container="$(_kmip_container_name "$container")" || { return 1; }
+    # Grep needs to find lines that are json, but not outputs from jboss-cli like `{"outcome" => "success"}`
+    kube logs "$pod" -c "$container" "${kubectl_args[@]}" | grep -Pe '^\{(?!"outcome"\s*=>).*\}\s*$' \
+        #| jq -r 'select(.loggerName | contains("AvailabilityTimeMerger") | not) | select(.message | contains("No not done journal") | not) | [.level, .timestamp, .message] | join(" | ")'
 }
 
 cmd_print() {
@@ -198,8 +237,11 @@ cmd_print() {
     echo "export MIPSERVER_DEFAULT_CONTAINER=\"$MIPSERVER_DEFAULT_CONTAINER\""
 
     ship-bash-function kube "kubctl alias with namespace"
+    ship-bash-function _kmip_pod_name "internal use only"
+    ship-bash-function _kmip_container_name "internal use only"
     ship-bash-function kmipexec_usage "usage for kmipexec"
     ship-bash-function kmipexec "execute command on mipserver pod"
+    ship-bash-function kmiplogs "get logs of mipserver pod"
     ship-bash-function kmipdebug "foward port 8787"
 }
 
