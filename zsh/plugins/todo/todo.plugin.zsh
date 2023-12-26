@@ -224,41 +224,11 @@ if false ; then
     # load the lookup subsystem if it's available on the system
     zrcautoload lookupinit && lookupinit
 
-    #f5# Create Directory and \kbd{cd} to it
-    function mkcd () {
-        if (( ARGC != 1 )); then
-            printf 'usage: mkcd <new-directory>\n'
-            return 1;
-        fi
-        if [[ ! -d "$1" ]]; then
-            command mkdir -p "$1"
-        else
-            printf '`%s'\'' already exists: cd-ing.\n' "$1"
-        fi
-        builtin cd "$1"
-    }
-
     # TODO: From .zshrc.local
     function virtual_env_prompt () {
         REPLY=${VIRTUAL_ENV+(${VIRTUAL_ENV:t}) }
     }
     grml_theme_add_token  virtual-env -f virtual_env_prompt '%F{magenta}' '%f'
     zstyle ':prompt:grml:left:setup' items rc virtual-env change-root user at host path vcs percent
-
-    # just type '...' to get '../..'
-    rationalise-dot() {
-    local MATCH
-    if [[ $LBUFFER =~ '(^|/| |	|'$'\n''|\||;|&)\.\.$' ]]; then
-    LBUFFER+=/
-    zle self-insert
-    zle self-insert
-    else
-    zle self-insert
-    fi
-    }
-    zle -N rationalise-dot
-    bindkey . rationalise-dot
-    # without this, typing a . aborts incremental history search
-    bindkey -M isearch . self-insert
 
 fi

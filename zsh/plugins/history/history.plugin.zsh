@@ -52,6 +52,11 @@ if ! zstyle -t ':zephyr:plugin:history:alias' skip; then
   alias history-stat="history 0 | awk '{print \$2}' | sort | uniq -c | sort -n -r | head"
 fi
 
+# Load history search module
+autoload -U history-search-end
+zle -N history-beginning-search-backward-end history-search-end
+zle -N history-beginning-search-forward-end  history-search-end
+
 #
 # Wrap up
 #

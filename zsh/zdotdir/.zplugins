@@ -61,6 +61,9 @@ $SKY_DOTFILES/zsh/plugins/completion
 
 # mattmc3/zephyr path:plugins/confd
 
+# FIXME: Can't move up, something kills the keybinds???
+$SKY_DOTFILES/zsh/plugins/keybinds
+
 # deferred plugins
 #zdharma-continuum/fast-syntax-highlighting kind:defer # Too slow
 #zdharma/fast-syntax-highlighting kind:defer # Too slow
