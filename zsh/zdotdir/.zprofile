@@ -1,6 +1,6 @@
 #!/usr/bin/zsh
 #
-# .zshrc - Run on login Zsh session.
+# .zprofile - Run on login Zsh session.
 #
 
 # Temporary, just for timing zsh startup
