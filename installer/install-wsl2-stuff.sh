@@ -1,5 +1,4 @@
 #!/bin/bash
-# Basic bash script scaffold
 
 ################################################################################
 # Verbosity, command logging
@@ -126,6 +125,7 @@ lins() {
     declare bn
     for i in "${sources[@]}" ; do
         bn="$(basename "$i")"
+        # FIXME: Check that source exists
         if [[ -e "$target/$bn" ]] ; then
             echo "$target/$bn already exists." 1>&2
             continue
@@ -250,9 +250,11 @@ install_dotfiles() {
     if [[ ! -e "bin/my-ssh-agent.eval.sh" ]] ; then
         invoke ln -s ../_dotfiles/ssh/ssh-agent-scripts/wsl2-ssh-agent-relay.eval.sh bin/my-ssh-agent.eval.sh || return 1
     fi
-    # Others config
-    lins "_dotfiles"/{vim/.vim,vim/.vimrc,git/.gitconfig,tmux/.tmux.conf} ~ || return 1
-    lins "_dotfiles/zsh"/{.zprofile,.zsh.path,.zshenv,.zshrc,.zshrc.local} ~ || return 1
+    lins "_dotfiles"/{vim/.vim,vim/.vimrc,git/.gitconfig,tmux/.tmux.conf,zsh/.zshenv} ~ || return 1
+
+    lins "_dotfiles/zsh/.zshenv" ~ || return 1
+    mkdir -p ~/.config/zsh
+    lins _dotfiles/zsh/zdotdir/* ~/.config/zsh || return 1
 }
 
 install_homebrew() {

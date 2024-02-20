@@ -14,10 +14,19 @@ exec_all() {
     )
 }
 
-if [[ $MY_OSTYPE = MINGW* || $MY_OSTYPE = MSYS* ]] ; then
-    mkdir -p /var/lock
+# FIXME: Isn't /run/lock the new standard? If yes, prefer it over /var/lock!
+LOCKDIR="$(readlink -f "/var/lock")"
+if [[ ! -w "$LOCKDIR" ]] ; then
+    LOCKDIR="$HOME/.var/lock"
+    if [[ ! -e "$LOCKDIR" ]] ; then
+        mkdir -p "$LOCKDIR" || { echo "Could not mkdir " >&2; exit 1; }
+    fi
 fi
-LOCKFILE="/var/lock/sky-dotfiles-$(basename "$0")"
+if [[ $MY_OSTYPE = MINGW* || $MY_OSTYPE = MSYS* ]] ; then
+    mkdir -p "$LOCKDIR" || { echo "Could not mkdir " >&2; exit 1; }
+fi
+
+LOCKFILE="$LOCKDIR/sky-dotfiles-$(basename "$0")"
 LOCKFD=9 #LOCKFD=99 # 99 doesn't work on mingw / msys2
 _lock()             { flock "-$1" $LOCKFD; }
 _release_lock()     { _lock u; _lock xn && rm -f "$LOCKFILE"; }
