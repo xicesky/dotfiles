@@ -145,6 +145,13 @@ install_dotfiles() {
     lins "${SOURCES[@]}" ~/.config/zsh || return 1
 }
 
+change_shell() {
+    echo "" >&2
+    echo "WARNING: Changing shell on steam deck will break the steam gaming mode somehow." >&2
+    echo "         Not changing shell for now." >&2
+    #invoke chsh -s /usr/bin/zsh || return 1
+}
+
 ################################################################################
 # Main, argparsing and commands
 
@@ -154,6 +161,7 @@ cmd_install() {
     install_dotfiles || return 1
     # TODO: Homebrew
     # invoke install_homebrew || return 1
+    change_shell || return 1
 }
 
 cmd_help() {

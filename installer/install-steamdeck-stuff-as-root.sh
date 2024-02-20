@@ -1,22 +1,14 @@
 #!/bin/sh
 
-## Most important
-pacman -S etckeeper
-git config --global user.name "Markus Dangl"
-git config --global user.email "markus@q1cc.net"
-git config --global init.defaultBranch main
-git config --global alias.st status
-etckeeper init
-etckeeper commit
+# Note: etckeeper seems to mess it up, it won't boot anymore
 
-## Then install this
-aptitude install \
-    vim htop iotop iptraf p7zip-full mc netcat curl wget \
-    nmap screen checkinstall cclive pigz gzrt \
-    gzip bzip2 hwinfo ltrace strace lvm2 lzma \
-    ncftp netcat-openbsd parted p7zip-rar pv \
-    gdisk bc xauth zsh sudo dnsutils tcpdump \
-    subversion git git-svn gnupg2
+#pacman -S etckeeper
+#git config --global user.name "Markus Dangl"
+#git config --global user.email "markus@q1cc.net"
+#git config --global init.defaultBranch main
+#git config --global alias.st status
+#etckeeper init
+#etckeeper commit
 
 # Already installed on steam deck:
 #   vim htop iotop p7zip curl wget tmux
@@ -25,4 +17,16 @@ aptitude install \
 #   bc
 # Replacments
 #   dig -> dog (because we don't want to install the compete "bind" package)
-pacman -S openbsd-netcat pv dog
+
+# Enable SSH
+echo "X11Forwarding yes" >/etc/ssh/sshd_config.d/89-enable-x11forwarding.conf
+systemctl enable sshd
+systemctl restart sshd
+
+# Unlock & pacman & re-lock
+steamos-readonly disable
+pacman-key --init
+pacman-key --populate archlinux
+pacman-key --populate holo
+pacman -Sy openbsd-netcat pv dog
+steamos-readonly enable
