@@ -28,5 +28,5 @@ steamos-readonly disable
 pacman-key --init
 pacman-key --populate archlinux
 pacman-key --populate holo
-pacman -Sy openbsd-netcat pv dog
+pacman -Sy openbsd-netcat pv dog mc
 steamos-readonly enable
