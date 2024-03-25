@@ -24,8 +24,8 @@ config-for-sp-prod() {
 
 config-for-mx-internal() {
     KUBE_CONFIG_FILE="config-mx-internal.yaml"
-    KUBE_NAMESPACE="vt-integration"
-    MIPSERVER_STS="prd-vt-integration-dispatchx-mipserver"
+    KUBE_NAMESPACE="$1"
+    MIPSERVER_STS="$2"
     MIPSERVER_DEFAULT_CONTAINER="dispatchx-mipserver"
 }
 
@@ -44,11 +44,12 @@ config-for-qub1c() {
 }
 
 config-for-nbb() {
-    KUBE_CONFIG_FILE="config-az-nbb.yaml"
+    # This is used on the bastion host, the kubeconfig is already set
+    KUBE_CONFIG_FILE="config"
     SPCUSTOMER=""
     KUBE_NAMESPACE="$1"
     MIPSERVER_STS="${2:-mipserver-mwm-dev}"
-    MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver-mwm-dev}"
+    MIPSERVER_DEFAULT_CONTAINER="${3:-mipserver-fla}"
 }
 
 load-config() {
@@ -80,8 +81,10 @@ load-config() {
     customer-*)         config-for-sp "$1" ;;
 
     nbb-dev)            config-for-nbb "mwm-dev" "mipserver-mwm-dev" ;;
+    nbb-prod)           config-for-nbb "mwm-prod" "mipserver-mwm-prod" ;;
 
-    prd-vti)            config-for-mx-internal "vt-integration" ;;
+    prd-vti)            config-for-mx-internal "vt-integration" "prd-vt-integration-dispatchx-mipserver" ;;
+    abrg|arburg*)       config-for-mx-internal "ps-arburg" "ps-arburg-dispatchx-mipserver" ;;
     qub1c)              config-for-qub1c "$1" ;;
     local*)             config-for-local-k3d "$1" ;;
     *)                  return 1 ;;
@@ -169,6 +172,65 @@ _kmip_container_name() {
     echo "$container"
 }
 
+function join_by {
+  local d=${1-} f=${2-}
+  if shift 2; then
+    printf %s "$f" "${@/#/$d}"
+  fi
+}
+
+_json_log_filter() {
+    declare -a pipeline=()
+    declare -a ignored_loggers=(AvailabilityTimeMerger VisitourPollAvailabilityJob ReflectionServiceFactoryBean)
+    declare s
+
+    if [[ "$1" != *r* ]] ; then
+        pipeline+=(
+            # Grep needs to find lines that are json, but not outputs from jboss-cli like `{"outcome" => "success"}`
+            "grep -Pe '^\{(?!\"outcome\"\s*=>).*\}\s*$'"
+        )
+    fi
+
+    # Filter out some noise (raw grep)
+    if [[ "$1" != *nf* ]] ; then
+        pipeline+=(
+            "$(printf "%q " grep -vPe "(No not done journal tx-id found for|<(GetAbsence|GetAbsenceResponse|GetResources|GetResourcesResponse)( [^>]*)?>|PortTypeName: ReadCompleteOrderService)")"
+            "$(printf "%q " sed -E \
+                -e '/"message":"REQ_IN.*<DynamicChange/s/^\{"timestamp":"([^"]*)".*,"loggerName":"([^"]*)".*,"level":"([^"]*)".*,"message":".*<DynamicChange[^>]+><VTID[^>]+>([^\n<]*)<\/VTID><ExtID[^>]+>([^\n<]*)<\/ExtID><[^>]+>([^\n<]*)<\/FunctionCode><Status[^>]+>([^\n<]*)<\/Status>.*<\/DynamicChange>.*\}$/{"timestamp": "\1","loggerName":"\2","level":"\3_DC_IN","message":"FC \6 \4 \\\"\5\\\" (Status \7)"}/' \
+                -e '/"message":"RESP_OUT.*<DynamicChangeResponse/s/^\{"timestamp":"([^"]*)".*,"loggerName":"([^"]*)".*,"level":"([^"]*)".*\}$/{"timestamp": "\1","loggerName":"\2","level":"\3_DC_RESP","message":"ok"}/'
+            )"
+        )
+    fi
+
+    if [[ "$1" == *g* ]] ; then
+        pipeline+=( "$(printf "%q " grep -iPe "$2")" )
+    fi
+
+    # Json filtering and formatting - skipped if "raw"
+    if [[ "$1" != *r* ]] ; then
+
+        # Filter out some noise and ignored loggers
+        s="$(printf " or contains(\"%s\")" "${ignored_loggers[@]}")"
+        s="${s:4}" #; echo "$s" >&2
+        pipeline+=( "jq -c 'select(.loggerName | $s | not) | select(.message | contains(\"No not done journal\") | not)'" )
+
+        # Format output, option "-s" to print stacktrace
+        if [[ "$1" == *s* ]] ; then
+            pipeline+=( "jq -r '[.level, .timestamp, .loggerName, .message, .stackTrace] | join(\"|\")'" )
+        else
+            pipeline+=( "jq -r '[.level, .timestamp, .message] | join(\"|\")'" )
+        fi
+    fi
+    
+    #pipeline+=( "column -t -s '|'" )
+    
+    #command=$(printf " | %s" "${pipeline[@]}")
+    #echo "${command:3}"
+    if [ ${#pipeline[@]} -gt 0 ]; then
+        printf " \\\\\n     | %s" "${pipeline[@]}"
+    fi
+}
+
 # execute command on mipserver pod
 kmipexec() {
     declare pod=""
@@ -207,6 +269,7 @@ kmiplogs() {
     declare container=""    # previously always "dispatchx-mipserver", now varies
     # TODO: handle --since and --tail, defaulting to --tail=1000 --since=10m
     declare -a kubectl_args=()
+    declare json_filter_arg0="" json_filter_arg1=""
 
     # Parse arguments
     while [[ $# -gt 0 ]] ; do
@@ -215,17 +278,22 @@ kmiplogs() {
         case "$arg" in
         --pod|-p)           pod="$1"; shift ;;
         --container|-c)     container="$1"; shift ;;
-        --since*|--tail*|-f)
-                            kubectl_args+=("$arg")
-            ;;
+        -f|--follow)        kubectl_args+=("$arg") ;;
+        --since*|--tail*)   kubectl_args+=("$arg" "$1"); shift ;;
+        -g|--grep)          json_filter_arg0="${json_filter_arg0}g"; json_filter_arg1="$1"; shift ;;
+        -s|--stacktrace)    json_filter_arg0="${json_filter_arg0}s" ;;
+        --raw)              json_filter_arg0="${json_filter_arg0}r" ;;
         esac
     done
 
     pod="$(_kmip_pod_name "$pod")" || { return 1; }
     container="$(_kmip_container_name "$container")" || { return 1; }
-    # Grep needs to find lines that are json, but not outputs from jboss-cli like `{"outcome" => "success"}`
-    kube logs "$pod" -c "$container" "${kubectl_args[@]}" | grep -Pe '^\{(?!"outcome"\s*=>).*\}\s*$' \
-        #| jq -r 'select(.loggerName | contains("AvailabilityTimeMerger") | not) | select(.message | contains("No not done journal") | not) | [.level, .timestamp, .message] | join(" | ")'
+
+    declare actual_command
+    actual_command="$(printf "%q " kubectl -n "$KUBE_NAMESPACE" logs "$pod" -c "$container" "${kubectl_args[@]}")$(_json_log_filter "$json_filter_arg0" "$json_filter_arg1")"
+    #echo _json_log_filter "$json_filter_arg0" "$json_filter_arg1" 1>&2
+    echo "> $actual_command" 1>&2
+    eval "$actual_command"
 }
 
 cmd_print() {
@@ -239,6 +307,7 @@ cmd_print() {
     ship-bash-function kube "kubctl alias with namespace"
     ship-bash-function _kmip_pod_name "internal use only"
     ship-bash-function _kmip_container_name "internal use only"
+    ship-bash-function _json_log_filter "internal use only"
     ship-bash-function kmipexec_usage "usage for kmipexec"
     ship-bash-function kmipexec "execute command on mipserver pod"
     ship-bash-function kmiplogs "get logs of mipserver pod"
