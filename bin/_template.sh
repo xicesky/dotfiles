@@ -51,7 +51,7 @@ invoke() {
         esac
     done
     LAST_COMMAND=("$@")
-    log -p "" 2 "$(printf "%q " "$@")"
+    log -p "" 2 "$(printf "%q " "$@")${redir:+ >$redir}"
     if ! "$NO_ACT" ; then
         LAST_COMMAND_EXITCODE=0
         if [[ -z "$redir" ]] ; then "$@"; else "$@" >"$redir"; fi
