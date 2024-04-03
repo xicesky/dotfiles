@@ -6,6 +6,13 @@ SPCUSTOMER=""
 MIPSERVER_STS=""
 MIPSERVER_DEFAULT_CONTAINER=""
 
+# Database connection via psql
+PGHOST="${PGHOST:-}"
+PGPORT="${PGPORT:-5432}"
+PGDATABASE="${PGDATABASE:-}"
+PGUSER="${PGUSER:-}"
+PGPASSWORD="${PGPASSWORD:-}"
+
 config-for-sp() {
     KUBE_CONFIG_FILE="config-az-mx-dev.yaml"
     SPCUSTOMER="$1"
@@ -50,6 +57,9 @@ config-for-nbb() {
     KUBE_NAMESPACE="$1"
     MIPSERVER_STS="${2:-mipserver-mwm-dev}"
     MIPSERVER_DEFAULT_CONTAINER="${3:-mipserver-fla}"
+    PGHOST="ng-mwm-psql.postgres.database.azure.com"
+    PGDATABASE="${2:-mipserver-mwm-dev}" # Same as the sts name, i.e. mipserver-mwm-dev, mipserver-mwm-prod
+    PGUSER="mwmpsqladm"
 }
 
 load-config() {
@@ -137,10 +147,42 @@ ship-bash-function() {
     ship-bash-function-as "$name" "$name" "$comment"
 }
 
+ship-environment-variable() {
+    declare name="$1"; shift
+    declare value="$1"; shift
+    declare comment="$1"; shift
+    if [[ -n "$comment" ]] ; then
+        echo "# $comment"
+    fi
+    printf "export %s=%q\n" "$name" "$value"
+}
+
 # kubectl alias with namespace
 kube() {
     echo "> $(printf "%q " kubectl -n "$KUBE_NAMESPACE" "$@")" 1>&2
     kubectl -n "$KUBE_NAMESPACE" "$@";
+}
+
+kpsql() {
+    if [[ -z "$PGHOST" ]] ; then
+        echo "No database host set. (PGHOST)" 1>&2
+        return 1
+    fi
+    if [[ -z "$PGDATABASE" ]] ; then
+        echo "No database name set. (PGDATABASE)" 1>&2
+        return 1
+    fi
+    if [[ -z "$PGUSER" ]] ; then
+        echo "No database user set. (PGUSER)" 1>&2
+        return 1
+    fi
+    if [[ -z "$PGPASSWORD" ]] ; then
+        read -r -s -p "Enter password: " PGPASSWORD
+    fi
+    # This will _NOT_ print the command because it contains the password
+    kubectl exec --namespace=postgresql-client postgresql-client -it -- \
+        env PGHOST="$PGHOST" PGPORT="$PGPORT" PGDATABASE="$PGDATABASE" PGUSER="$PGUSER" PGPASSWORD="$PGPASSWORD" PSQL_PAGER= \
+        psql "$@"
 }
 
 kmipexec_usage() {
@@ -298,13 +340,20 @@ kmiplogs() {
 
 cmd_print() {
     # set KUBECONFIG
-    echo "export KUBECONFIG=~/.kube/$KUBE_CONFIG_FILE"
-    echo "export KUBE_NAMESPACE=\"$KUBE_NAMESPACE\""
-    echo "export SPCUSTOMER=\"$SPCUSTOMER\""
-    echo "export MIPSERVER_STS=\"$MIPSERVER_STS\""
-    echo "export MIPSERVER_DEFAULT_CONTAINER=\"$MIPSERVER_DEFAULT_CONTAINER\""
+    ship-environment-variable KUBECONFIG ~/".kube/$KUBE_CONFIG_FILE"
+    ship-environment-variable KUBE_NAMESPACE "$KUBE_NAMESPACE"
+    ship-environment-variable SPCUSTOMER "$SPCUSTOMER"
+    ship-environment-variable MIPSERVER_STS "$MIPSERVER_STS"
+    ship-environment-variable MIPSERVER_DEFAULT_CONTAINER "$MIPSERVER_DEFAULT_CONTAINER"
+    ship-environment-variable PGHOST "$PGHOST"
+    ship-environment-variable PGPORT "$PGPORT"
+    ship-environment-variable PGDATABASE "$PGDATABASE"
+    ship-environment-variable PGUSER "$PGUSER"
+    # Note: Do not ship PGPASSWORD for security reasons
+    #ship-environment-variable PGPASSWORD "$PGPASSWORD"
 
     ship-bash-function kube "kubctl alias with namespace"
+    ship-bash-function kpsql "run psql on the postgresql-client pod"
     ship-bash-function _kmip_pod_name "internal use only"
     ship-bash-function _kmip_container_name "internal use only"
     ship-bash-function _json_log_filter "internal use only"
