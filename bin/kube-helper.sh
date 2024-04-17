@@ -177,7 +177,12 @@ kpsql() {
         return 1
     fi
     if [[ -z "$PGPASSWORD" ]] ; then
-        read -r -s -p "Enter password: " PGPASSWORD
+        echo -n "Enter password: "
+        read -r -s PGPASSWORD
+        if [[ -z "$PGPASSWORD" ]] ; then
+            echo "No password provided." 1>&2
+            return 1
+        fi
     fi
     # This will _NOT_ print the command because it contains the password
     kubectl exec --namespace=postgresql-client postgresql-client -it -- \
