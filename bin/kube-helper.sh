@@ -13,7 +13,7 @@ PGDATABASE="${PGDATABASE:-}"
 PGUSER="${PGUSER:-}"
 PGPASSWORD="${PGPASSWORD:-}"
 
-config-for-sp() {
+config-for-sp-dev() {
     KUBE_CONFIG_FILE="config-az-mx-dev.yaml"
     SPCUSTOMER="$1"
     KUBE_NAMESPACE="$SPCUSTOMER"
@@ -27,6 +27,9 @@ config-for-sp-prod() {
     KUBE_NAMESPACE="$SPCUSTOMER"
     MIPSERVER_STS="${2:-mipserver-$SPCUSTOMER}"
     MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver-fla}"
+    PGHOST="postgres-flexible-mx-sp-mip-prod.postgres.database.azure.com"
+    PGDATABASE="postgresqldatabase-${SPCUSTOMER}"
+    PGUSER="postgresqldatabase-${SPCUSTOMER}-admin"
 }
 
 config-for-mx-internal() {
@@ -41,6 +44,9 @@ config-for-local-k3d() {
     SPCUSTOMER=""
     KUBE_NAMESPACE="default"
     MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver}"
+    PGHOST="localhost"
+    PGDATABASE="mip-docker"
+    PGUSER="postgres"
 }
 
 config-for-qub1c() {
@@ -64,11 +70,11 @@ config-for-nbb() {
 
 load-config() {
     case "$1" in
-    flsa*)              config-for-sp "customer-687399035" ;;
+    flsa*)              config-for-sp-dev  "customer-687399035" ;;
 
     ochs*-qa)           config-for-sp-prod  "customer-687399031" ;;
     ochs*-prod)         config-for-sp-prod  "customer-687399036" ;;
-    ochs*-dev)          config-for-sp       "customer-687399036" ;;
+    ochs*-dev)          config-for-sp-dev   "customer-687399036" ;;
 
     bwtd*-qa)           config-for-sp-prod  "customer-687399060" "bwt-de-mipserver" ;;
     bwtd*-prod)         config-for-sp-prod  "customer-687399061" "bwt-de-mipserver" ;;
@@ -76,8 +82,8 @@ load-config() {
     bwta*-prod)         config-for-sp-prod  "customer-687399201" "bwt-at-mipserver" ;;
 
     harg*-qa)           config-for-sp-prod  "customer-687399110" ;;
-    #harg*-prpd)         config-for-sp-prod  "customer-687399111" ;;
-    #harg*)              config-for-sp      "customer-687399110" ;;
+    #harg*-prod)         config-for-sp-prod  "customer-687399111" ;;
+    harg*-dev)          config-for-sp-dev   "customer-687399110" ;;
 
     kalt*-qa)           config-for-sp-prod  "customer-687399150" kaltenbach-mipserver ;;
     kalt*-prod)         config-for-sp-prod  "customer-687399151" kaltenbach-mipserver ;;
@@ -88,7 +94,7 @@ load-config() {
 
     customer-*-qa)      config-for-sp-prod "$1" ;;
     customer-*-prod)    config-for-sp-prod "$1" ;;
-    customer-*)         config-for-sp "$1" ;;
+    customer-*)         config-for-sp-dev  "$1" ;;
 
     nbb-dev)            config-for-nbb "mwm-dev" "mipserver-mwm-dev" ;;
     nbb-prod)           config-for-nbb "mwm-prod" "mipserver-mwm-prod" ;;
@@ -343,10 +349,28 @@ kmiplogs() {
     eval "$actual_command"
 }
 
+K_OUTPUT_FORMAT="${K_OUTPUT_FORMAT:-yaml}"
+
+_json_to_output_format() {
+    case "${K_OUTPUT_FORMAT:-yaml}" in
+        yaml) yq -p json -o yaml ;;
+        json) jq '.' ;;
+        *) echo "Error: Unknown output format: K_OUTPUT_FORMAT=$(printf "%q" "$K_OUTPUT_FORMAT")" 1>&2; return 1 ;;
+    esac
+}
+
+kargoexport() {
+    # Export argocd application
+    kube get Application "$1" -o json \
+        | jq 'del(.status) | .metadata |= with_entries(select(.key == "name" or .key == "namespace"))' \
+        | _json_to_output_format
+}
+
 cmd_print() {
     # set KUBECONFIG
     ship-environment-variable KUBECONFIG ~/".kube/$KUBE_CONFIG_FILE"
     ship-environment-variable KUBE_NAMESPACE "$KUBE_NAMESPACE"
+    ship-environment-variable K_OUTPUT_FORMAT "$K_OUTPUT_FORMAT"
     ship-environment-variable SPCUSTOMER "$SPCUSTOMER"
     ship-environment-variable MIPSERVER_STS "$MIPSERVER_STS"
     ship-environment-variable MIPSERVER_DEFAULT_CONTAINER "$MIPSERVER_DEFAULT_CONTAINER"
@@ -362,10 +386,12 @@ cmd_print() {
     ship-bash-function _kmip_pod_name "internal use only"
     ship-bash-function _kmip_container_name "internal use only"
     ship-bash-function _json_log_filter "internal use only"
+    ship-bash-function _json_to_output_format "internal use only"
     ship-bash-function kmipexec_usage "usage for kmipexec"
     ship-bash-function kmipexec "execute command on mipserver pod"
     ship-bash-function kmiplogs "get logs of mipserver pod"
     ship-bash-function kmipdebug "foward port 8787"
+    ship-bash-function kargoexport "export argocd application"
 }
 
 help() {
