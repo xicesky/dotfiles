@@ -9,7 +9,7 @@ main() {
         -m|--minute)    type="minute"; shift ;;
         -u|--unique)    type="unique"; shift ;;
         -g|--git|--iso) type="iso"; shift ;;
-        *)  echo "Unknown argument: $1" 1>&2 || return $? ;;
+        *)  echo "Unknown argument: $1"; return 1 ;;
         esac
     fi
 
