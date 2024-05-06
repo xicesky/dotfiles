@@ -43,15 +43,18 @@ LAST_COMMAND_EXITCODE=0
 #   - Set variables
 invoke() {
     declare redir=""
+    declare loglevel=2
     while [[ $# -gt 0 ]] ; do
         case "$1" in
             "-o")   shift; redir="$1"; shift ;;
+            "-l")   shift; loglevel="$1"; shift ;;
+            "--")   shift; break ;;
             -*)     echo "invoke: Unknown flag: $arg" 1>&2; return 1 ;;
             *)      break ;;
         esac
     done
     LAST_COMMAND=("$@")
-    log -p "" 2 "$(printf "%q " "$@")${redir:+ >$redir}"
+    log -p "" "$loglevel" "$(printf "%q " "$@")${redir:+ >$redir}"
     if ! "$NO_ACT" ; then
         LAST_COMMAND_EXITCODE=0
         if [[ -z "$redir" ]] ; then "$@"; else "$@" >"$redir"; fi
