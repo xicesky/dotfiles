@@ -1,0 +1,95 @@
+#!/bin/bash
+# This script decodes a base64url encoded JWT token and prints the JSON payload
+# (or header with --header flag).
+
+declare jwt_field_no=2
+JWT_PRIVATE_KEY="${JWT_PRIVATE_KEY:-private_key}"
+JWT_PUBLIC_KEY="${JWT_PUBLIC_KEY:-public_key}"
+PRETTY_PRINT_JSON="${PRETTY_PRINT_JSON:-false}"
+
+_pretty_print_json() {
+    if [[ "$PRETTY_PRINT_JSON" == "true" ]]; then
+        jq .
+    else
+        cat
+    fi
+}
+
+decode_jwt() {
+    cut -d '.' -f $jwt_field_no | basenc -d --base64url -i - 2>/dev/null | _pretty_print_json
+}
+
+# undocumented, WIP, does not work correctly yet
+sign_jwt() {
+    declare header payload signature
+    header=$(echo -n '{"alg":"HS256","typ":"JWT"}' | basenc --base64url -)
+    payload=$(cat | basenc --base64url -)
+    signature=$(echo -n "$header.$payload" | openssl dgst -sha256 -hmac "$JWT_PRIVATE_KEY" -binary | basenc --base64url -)
+    echo "$header.$payload.$signature"
+}
+
+# undocumented, WIP, does not work correctly yet
+make_payload() {
+    # TODO...
+    declare current_time expiration_time payload
+    current_time=$(date +%s)
+    expiration_time=$(( current_time + 864000 )) # 864000 = 10 * 24 * 60 * 60 = 10 days
+    payload=$(echo -n '{"sub":"'"$JWT_PUBLIC_KEY"'","exp":'$expiration_time'}')
+    echo "$payload"
+}
+
+usage() {
+    cat <<EOF
+Usage: $0 [OPTIONS] [JWT]
+
+Decodes a base64url encoded JWT token and prints the JSON payload (or header).
+Options:
+  --header  Print the header instead of the payload.
+  -h, --help  Show this help message and exit.
+EOF
+}
+
+main() {
+    local jwt=""
+    local function="decode_jwt"
+    while [[ $# -gt 0 ]] ; do
+        arg="$1"; shift
+        case "$arg" in
+            -h|--help)
+                usage
+                return 0
+                ;;
+            -d|--decode)
+                function="decode_jwt"
+                ;;
+            --header)
+                jwt_field_no=1
+                ;;
+            -s|--sign)
+                function="sign_jwt"
+                ;;
+            -p|--make-payload)
+                function="make_payload"
+                ;;
+            --pp|--pretty-print)
+                PRETTY_PRINT_JSON=true
+                ;;
+            -*)
+                { echo "Unknown flag: $arg"; usage; } 1>&2
+                return 1
+                ;;
+            *)
+                jwt="$arg"
+                break
+                ;;
+        esac
+    done
+    if [[ -n "$jwt" ]]; then
+        # Use jwt from argument
+        echo "$jwt" | $function
+    else
+        $function
+    fi
+}
+
+main "$@"
