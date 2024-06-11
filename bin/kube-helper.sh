@@ -19,6 +19,11 @@ config-for-sp-dev() {
     KUBE_NAMESPACE="$SPCUSTOMER"
     MIPSERVER_STS="${2:-mipserver-$SPCUSTOMER}"
     MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver-fla}"
+    # Old variant
+    #PGHOST="postgres-shared.postgres.database.azure.com"
+    PGHOST="postgres-flexible-mx-sp-priv.postgres.database.azure.com"
+    PGDATABASE="postgresqldatabase-${SPCUSTOMER}"
+    PGUSER="postgresqldatabase-${SPCUSTOMER}-admin"
 }
 
 config-for-sp-prod() {
@@ -27,7 +32,9 @@ config-for-sp-prod() {
     KUBE_NAMESPACE="$SPCUSTOMER"
     MIPSERVER_STS="${2:-mipserver-$SPCUSTOMER}"
     MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver-fla}"
-    PGHOST="postgres-flexible-mx-sp-mip-prod.postgres.database.azure.com"
+    # Old variant
+    #PGHOST="postgres-flexible-mx-sp-mip-prod.postgres.database.azure.com"
+    PGHOST="postgres-flexible-mx-sp-mip-prod-priv.postgres.database.azure.com"
     PGDATABASE="postgresqldatabase-${SPCUSTOMER}"
     PGUSER="postgresqldatabase-${SPCUSTOMER}-admin"
 }
