@@ -169,15 +169,28 @@ cmd_login-client-credentials() {
 
 cmd_login-device() {
     # See https://git.mobilexag.de/prd-serviceplatform/documentation/-/blob/develop/modules/operations-guide/examples/read-token-from-keycloak.sh?ref_type=heads
+    # https://datatracker.ietf.org/doc/html/rfc8628#section-3.1
     # TODO: Not tested yet!
     declare response_json device_code user_code verification_uri expires interval expire_seconds error access_token
     
-    response_json="$(curl -s -X POST \
-        --url "$OAUTH2_DEVICE_ENDPOINT" \
-        --header 'content-type: application/x-www-form-urlencoded' \
-        --data "client_id=$OAUTH2_CLIENT_ID" \
-        --data "scope=$OAUTH2_SCOPE"
+    response_json="$(
+        # Note: Client authentication is enabled in keycloak, so we need to pass the client_secret
+        # This is not neccessary for other clients like crossmip, where the client is public
+        invoke curl -s -X POST \
+            --url "$OAUTH2_DEVICE_ENDPOINT" \
+            --header 'content-type: application/x-www-form-urlencoded' \
+            --data "client_id=$OAUTH2_CLIENT_ID" \
+            --data "client_secret=$OAUTH2_CLIENT_SECRET" \
+            --data "scope=$OAUTH2_SCOPE"
     )"
+    echo "response_json: $response_json" 1>&2
+
+    error="$(echo "$response_json" | jq -r .error)"
+    if [ "$error" != "null" ]; then
+        echo "Error response from keycloak: $(printf "%q" "$error")" 1>&2
+        echo "$response_json" | jq . 1>&2
+        return 1
+    fi
 
     device_code="$(echo "$response_json" | jq -r .device_code)"
     user_code="$(echo "$response_json" | jq -r .user_code)"
@@ -185,18 +198,25 @@ cmd_login-device() {
     expires="$(echo "$response_json" | jq -r .expires_in)"
     interval="$(echo "$response_json" | jq -r .interval)"
 
-    echo "Please open $verification_uri, enter $user_code and login"
+    (
+        echo "Please:"
+        echo "    * open $verification_uri"
+        echo "    * enter $user_code and log in"
+        open "$verification_uri"
+    ) 1>&2
 
     # Loop until the token is available or the timeout is reached
     expire_seconds=$((SECONDS+expires))
     while [ $SECONDS -lt $expire_seconds ]; do
         sleep "$interval"
-        response_json="$(curl -s -X POST \
-            --url "$OAUTH2_TOKEN_ENDPOINT" \
-            --header 'content-type: application/x-www-form-urlencoded' \
-            --data "client_id=read-token-client" \
-            --data "device_code=$device_code" \
-            --data "grant_type=urn:ietf:params:oauth:grant-type:device_code"
+        response_json="$(
+            invoke curl -s -X POST \
+                --url "$OAUTH2_TOKEN_ENDPOINT" \
+                --header 'content-type: application/x-www-form-urlencoded' \
+                --data "client_id=$OAUTH2_CLIENT_ID" \
+                --data "client_secret=$OAUTH2_CLIENT_SECRET" \
+                --data "device_code=$device_code" \
+                --data "grant_type=urn:ietf:params:oauth:grant-type:device_code"
         )"
         access_token="$(echo "$response_json" | jq -r .access_token)"
         error="$(echo "$response_json" | jq -r .error)"
@@ -204,7 +224,8 @@ cmd_login-device() {
             break
         fi
         if [ "$error" != "authorization_pending" ]; then
-	        echo "$error"
+	        echo "Error response from keycloak: $(printf "%q" "$error")" 1>&2
+            echo "$response_json" | jq . 1>&2
 	        return 1
 	    fi
     done
@@ -228,12 +249,30 @@ cmd_read-token() {
 	    --header "Authorization: Bearer $OAUTH2_ACCESS_TOKEN"
 }
 
+# Example request to a crossmip rest api (online-search-service)
+cmd_curl() {
+    # FIXME: Check if OAUTH2_ACCESS_TOKEN is set or expired
+    invoke -l 1 curl -H "Authorization: Bearer $OAUTH2_ACCESS_TOKEN" "$@"
+}
+
 _graphql_query() {
     cat <<'EOF'
 query installationsByAddressStreetFragment {
-  installationsByAddressStreetFragment(streetFragment: "10") {
+  installationsByFragments(nameFragment: "bay", zipFragment: "81", streetFragment: "Schön") {
     id,
-    address {streetJson{jsonString},streetNumberJson{jsonString},zipJson{jsonString},cityJson{jsonString}},
+    displayIdJson{jsonString},
+    shortTextJson{jsonString},
+    address {id,streetJson{jsonString},streetNumberJson{jsonString},zipJson{jsonString},cityJson{jsonString}},
+    contact {
+      id,
+      firstNameJson{jsonString},
+      lastNameJson{jsonString},
+      contactComms{
+        type,
+        position,
+        valueJson{jsonString},
+      }
+    },
   }
 }
 EOF
@@ -265,7 +304,7 @@ EOF
 }
 
 _graphql_request() {
-    _graphql_query2 | jq --raw-input --slurp '{"query":.}'
+    _graphql_query | jq --raw-input --slurp '{"query":.}'
 }
 
 # Example request to a crossmip rest api (online-search-service)
