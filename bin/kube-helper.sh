@@ -13,6 +13,10 @@ PGDATABASE="${PGDATABASE:-}"
 PGUSER="${PGUSER:-}"
 PGPASSWORD="${PGPASSWORD:-}"
 
+# Azure (az) parameters
+AZURE_TENANT_ID="${AZURE_TENANT_ID:-16b6f33b-57e2-4e2e-a05b-071e9ce7fc3e}"
+AZURE_SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID:-5a8fa46d-0536-4d5b-9c87-99141d740fac}"
+
 config-for-sp-dev() {
     KUBE_CONFIG_FILE="config-az-mx-dev.yaml"
     SPCUSTOMER="$1"
@@ -24,6 +28,10 @@ config-for-sp-dev() {
     PGHOST="postgres-flexible-mx-sp-priv.postgres.database.azure.com"
     PGDATABASE="postgresqldatabase-${SPCUSTOMER}"
     PGUSER="postgresqldatabase-${SPCUSTOMER}-admin"
+    #PGUSER=markus.dangl@solvares.com   # az method doesn't seem to work on dev!?
+
+    AZURE_TENANT_ID="a223fba7-7c90-4a1a-affb-5e6549d0f252"
+    AZURE_SUBSCRIPTION_ID="32da1237-4da1-4065-8a2a-37122ce002b1"
 }
 
 config-for-sp-prod() {
@@ -36,7 +44,11 @@ config-for-sp-prod() {
     #PGHOST="postgres-flexible-mx-sp-mip-prod.postgres.database.azure.com"
     PGHOST="postgres-flexible-mx-sp-mip-prod-priv.postgres.database.azure.com"
     PGDATABASE="postgresqldatabase-${SPCUSTOMER}"
-    PGUSER="postgresqldatabase-${SPCUSTOMER}-admin"
+    #PGUSER="postgresqldatabase-${SPCUSTOMER}-admin"
+    PGUSER=markus.dangl@solvares.com
+
+    AZURE_TENANT_ID="16b6f33b-57e2-4e2e-a05b-071e9ce7fc3e"
+    AZURE_SUBSCRIPTION_ID="5a8fa46d-0536-4d5b-9c87-99141d740fac"
 }
 
 config-for-mx-internal() {
@@ -79,23 +91,28 @@ load-config() {
     case "$1" in
     flsa*)              config-for-sp-dev  "customer-687399035" ;;
 
+    ochs*-dev)          config-for-sp-dev   "customer-687399036" ;;
     ochs*-qa)           config-for-sp-prod  "customer-687399031" ;;
     ochs*-prod)         config-for-sp-prod  "customer-687399036" ;;
-    ochs*-dev)          config-for-sp-dev   "customer-687399036" ;;
+
+    harg*-dev)          config-for-sp-dev   "customer-687399110" ;;
+    harg*-qa)           config-for-sp-prod  "customer-687399110" ;;
+    harg*-prod)         config-for-sp-prod  "customer-687399111" ;;
 
     bwtd*-qa)           config-for-sp-prod  "customer-687399060" "bwt-de-mipserver" ;;
     bwtd*-prod)         config-for-sp-prod  "customer-687399061" "bwt-de-mipserver" ;;
     bwta*-qa)           config-for-sp-prod  "customer-687399200" "bwt-at-mipserver" ;;
     bwta*-prod)         config-for-sp-prod  "customer-687399201" "bwt-at-mipserver" ;;
 
-    harg*-qa)           config-for-sp-prod  "customer-687399110" ;;
-    #harg*-prod)         config-for-sp-prod  "customer-687399111" ;;
-    harg*-dev)          config-for-sp-dev   "customer-687399110" ;;
+    hsm*-qa)           config-for-sp-prod  "customer-687399220" "hsm-mipserver" ;;
+    hsm*-prod)         config-for-sp-prod  "customer-687399221" "hsm-mipserver" ;;
 
     kalt*-qa)           config-for-sp-prod  "customer-687399150" kaltenbach-mipserver ;;
     kalt*-prod)         config-for-sp-prod  "customer-687399151" kaltenbach-mipserver ;;
+
     gewo*-qa)           config-for-sp-prod  "customer-687399170" gewofag-mipserver ;;
     gewo*-prod)         config-for-sp-prod  "customer-687399171" gewofag-mipserver ;;
+
     solu*-qa)           config-for-sp-prod  "customer-687399180" soluvia-mipserver ;;
     #solu*-prod)         config-for-sp-prod  "customer-687399181" soluvia-mipserver ;;
 
@@ -373,6 +390,39 @@ kargoexport() {
         | _json_to_output_format
 }
 
+kaz() {
+    # Parse arguments
+    command="$1"; shift
+    while [[ $# -gt 0 ]] ; do
+        if [[ "$1" == '--' || "$1" != -* ]] ; then break; fi
+        arg="$1"; shift
+        case "$arg" in
+        -*)
+            echo "Error: unknown option: $arg" 1>&2
+            return 1;
+            ;;
+        *)
+            echo "Error: unknown positional argument: $arg" 1>&2
+            return 1;
+            ;;
+        esac
+    done
+    case "$command" in
+        login)
+            echo "$(printf "%q " az login --tenant "$AZURE_TENANT_ID" --use-device-code)" 1>&2
+            az login --tenant "$AZURE_TENANT_ID" --use-device-code
+            ;;
+        set-sub*)
+            echo "$(printf "%q " az account set --subscription "$AZURE_SUBSCRIPTION_ID")" 1>&2
+            az account set --subscription "$AZURE_SUBSCRIPTION_ID"
+            ;;
+        *)
+            echo "Error: unknown command: $command" 1>&2
+            return 1;
+            ;;
+    esac
+}
+
 cmd_print() {
     # set KUBECONFIG
     ship-environment-variable KUBECONFIG ~/".kube/$KUBE_CONFIG_FILE"
@@ -387,6 +437,9 @@ cmd_print() {
     ship-environment-variable PGUSER "$PGUSER"
     # Note: Do not ship PGPASSWORD for security reasons
     #ship-environment-variable PGPASSWORD "$PGPASSWORD"
+    printf "export %s\n" "PGPASSWORD"
+    ship-environment-variable AZURE_TENANT_ID "$AZURE_TENANT_ID"
+    ship-environment-variable AZURE_SUBSCRIPTION_ID "$AZURE_SUBSCRIPTION_ID"
 
     ship-bash-function kube "kubctl alias with namespace"
     ship-bash-function kpsql "run psql on the postgresql-client pod"
@@ -399,6 +452,7 @@ cmd_print() {
     ship-bash-function kmiplogs "get logs of mipserver pod"
     ship-bash-function kmipdebug "foward port 8787"
     ship-bash-function kargoexport "export argocd application"
+    ship-bash-function kaz "wrapper for azure az commands"
 }
 
 help() {
