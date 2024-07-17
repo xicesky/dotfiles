@@ -15,6 +15,7 @@
 declare -ga gnufindpreargs=( -regextype egrep )
 declare -ga gnufindskipargs=()
 declare -ga gnufindargs=()
+declare -ga grepargs=()
 declare skip_target=true
 declare color=auto
 declare print_command=false
@@ -112,7 +113,7 @@ main() {
                 ;;
             -grep|-sgrep)
                 shift
-                gnufindargs+=( -exec grep --color="$color" )
+                gnufindargs+=( -exec grep "${grepargs[@]}" --color="$color" )
                 # optional single arg
                 if [[ "$1" = -* ]] ; then
                     gnufindargs+=( "$1" ); shift
@@ -128,6 +129,15 @@ main() {
                 fi
                 shift
                 seen_actions+=( grep )
+                ;;
+            -gA|--grep-after-context|--after-context)
+                shift; grepargs+=( -A "$1" ); shift
+                ;;
+            -gB|--grep-before-context|--before-context)
+                shift; grepargs+=( -B "$1" ); shift
+                ;;
+            -gC|--grep-context|--context)
+                shift; grepargs+=( -C "$1" ); shift
                 ;;
             -print|-fprint|-ls|-fls|-printf|-fprintf|-exec|-execdir|-ok|-okdir|-delete)
                 gnufindargs+=( "$1" )
