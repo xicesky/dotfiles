@@ -1,0 +1,323 @@
+#!/bin/bash
+# Sets up a kubectl port-forward to loki and then runs a query via logcli
+# TODO: Write own go application based on https://github.com/grafana/loki/blob/main/cmd/logcli/main.go
+
+LOCAL_PORT="${LOCAL_PORT:-9880}"
+LOKI_SERVICE_PORT="${LOKI_SERVICE_PORT:-80}"
+KUBERNETES_MONITORING_NAMESPACE="${KUBERNETES_MONITORING_NAMESPACE:-monitoring}"
+KUBERNETES_TARGET_RESOURCE="${KUBERNETES_TARGET_RESOURCE:-service/monitoring-loki-gateway}"
+PORTFORWARD_PID=
+
+################################################################################
+# Verbosity, command logging
+
+# Verbosity level, 0 is quiet, 1 is normal, 2 prints commands
+VERBOSITY="${VERBOSITY:-1}"
+
+# Don't act, just check (and print commands)
+NO_ACT="${NO_ACT:-false}"
+
+# Display a message if verbosity level allows
+log() {
+    declare prefix="$DEFAULT_LOG_PREFIX"
+    [[ "$1" = "-p" ]] && { shift; prefix="$1"; shift; }
+    declare level="$1"; shift
+    if [[ "$VERBOSITY" -ge "$level" ]] ; then
+        echo "$prefix$*" 1>&2
+    fi
+}
+
+# Same but use printf
+logf() {
+    declare level="$1"; shift
+    # Passing a formatting string is exactly what we intend here
+    # shellcheck disable=SC2059
+    log "$level" "$(printf "$@")"
+}
+
+# Stores the last command executed by invoke()
+declare -a LAST_COMMAND
+LAST_COMMAND=()
+
+# ... and it's exit code
+declare -g LAST_COMMAND_EXITCODE
+LAST_COMMAND_EXITCODE=0
+
+# Log and invoke a command or skip it if NO_ACT is set
+# This actually works only for simple commands, you can't use it to:
+#   - Invoke commands that use pipes or redirections
+#   - Invoke compound commands (expressions)
+#   - Set variables
+invoke() {
+    declare redir=""
+    declare loglevel=2
+    while [[ $# -gt 0 ]] ; do
+        case "$1" in
+            "-o")   shift; redir="$1"; shift ;;
+            "-l")   shift; loglevel="$1"; shift ;;
+            "--")   shift; break ;;
+            -*)     echo "invoke: Unknown flag: $arg" 1>&2; return 1 ;;
+            *)      break ;;
+        esac
+    done
+    LAST_COMMAND=("$@")
+    log -p "" "$loglevel" "$(printf "%q " "$@")${redir:+ >$redir}"
+    if ! "$NO_ACT" ; then
+        LAST_COMMAND_EXITCODE=0
+        if [[ -z "$redir" ]] ; then "$@"; else "$@" >"$redir"; fi
+        LAST_COMMAND_EXITCODE="$?"
+        return $LAST_COMMAND_EXITCODE
+    fi
+}
+
+# Report the last command, if it failed
+report_command_failure() {
+    if [[ "$LAST_COMMAND_EXITCODE" -ne 0 ]] ; then
+        log 1 "Last command executed:"
+        log 1 "    $(printf "%q " "${LAST_COMMAND[@]}")"
+        log 1 "Returned exit code ${LAST_COMMAND_EXITCODE}"
+    fi
+}
+
+################################################################################
+
+_json_log_filter() {
+    declare -a pipeline=()
+    declare -a ignored_loggers=(AvailabilityTimeMerger VisitourPollAvailabilityJob ReflectionServiceFactoryBean)
+    declare s
+
+    ## Example output from logcli query:
+    ## {
+    ##     "labels": {
+    ##         "app": "mipserver-fla-customer-687399110",
+    ##         "container": "mipserver-fla",
+    ##         "environment": "DEV",
+    ##         "filename": "/var/log/pods/customer-687399110_mipserver-customer-687399110-0_435495f5-8645-47fa-9764-679825a499d5/mipserver-fla/0.log",
+    ##         "hostName": "mipserver-customer-687399110-0",
+    ##         "instance": "mipserver-customer-687399110",
+    ##         "job": "customer-687399110/mipserver-fla-customer-687399110",
+    ##         "label": "value",
+    ##         "level": "debug",
+    ##         "loggerClassName": "org.slf4j.impl.Slf4jLogger",
+    ##         "loggerName": "de.mobilexag.centerware.product.job.push.executor.DeltaPushJobExecutionHandler",
+    ##         "message": "No not done journal tx-id found for job.code=TRACK_VISITOUR_CHANGES",
+    ##         "namespace": "customer-687399110",
+    ##         "ndc": "",
+    ##         "node_name": "aks-agentpool-19707992-vmss000024",
+    ##         "pod": "mipserver-customer-687399110-0",
+    ##         "processId": "1218",
+    ##         "processName": "jboss-modules.jar",
+    ##         "sequence": "25777",
+    ##         "service_name": "mipserver-fla-customer-687399110",
+    ##         "stream": "stdout",
+    ##         "threadId": "235",
+    ##         "threadName": "Thread-14 (ActiveMQ-client-global-threads)",
+    ##         "timestamp": "2024-07-21T11:38:10.245Z"
+    ##     },
+    ##     "line": "debug No not done journal tx-id found for job.code=TRACK_VISITOUR_CHANGES",
+    ##     "timestamp": "2024-07-21T11:38:10.245633225Z"
+    ## }
+
+
+    # if [[ "$1" != *r* ]] ; then
+    #     pipeline+=(
+    #         # Grep needs to find lines that are json, but not outputs from jboss-cli like `{"outcome" => "success"}`
+    #         "grep -Pe '^\{(?!\"outcome\"\s*=>).*\}\s*$'"
+    #     )
+    # fi
+
+    # # Filter out some noise (raw grep)
+    # if [[ "$1" != *nf* ]] ; then
+    #     pipeline+=(
+    #         "$(printf "%q " grep -vPe "(No not done journal tx-id found for|<(GetAbsence|GetAbsenceResponse|GetResources|GetResourcesResponse)( [^>]*)?>|PortTypeName: ReadCompleteOrderService)")"
+    #         "$(printf "%q " sed -E \
+    #             -e '/"message":"REQ_IN.*<DynamicChange/s/^\{"timestamp":"([^"]*)".*,"loggerName":"([^"]*)".*,"level":"([^"]*)".*,"message":".*<DynamicChange[^>]+><VTID[^>]+>([^\n<]*)<\/VTID><ExtID[^>]+>([^\n<]*)<\/ExtID><[^>]+>([^\n<]*)<\/FunctionCode><Status[^>]+>([^\n<]*)<\/Status>.*<\/DynamicChange>.*\}$/{"timestamp": "\1","loggerName":"\2","level":"\3_DC_IN","message":"FC \6 \4 \\\"\5\\\" (Status \7)"}/' \
+    #             -e '/"message":"RESP_OUT.*<DynamicChangeResponse/s/^\{"timestamp":"([^"]*)".*,"loggerName":"([^"]*)".*,"level":"([^"]*)".*\}$/{"timestamp": "\1","loggerName":"\2","level":"\3_DC_RESP","message":"ok"}/'
+    #         )"
+    #     )
+    # fi
+
+    # if [[ "$1" == *g* ]] ; then
+    #     pipeline+=( "$(printf "%q " grep -iPe "$2")" )
+    # fi
+
+    # Json filtering and formatting - skipped if "raw"
+    if [[ "$1" != *r* ]] ; then
+
+        # Filter out some noise and ignored loggers
+        #s="$(printf " or contains(\"%s\")" "${ignored_loggers[@]}")"
+        #s="${s:4}" #; echo "$s" >&2
+        #pipeline+=( "jq -c 'select(.loggerName | $s | not) | select(.message | contains(\"No not done journal\") | not)'" )
+
+        # Format output, option "-s" to print stacktrace
+        if [[ "$1" == *s* ]] ; then
+            pipeline+=( "jq -r '[.labels.level, .timestamp, .labels.loggerName, .line, .labels.stackTrace] | join(\"|\")'" )
+        else
+            pipeline+=( "jq -r '[.labels.level, .timestamp, .line] | join(\"|\")'" )
+        fi
+    fi
+
+    #pipeline+=( "column -t -s '|'" )
+    
+    #command=$(printf " | %s" "${pipeline[@]}")
+    #echo "${command:3}"
+    if [ ${#pipeline[@]} -gt 0 ]; then
+        printf " \\\\\n     | %s" "${pipeline[@]}"
+    fi
+}
+
+################################################################################
+
+await-success() {
+    local attempts=0
+    local max_attempts=150
+    local interval=0.2
+
+    while ! "$@" >/dev/null 2>&1; do
+        attempts=$((attempts + 1))
+        if [ $attempts -ge $max_attempts ]; then
+            log -p "" 1 "Command failed after $max_attempts attempts: $*" 1>&2
+            return 1
+        fi
+        sleep $interval
+    done
+}
+
+start-portforward() {
+    declare -a command
+    declare -g PORTFORWARD_PID
+
+    if [ -n "${PORTFORWARD_PID}" ]; then
+        log -p "" 1 "Port-forward already running with PID ${PORTFORWARD_PID}" 1>&2
+        return 0
+    fi
+    
+    command=( kubectl port-forward -n "${KUBERNETES_MONITORING_NAMESPACE}" "${KUBERNETES_TARGET_RESOURCE}" "${LOCAL_PORT}:${LOKI_SERVICE_PORT}" )
+    log 1 "$(printf "%q " "${command[@]}")"
+    "${command[@]}" >/dev/null 2>&1 &
+    PORTFORWARD_PID=$!
+    log -p "" 2 "Port-forward PID: ${PORTFORWARD_PID}"
+    trap 'stop-portforward' EXIT
+
+    # Wait for the port-forward to be ready
+    await-success nc -z localhost "$LOCAL_PORT" || return 1
+    log 2 "Started port-forward to ${KUBERNETES_TARGET_RESOURCE} on local port ${LOCAL_PORT} with PID ${PORTFORWARD_PID}" 1>&2
+}
+
+stop-portforward() {
+    declare -g PORTFORWARD_PID
+
+    if [ -n "${PORTFORWARD_PID}" ]; then
+        kill "${PORTFORWARD_PID}" 3>&1 1>&2 2>&3 3>&- | grep -v 'no such process' 3>&1 1>&2 2>&3 3>&-
+        log 2 "Stopped port-forward with PID ${PORTFORWARD_PID}" 1>&2
+    fi
+}
+
+cmd_logs() {
+    declare json_filter_arg0="" json_filter_arg1=""
+    declare query=""
+
+    # Parse arguments
+    while [[ $# -gt 0 ]] ; do
+        if [[ "$1" == '--' || "$1" != -* ]] ; then break; fi
+        arg="$1"; shift
+        case "$arg" in
+        --pod|-p)           pod="$1"; shift ;;
+        --container|-c)     container="$1"; shift ;;
+        -f|--follow)        kubectl_args+=("$arg") ;;
+        --since*|--tail*)   kubectl_args+=("$arg" "$1"); shift ;;
+        -g|--grep)          json_filter_arg0="${json_filter_arg0}g"; json_filter_arg1="$1"; shift ;;
+        -s|--stacktrace)    json_filter_arg0="${json_filter_arg0}s" ;;
+        --raw)              json_filter_arg0="${json_filter_arg0}r" ;;
+        esac
+    done
+
+    query="$(cat <<'EOF'
+{app="mipserver-fla-customer-687399110",namespace="customer-687399110"} # Hargassner QA
+    | json |line_format `{{.level}} {{if .message }}{{regexReplaceAll "^([^\r\n]*)" .message "${1}"}}{{else}}{{.log}}{{end}}`
+    #| level=~"(?i)(ERROR|WARNING)"
+EOF
+)"
+
+    start-portforward || return 1
+    actual_command="$(printf "%q " logcli --addr="http://localhost:${LOCAL_PORT}" query -o jsonl --timezone=UTC --limit 30 --since 15m --tail "$query")$(_json_log_filter "" "")"
+    log 2 "$actual_command"
+    eval "$actual_command"
+}
+
+cmd_query() {
+    local query=""
+    if [[ $# -eq 0 ]] ; then
+        echo "Please enter query, press Ctrl+D when done:" 1>&2
+        query="$(cat)"
+    else
+        query="$1"; shift
+    fi
+    start-portforward || return 1
+
+    #export LOKI_ADDR="http://localhost:${LOCAL_PORT}"
+    #invoke -l 1 logcli --addr="http://localhost:${LOCAL_PORT}" query -o jsonl --timezone=UTC --limit 30 --since 15m --tail "$query" # "$@"
+    actual_command="$(printf "%q " logcli --addr="http://localhost:${LOCAL_PORT}" query -o jsonl --timezone=UTC --limit 30 --since 15m --tail "$query")"
+    log 2 "$actual_command"
+    eval "$actual_command"
+}
+
+################################################################################
+# Main, argparsing and commands
+
+cmd_help() {
+    usage
+}
+
+usage() {
+    echo "Usage: $0 [global flags...] <command...>"
+    echo "Global flags:"
+    echo "    -v      Increase verbosity level"
+    echo "    -q      Decrease verbosity level"
+    echo "    --help  Show usage and exit"
+    echo ""
+    echo "Available commands:"
+    echo "    help    Show usage and exit"
+    echo "    query   Run logcli query"
+    echo ""
+}
+
+main() {
+    declare cmd=""
+    declare cmderr=0
+    while [[ $# -gt 0 ]] ; do
+        arg="$1"; shift
+        case "$arg" in
+            -v) (( VERBOSITY++ )) ;;
+            -q) (( VERBOSITY-- )) ;;
+            --help)
+                cmd=help
+                break
+                ;;
+            -*)
+                { echo "Unknown flag: $arg"; usage; } 1>&2
+                return 1
+                ;;
+            *)
+                cmd="$arg"
+                break
+                ;;
+        esac
+    done
+    if [[ -z "$cmd" ]] ; then
+        usage
+    elif [[ $(type -t "cmd_$cmd") == function ]] ; then
+        "cmd_$cmd" "$@"
+        cmderr="$?"
+        if [[ "$cmderr" -ne 0 && "$LAST_COMMAND_EXITCODE" -ne 0 ]] ; then
+            report_command_failure 1>&2
+            echo "" 1>&2
+        fi
+        return "$cmderr"
+    else
+        { echo "Unknown command: $cmd"; usage; } 1>&2
+        return 1
+    fi
+}
+
+main "$@"
