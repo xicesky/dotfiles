@@ -193,6 +193,11 @@ kube() {
     kubectl -n "$KUBE_NAMESPACE" "$@";
 }
 
+kube-list-resources() {
+    echo "> $(printf "%q " kubectl api-resources --verbs=list --namespaced -o name)" 1>&2
+    kubectl api-resources --verbs=list --namespaced -o name
+}
+
 kpsql() {
     if [[ -z "$PGHOST" ]] ; then
         echo "No database host set. (PGHOST)" 1>&2
@@ -383,9 +388,22 @@ _json_to_output_format() {
     esac
 }
 
+kargolist() {
+    declare namespace=argocd
+    if [[ "$1" == "--namespace" ]] ; then
+        namespace="$2"; shift 2
+    fi
+    echo "> $(printf "%q " kubectl get -n "$namespace" applications.argoproj.io)" 1>&2
+    kubectl get -n "$namespace" applications.argoproj.io
+}
+
 kargoexport() {
+    declare namespace=argocd
+    if [[ "$1" == "--namespace" ]] ; then
+        namespace="$2"; shift 2
+    fi
     # Export argocd application
-    kube get Application "$1" -o json \
+    kubectl get -n "$namespace" applications.argoproj.io "$1" -o json \
         | jq 'del(.status) | .metadata |= with_entries(select(.key == "name" or .key == "namespace"))' \
         | _json_to_output_format
 }
@@ -442,6 +460,7 @@ cmd_print() {
     ship-environment-variable AZURE_SUBSCRIPTION_ID "$AZURE_SUBSCRIPTION_ID"
 
     ship-bash-function kube "kubctl alias with namespace"
+    ship-bash-function kube-list-resources "list all kubernetes resource types"
     ship-bash-function kpsql "run psql on the postgresql-client pod"
     ship-bash-function _kmip_pod_name "internal use only"
     ship-bash-function _kmip_container_name "internal use only"
@@ -451,6 +470,7 @@ cmd_print() {
     ship-bash-function kmipexec "execute command on mipserver pod"
     ship-bash-function kmiplogs "get logs of mipserver pod"
     ship-bash-function kmipdebug "foward port 8787"
+    ship-bash-function kargolist "list argocd applications"
     ship-bash-function kargoexport "export argocd application"
     ship-bash-function kaz "wrapper for azure az commands"
 }
