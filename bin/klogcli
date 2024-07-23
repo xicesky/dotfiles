@@ -1,5 +1,6 @@
 #!/bin/bash
 # Sets up a kubectl port-forward to loki and then runs a query via logcli
+# See https://grafana.com/docs/loki/latest/query/logcli/
 # TODO: Write own go application based on https://github.com/grafana/loki/blob/main/cmd/logcli/main.go
 
 LOCAL_PORT="${LOCAL_PORT:-9880}"

@@ -51,6 +51,25 @@ config-for-sp-prod() {
     AZURE_SUBSCRIPTION_ID="5a8fa46d-0536-4d5b-9c87-99141d740fac"
 }
 
+config-for-sp-prod-new() {
+    # Valid for new helm charts
+
+    KUBE_CONFIG_FILE="config-az-mx-prod.yaml"
+    SPCUSTOMER="$1"
+    KUBE_NAMESPACE="$SPCUSTOMER"
+    MIPSERVER_STS="${2:-mipserver}"
+    MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver}"
+    # Old variant
+    #PGHOST="postgres-flexible-mx-sp-mip-prod.postgres.database.azure.com"
+    PGHOST="postgres-flexible-mx-sp-mip-prod-priv.postgres.database.azure.com"
+    PGDATABASE="postgresqldatabase-${SPCUSTOMER}"
+    #PGUSER="postgresqldatabase-${SPCUSTOMER}-admin"
+    PGUSER=markus.dangl@solvares.com
+
+    AZURE_TENANT_ID="16b6f33b-57e2-4e2e-a05b-071e9ce7fc3e"
+    AZURE_SUBSCRIPTION_ID="5a8fa46d-0536-4d5b-9c87-99141d740fac"
+}
+
 config-for-mx-internal() {
     KUBE_CONFIG_FILE="config-mx-internal.yaml"
     KUBE_NAMESPACE="$1"
@@ -107,7 +126,7 @@ load-config() {
     hsm*-qa)           config-for-sp-prod  "customer-687399220" "hsm-mipserver" ;;
     hsm*-prod)         config-for-sp-prod  "customer-687399221" "hsm-mipserver" ;;
 
-    kalt*-qa)           config-for-sp-prod  "customer-687399150" kaltenbach-mipserver ;;
+    kalt*-qa)           config-for-sp-prod-new "customer-687399150" ;;
     kalt*-prod)         config-for-sp-prod  "customer-687399151" kaltenbach-mipserver ;;
 
     gewo*-qa)           config-for-sp-prod  "customer-687399170" gewofag-mipserver ;;
@@ -234,8 +253,8 @@ kmipexec_usage() {
 
 _kmip_pod_name() {
     declare pod="$1"
-    [[ -z "$pod" && -n "$SPCUSTOMER" ]] && pod="mipserver-${SPCUSTOMER}-0"
     [[ -z "$pod" && -n "$MIPSERVER_STS" ]] && pod="${MIPSERVER_STS}-0"
+    [[ -z "$pod" && -n "$SPCUSTOMER" ]] && pod="mipserver-${SPCUSTOMER}-0"
     if [[ -z "$pod" ]] ; then
         echo "No pod name provided and no serviceplatform customer (SPCUSTOMER variable) set." 1>&2
         return 1
