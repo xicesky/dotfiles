@@ -22,7 +22,7 @@ config-for-sp-dev() {
     SPCUSTOMER="$1"
     KUBE_NAMESPACE="$SPCUSTOMER"
     MIPSERVER_STS="${2:-mipserver-$SPCUSTOMER}"
-    MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver-fla}"
+    MIPSERVER_DEFAULT_CONTAINER="${3:-mipserver}" # Old default was mipserver-fla
     # Old variant
     #PGHOST="postgres-shared.postgres.database.azure.com"
     PGHOST="postgres-flexible-mx-sp-priv.postgres.database.azure.com"
@@ -39,7 +39,7 @@ config-for-sp-prod() {
     SPCUSTOMER="$1"
     KUBE_NAMESPACE="$SPCUSTOMER"
     MIPSERVER_STS="${2:-mipserver-$SPCUSTOMER}"
-    MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver-fla}"
+    MIPSERVER_DEFAULT_CONTAINER="${3:-mipserver}" # Old default was mipserver-fla
     # Old variant
     #PGHOST="postgres-flexible-mx-sp-mip-prod.postgres.database.azure.com"
     PGHOST="postgres-flexible-mx-sp-mip-prod-priv.postgres.database.azure.com"
@@ -108,39 +108,39 @@ config-for-nbb() {
 
 load-config() {
     case "$1" in
-    flsa*)              config-for-sp-dev  "customer-687399035" ;;
+    flsa*)              config-for-sp-dev  "customer-687399035" "" "mipserver-fla" ;;
 
-    ochs*-dev)          config-for-sp-dev   "customer-687399036" ;;
-    ochs*-qa)           config-for-sp-prod  "customer-687399031" ;;
-    ochs*-prod)         config-for-sp-prod  "customer-687399036" ;;
+    ochs*-dev)          config-for-sp-dev   "customer-687399036" "" "mipserver-fla" ;;
+    ochs*-qa)           config-for-sp-prod  "customer-687399031" "" "mipserver-fla" ;;
+    ochs*-prod)         config-for-sp-prod  "customer-687399036" "" "mipserver-fla" ;;
 
-    harg*-dev)          config-for-sp-dev   "customer-687399110" ;;
-    harg*-qa)           config-for-sp-prod  "customer-687399110" ;;
-    harg*-prod)         config-for-sp-prod  "customer-687399111" ;;
+    harg*-dev)          config-for-sp-dev   "customer-687399110" "" "mipserver-fla" ;;
+    harg*-qa)           config-for-sp-prod  "customer-687399110" "" "mipserver-fla" ;;
+    harg*-prod)         config-for-sp-prod  "customer-687399111" "" "mipserver-fla" ;;
 
-    bwtd*-qa)           config-for-sp-prod  "customer-687399060" "bwt-de-mipserver" ;;
-    bwtd*-prod)         config-for-sp-prod  "customer-687399061" "bwt-de-mipserver" ;;
-    bwta*-qa)           config-for-sp-prod  "customer-687399200" "bwt-at-mipserver" ;;
-    bwta*-prod)         config-for-sp-prod  "customer-687399201" "bwt-at-mipserver" ;;
+    bwtd*-qa)           config-for-sp-prod  "customer-687399060" "" "bwt-de-mipserver" ;;
+    bwtd*-prod)         config-for-sp-prod  "customer-687399061" "" "bwt-de-mipserver" ;;
+    bwta*-qa)           config-for-sp-prod  "customer-687399200" "" "bwt-at-mipserver" ;;
+    bwta*-prod)         config-for-sp-prod  "customer-687399201" "" "bwt-at-mipserver" ;;
 
-    hsm*-qa)           config-for-sp-prod  "customer-687399220" "hsm-mipserver" ;;
-    hsm*-prod)         config-for-sp-prod  "customer-687399221" "hsm-mipserver" ;;
+    hsm*-qa)            config-for-sp-prod  "customer-687399220" "" "hsm-mipserver" ;;
+    hsm*-prod)          config-for-sp-prod  "customer-687399221" "" "hsm-mipserver" ;;
 
-    kalt*-qa)           config-for-sp-prod-new "customer-687399150" ;;
-    kalt*-prod)         config-for-sp-prod  "customer-687399151" kaltenbach-mipserver ;;
+    kalt*-qa)           config-for-sp-prod-new "customer-687399150" "" "kaltenbach-mipserver" ;;
+    kalt*-prod)         config-for-sp-prod  "customer-687399151" "" "kaltenbach-mipserver" ;;
 
-    gewo*-qa)           config-for-sp-prod  "customer-687399170" gewofag-mipserver ;;
-    gewo*-prod)         config-for-sp-prod  "customer-687399171" gewofag-mipserver ;;
+    gewo*-qa)           config-for-sp-prod  "customer-687399170" "" "gewofag-mipserver" ;;
+    gewo*-prod)         config-for-sp-prod  "customer-687399171" "" "gewofag-mipserver" ;;
 
-    solu*-qa)           config-for-sp-prod  "customer-687399180" soluvia-mipserver ;;
-    #solu*-prod)         config-for-sp-prod  "customer-687399181" soluvia-mipserver ;;
+    solu*-qa)           config-for-sp-prod  "customer-687399180" "" "soluvia-mipserver" ;;
+    #solu*-prod)         config-for-sp-prod  "customer-687399181" "" "soluvia-mipserver" ;;
 
     customer-*-qa)      config-for-sp-prod "$1" ;;
     customer-*-prod)    config-for-sp-prod "$1" ;;
     customer-*)         config-for-sp-dev  "$1" ;;
 
-    nbb-dev)            config-for-nbb "mwm-dev" "mipserver-mwm-dev" ;;
-    nbb-prod)           config-for-nbb "mwm-prod" "mipserver-mwm-prod" ;;
+    nbb-dev)            config-for-nbb "mwm-dev" "mipserver-mwm-dev" "mipserver-mwm-dev" ;;
+    nbb-prod)           config-for-nbb "mwm-prod" "mipserver-mwm-prod" "mipserver-mwm-prod" ;;
 
     prd-vti)            config-for-mx-internal "vt-integration" "prd-vt-integration-dispatchx-mipserver" ;;
     abrg|arburg*)       config-for-mx-internal "ps-arburg" "ps-arburg-dispatchx-mipserver" ;;
