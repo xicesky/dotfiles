@@ -1,4 +1,5 @@
 #!/bin/bash
+# ATTENTION: This is still highly windows-centric, i'd like to completely rewrite it.
 
 declare -g JAVAHOME BINJAVA JAVA_HOME JAVA_VERSION
 declare -g FIX_PATH=false LIST_ALL=false
@@ -20,6 +21,23 @@ declare -g SCOOP_APPS_DIR=""
 #     ls "$(cygpath -ua "$(scoop prefix temurin11-jdk)/..")"
 # }
 
+to-windows-path() {
+    echo "$1"
+}
+
+to-unix-path() {
+    echo "$1"
+}
+
+if type -P cygpath >/dev/null ; then
+    to-windows-path() {
+        cygpath --windows "$1"
+    }
+    to-unix-path() {
+        cygpath --unix "$1"
+    }
+fi
+
 load-java-suspects() {
     declare pgf
     JAVA_SUSPECTS=()
@@ -37,6 +55,11 @@ load-java-suspects() {
                 SCOOP_APPS_DIR="$(cygpath -ua "$(scoop prefix temurin11-jdk)/..")"
             fi
         fi
+    fi
+    if [[ -d /usr/lib/jvm ]] ; then
+        JAVA_SUSPECTS+=(
+            /usr/lib/jvm
+        )
     fi
 }
 
@@ -59,6 +82,7 @@ find-all-java-installs() {
             -o  -iname "jdk$JAVA_VERSION*" \
             -o  -iname "jdk-$JAVA_VERSION_ALT*" \
             -o  -iname "jdk$JAVA_VERSION_ALT*" \
+            -o  -iname "java-$JAVA_VERSION-openjdk-*" \
             \) \
             -printf "%f|%p\n" \
             2>/dev/null \
@@ -85,7 +109,7 @@ find-java() {
             JAVAHOME="$result"
             BINJAVA="$JAVAHOME/bin/java"
             if [[ -x "$BINJAVA" ]] ; then
-                JAVA_HOME="$(cygpath --windows "$JAVAHOME")"
+                JAVA_HOME="$(to-windows-path "$JAVAHOME")"
                 return 0
             fi
         fi
@@ -93,10 +117,10 @@ find-java() {
 
     # Guess from JAVA_HOME
     if [[ -n "$JAVA_HOME" ]] ; then
-        JAVAHOME="$(cygpath --unix "$JAVA_HOME")"
+        JAVAHOME="$(to-unix-path "$JAVA_HOME")"
         BINJAVA="$JAVAHOME/bin/java"
         if [[ -x "$BINJAVA" ]] ; then
-            JAVA_HOME="$(cygpath --windows "$JAVAHOME")"
+            JAVA_HOME="$(to-windows-path "$JAVAHOME")"
             return 0
         fi
     fi
@@ -107,10 +131,10 @@ find-java() {
     if [[ -x "$BINJAVA" ]] ; then
         # Just ask java for java.home
         JAVAHOME="$("$BINJAVA" -XshowSettings:properties -version 2>&1 > /dev/null | grep 'java.home' | sed 's/^.*= \?\(.*\)/\1/')"
-        JAVAHOME="$(cygpath --unix "$JAVAHOME")"
+        JAVAHOME="$(to-unix-path "$JAVAHOME")"
         
         if [[ -d "$JAVAHOME" ]] ; then
-            JAVA_HOME="$(cygpath --windows "$JAVAHOME")"
+            JAVA_HOME="$(to-windows-path "$JAVAHOME")"
             return 0
         fi
     fi
@@ -180,9 +204,9 @@ if $LIST_ALL ; then
     #list-java-search-dirs
     list-java-installs
 elif find-java ; then
-    quote JAVAHOME="$JAVAHOME"
-    quote JAVA_HOME="$(cygpath --windows "$JAVAHOME")"
-    quote BINJAVA="$BINJAVA"
+    quote export JAVAHOME="$JAVAHOME"
+    quote export JAVA_HOME="$(to-windows-path "$JAVAHOME")"
+    quote export BINJAVA="$BINJAVA"
     if $FIX_PATH ; then
         newpath="$(echo "$PATH" | tr ':' '\n' | grep -v jdk | tr '\n' ':')$JAVAHOME/bin"
         quote PATH="$newpath"
