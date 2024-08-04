@@ -1,5 +1,5 @@
 #!/bin/bash
-# FIXME: Share functions with other installers (install-wsl2-stuff.sh)
+# Installs dotfiles (only)
 
 ################################################################################
 # Verbosity, command logging
@@ -109,89 +109,139 @@ lins() {
 # Configuration
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/_dotfiles}"
-# Everything else is configured via _dotfiles/installer/install.sh
+USER_BIN_DIR="${USER_BIN_DIR:-$HOME/bin}"
+XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 
-configuration_load() {
-    if [[ -x "$DOTFILES_DIR/installer/install.sh" ]] ; then
-        eval "$("$DOTFILES_DIR/installer/install.sh" -q info)"
-    else
-        log 0 "Dotfiles main installer $DOTFILES_DIR/installer/install.sh not found or not executable"
-        return 1
+config_autodetect() {
+    # Does not really autodetect anything yet - we always use the defaults if possible
+    if [[ -d "$DOTFILES_DIR" ]] ; then
+        log -p '# ' 2 "Detected DOTFILES_DIR: $DOTFILES_DIR" 1>&2
     fi
+
+    if [[ -d "$XDG_CONFIG_HOME" ]] ; then
+        log -p '# ' 2 "Detected XDG_CONFIG_HOME: $XDG_CONFIG_HOME" 1>&2
+    else
+        log 0 "Warning: XDG_CONFIG_HOME not set or not a directory: $XDG_CONFIG_HOME" 1>&2
+    fi
+
+    if [[ -d "$XDG_CACHE_HOME" ]] ; then
+        log -p '# ' 2 "Detected XDG_CACHE_HOME: $XDG_CACHE_HOME" 1>&2
+    else
+        log 0 "Warning: XDG_CACHE_HOME not set or not a directory: $XDG_CACHE_HOME" 1>&2
+    fi
+}
+
+config_print() {
+    # Outputs configuration information in bash format
+    echo "DOTFILES_DIR=\"$(printf "%q" "$DOTFILES_DIR")\""
+    echo "USER_BIN_DIR=\"$(printf "%q" "$USER_BIN_DIR")\""
+    echo "XDG_CACHE_HOME=\"$(printf "%q" "$XDG_CACHE_HOME")\""
+    echo "XDG_CONFIG_HOME=\"$(printf "%q" "$XDG_CONFIG_HOME")\""
 }
 
 ################################################################################
 # Command parts / installation steps
 
-install_packages() {
-    invoke sudo apt-get install vim htop iotop iptraf-ng p7zip-full mc curl wget \
-	nmap pigz gzrt gzip bzip2 hwinfo ltrace strace lzma \
-	ncftp netcat-openbsd p7zip-rar pv \
-	bc zsh dnsutils git gnupg2 \
-    ca-certificates jq shellcheck xmlstarlet golang \
-    aptitude asciidoctor ruby-rouge \
-    || return 1
-
-    # Graphical tools
-    invoke sudo apt-get install \
-    xmonad xmobar trayer xsel rxvt-unicode suckless-tools gmrun \
-    libghc-xmonad-contrib-dev gnome-core ttf-bitstream-vera \
-    || return 1
+setup_dirs() {
+    invoke mkdir -p "$USER_BIN_DIR" || return 1
 }
 
-install_homebrew() {
-    # Install homebrew
-    if [[ -e /home/linuxbrew ]] ; then
-        echo "/home/linuxbrew already exists - not installing homebrew"
-        return 0
+update_dotfiles() {
+    # Check if agent is up at all
+    if [[ "$(ssh-add -l 2>/dev/null | wc -l)" -eq 0 ]] ; then
+        echo "No keys found in ssh-agent. Check via: ssh-add -l" 1>&2
+        return 1
     fi
+
+    # Klöne tze repositorie
     if [[ ! -d ~/_dotfiles ]] ; then
-        echo "Dotfiles are not in ~/_dotfiles (yet?)" 1>&2
-        return 1
+        invoke git clone --recurse-submodules "git@github.com:xicesky/dotfiles.git" ~/_dotfiles || return 1
+    else
+        ( 
+            cd ~/_dotfiles && invoke git pull
+        ) || return 1
     fi
-    if [[ ! -f ~/_dotfiles/homebrew/install.sh ]] ; then
-        #shellcheck disable=SC2088
-        echo "~/_dotfiles/homebrew/install.sh is missing" 1>&2
-        return 1
-    fi
-
-    echo "################################################################################"
-    echo "# Starting homebrew install"
-    echo ""
-    /bin/bash ~/_dotfiles/homebrew/install.sh || return 1
-    if [[ ! -x /home/linuxbrew/.linuxbrew/bin/brew ]] ; then
-        echo "Homebrew did not install /home/linuxbrew/.linuxbrew/bin/brew ???" 1>&2
-        return 1
-    fi
-    echo "# Homebrew install done"
 }
 
-change_shell() {
-    # chsh currently doesn't work, because my user is not in /etc/passwd
-    #invoke chsh -s /usr/bin/zsh || return 1
-    true
+install_dotfiles() {
+    # Binaries first
+    for i in \
+        datetag ff git-multi-st git-showtool kube-helper.sh list-git-repos \
+        open query-xml ry where-is-java winmerge \
+        ; do
+        lins "../_dotfiles/bin/$i" ~/bin || return 1
+    done
+    # FIXME?
+    # if [[ ! -e "bin/my-ssh-agent.eval.sh" ]] ; then
+    #     invoke ln -s ../_dotfiles/ssh/ssh-agent-scripts/wsl2-ssh-agent-relay.eval.sh bin/my-ssh-agent.eval.sh || return 1
+    # fi
+    if [[ -f ~/.bashrc ]] ; then
+        { 
+            echo "Warning: ~/.bashrc already exists, not linking"
+            echo "Remove it and rerun this installer it to get the actual bash configuration"
+        } 1>&2
+    fi
+    if [[ -f ~/.bash_logout ]] ; then
+        { 
+            echo "Warning: ~/.bash_logout already exists, not linking"
+            echo "Remove it and rerun this installer it to get the actual bash configuration"
+        } 1>&2
+    fi
+    lins "_dotfiles"/{vim/.vim,vim/.vimrc,git/.gitconfig,tmux/.tmux.conf,zsh/.zshenv,bash/.bashrc,bash/.bash_logout} ~ || return 1
+    
+    mkdir -p ~/.config/zsh || return 1
+    mapfile -d $'\0' SOURCES < <( ( cd ~ && find _dotfiles/zsh/zdotdir -mindepth 1 -maxdepth 1 -printf "../../%p\0") )
+    if [[ "${#SOURCES[@]}" -lt 1 ]] ; then
+        echo "Failed to find any sources in _dotfiles/zsh/zdotdir" 1>&2
+        return 1
+    fi
+    invoke lins "${SOURCES[@]}" ~/.config/zsh || return 1
+
+    mkdir -p ~/.config/bash || return 1
+    mapfile -d $'\0' SOURCES < <( ( cd ~ && find _dotfiles/bash/bash_dotdir -mindepth 1 -maxdepth 1 -printf "../../%p\0") )
+    if [[ "${#SOURCES[@]}" -lt 1 ]] ; then
+        echo "Failed to find any sources in _dotfiles/bash/bash_dotdir" 1>&2
+        return 1
+    fi
+    invoke lins "${SOURCES[@]}" ~/.config/bash || return 1
+}
+
+install_fonts() {
+    # Not yet finished
+    if [[ ! -d "$XDG_DATA_HOME/fonts" ]] ; then
+        echo "No XDG_DATA_HOME/fonts directory found, skipping font installation" 1>&2
+        return 1
+    fi
+    fontdir="$XDG_DATA_HOME/fonts"
+
+    invoke mkdir -p "$fontdir" || return 1
+    invoke cp ~/_dotfiles/fonts/source-code-pro/OTF/*.otf "$fontdir/"
+    invoke cp ~/_dotfiles/fonts/source-code-pro/TTF/*.ttf "$fontdir/"
+    invoke cp ~/_dotfiles/fonts/nerd-fonts/Meslo/*.ttf "$fontdir/"
+    invoke cp ~/_dotfiles/fonts/nerd-fonts/SourceCodePro/*.ttf "$fontdir/"
 }
 
 ################################################################################
 # Main, argparsing and commands
 
 cmd_install() {
-    invoke install_packages || return 1
-    configuration_load || return 1
-    invoke "$DOTFILES_DIR/installer/install.sh" install
-    # Homebrew currently doesn't work because of missing permissions
-    #invoke install_homebrew || return 1
-    change_shell || return 1
+    config_autodetect || return 1
+    invoke setup_dirs || return 1
+    invoke update_dotfiles || return 1
+    install_dotfiles || return 1
 }
 
 cmd_install-fonts() {
-    configuration_load || return 1
-    invoke "$DOTFILES_DIR/installer/install.sh" install-fonts || return 1
+    config_autodetect || return 1
+    install_fonts || return 1
 }
 
-cmd_temp() {
-    configuration_load || return 1
-    invoke install_packages || return 1
+cmd_info() {
+    # Outputs configuration information in bash format
+    config_autodetect || return 1
+    config_print
 }
 
 cmd_help() {
@@ -206,13 +256,14 @@ usage() {
     echo "    --help  Show usage and exit"
     echo ""
     echo "Available commands:"
-    echo "    install"
+    echo "    install Update & install dotfiles"
+    echo "    info    Show configuration information"
     echo "    help    Show usage and exit"
     echo ""
 }
 
 main() {
-    declare cmd=""
+    declare cmd="install"
     declare cmderr=0
     while [[ $# -gt 0 ]] ; do
         arg="$1"; shift
