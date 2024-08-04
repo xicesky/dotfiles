@@ -2,5 +2,5 @@
 
 cat <<"EOF"
 # Replacement for "aliases"
-vi() { vim "$@" }
+vi() { vim "$@"; }
 EOF
