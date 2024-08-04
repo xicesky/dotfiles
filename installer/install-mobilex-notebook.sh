@@ -108,6 +108,35 @@ lins() {
 ################################################################################
 # Command parts / installation steps
 
+install_packages() {
+    invoke sudo apt-get install vim htop iotop iptraf-ng p7zip-full mc curl wget \
+	nmap pigz gzrt gzip bzip2 hwinfo ltrace strace lzma \
+	ncftp netcat-openbsd p7zip-rar pv \
+	bc zsh dnsutils git gnupg2 \
+    ca-certificates jq shellcheck xmlstarlet golang \
+    aptitude asciidoctor ruby-rouge \
+    || return 1
+
+    # Graphical tools
+    invoke sudo apt-get install \
+    xmonad xmobar trayer xsel rxvt-unicode suckless-tools gmrun \
+    libghc-xmonad-contrib-dev gnome-core ttf-bitstream-vera \
+    || return 1
+}
+
+install_fonts() {
+    if [[ -n "$XDG_DATA_HOME" ]] ; then
+        fontdir="$XDG_DATA_HOME/fonts"
+    else
+        fontdir="$HOME/.local/share/fonts"
+    fi
+    invoke mkdir -p "$fontdir" || return 1
+    invoke cp ~/_dotfiles/fonts/source-code-pro/OTF/*.otf "$fontdir/"
+    invoke cp ~/_dotfiles/fonts/source-code-pro/TTF/*.ttf "$fontdir/"
+    invoke cp ~/_dotfiles/fonts/nerd-fonts/Meslo/*.ttf "$fontdir/"
+    invoke cp ~/_dotfiles/fonts/nerd-fonts/SourceCodePro/*.ttf "$fontdir/"
+}
+
 setup_dirs() {
     invoke mkdir -p ~/bin || return 1
 }
@@ -139,29 +168,89 @@ install_dotfiles() {
     # if [[ ! -e "bin/my-ssh-agent.eval.sh" ]] ; then
     #     invoke ln -s ../_dotfiles/ssh/ssh-agent-scripts/wsl2-ssh-agent-relay.eval.sh bin/my-ssh-agent.eval.sh || return 1
     # fi
-    lins "_dotfiles"/{vim/.vim,vim/.vimrc,git/.gitconfig,tmux/.tmux.conf,zsh/.zshenv} ~ || return 1
-    mkdir -p ~/.config/zsh
-    mapfile -d $'\0' SOURCES < <(find _dotfiles/zsh/zdotdir -mindepth 1 -maxdepth 1 -printf "../../%p\0")
-    lins "${SOURCES[@]}" ~/.config/zsh || return 1
+    if [[ -f ~/.bashrc ]] ; then
+        { 
+            echo "Warning: ~/.bashrc already exists, not linking"
+            echo "Remove it and rerun this installer it to get the actual bash configuration"
+        } 1>&2
+    fi
+    if [[ -f ~/.bash_logout ]] ; then
+        { 
+            echo "Warning: ~/.bash_logout already exists, not linking"
+            echo "Remove it and rerun this installer it to get the actual bash configuration"
+        } 1>&2
+    fi
+    lins "_dotfiles"/{vim/.vim,vim/.vimrc,git/.gitconfig,tmux/.tmux.conf,zsh/.zshenv,bash/.bashrc,bash/.bash_logout} ~ || return 1
+    
+    mkdir -p ~/.config/zsh || return 1
+    mapfile -d $'\0' SOURCES < <( ( cd ~ && find _dotfiles/zsh/zdotdir -mindepth 1 -maxdepth 1 -printf "../../%p\0") )
+    if [[ "${#SOURCES[@]}" -lt 1 ]] ; then
+        echo "Failed to find any sources in _dotfiles/zsh/zdotdir" 1>&2
+        return 1
+    fi
+    invoke lins "${SOURCES[@]}" ~/.config/zsh || return 1
+
+    mkdir -p ~/.config/bash || return 1
+    mapfile -d $'\0' SOURCES < <( ( cd ~ && find _dotfiles/bash/bash_dotdir -mindepth 1 -maxdepth 1 -printf "../../%p\0") )
+    if [[ "${#SOURCES[@]}" -lt 1 ]] ; then
+        echo "Failed to find any sources in _dotfiles/bash/bash_dotdir" 1>&2
+        return 1
+    fi
+    invoke lins "${SOURCES[@]}" ~/.config/bash || return 1
+}
+
+install_homebrew() {
+    # Install homebrew
+    if [[ -e /home/linuxbrew ]] ; then
+        echo "/home/linuxbrew already exists - not installing homebrew"
+        return 0
+    fi
+    if [[ ! -d ~/_dotfiles ]] ; then
+        echo "Dotfiles are not in ~/_dotfiles (yet?)" 1>&2
+        return 1
+    fi
+    if [[ ! -f ~/_dotfiles/homebrew/install.sh ]] ; then
+        #shellcheck disable=SC2088
+        echo "~/_dotfiles/homebrew/install.sh is missing" 1>&2
+        return 1
+    fi
+
+    echo "################################################################################"
+    echo "# Starting homebrew install"
+    echo ""
+    /bin/bash ~/_dotfiles/homebrew/install.sh || return 1
+    if [[ ! -x /home/linuxbrew/.linuxbrew/bin/brew ]] ; then
+        echo "Homebrew did not install /home/linuxbrew/.linuxbrew/bin/brew ???" 1>&2
+        return 1
+    fi
+    echo "# Homebrew install done"
 }
 
 change_shell() {
-    echo "" >&2
-    echo "WARNING: Changing shell on steam deck will break the steam gaming mode somehow." >&2
-    echo "         Not changing shell for now." >&2
+    # chsh currently doesn't work, because my user is not in /etc/passwd
     #invoke chsh -s /usr/bin/zsh || return 1
+    true
 }
 
 ################################################################################
 # Main, argparsing and commands
 
 cmd_install() {
+    invoke install_packages || return 1
     invoke setup_dirs || return 1
     invoke update_dotfiles || return 1
     install_dotfiles || return 1
-    # TODO: Homebrew
-    # invoke install_homebrew || return 1
+    # Homebrew currently doesn't work because of missing permissions
+    #invoke install_homebrew || return 1
     change_shell || return 1
+}
+
+cmd_install-fonts() {
+    invoke install_fonts || return 1
+}
+
+cmd_temp() {
+    invoke install_packages || return 1
 }
 
 cmd_help() {
