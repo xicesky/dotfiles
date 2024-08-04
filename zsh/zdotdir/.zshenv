@@ -6,6 +6,10 @@
 # Temporary, just for timing zsh startup
 [[ -z "$ZPROFRC" ]] || echo "$(date +"%T.%N") ENTER \$ZDOTDIR/.zshenv"
 
+# Unset SHELL_TYPE and SKY_ENVIRONMENT_FILE, they might come from another shell
+SHELL_TYPE=""
+SKY_ENVIRONMENT_FILE=""
+
 # Prevent debian's /etc/zshrc from running compinit - it will be run
 # in our .zshrc anyway and just degrate startup performance
 skip_global_compinit=1

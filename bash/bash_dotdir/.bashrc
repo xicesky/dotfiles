@@ -2,7 +2,7 @@
 
 exec_all() {
     while IFS= read -r -d $'\0' file ; do
-        echo "# $(basename "$file")"
+        #echo "# $(basename "$file")"
         # shellcheck disable=SC1090
         source "$file"
     done < <(
