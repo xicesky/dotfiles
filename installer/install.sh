@@ -168,8 +168,10 @@ update_dotfiles() {
 install_dotfiles() {
     # Binaries first
     for i in \
-        datetag ff git-multi-st git-showtool kube-helper.sh list-git-repos \
-        open query-xml ry where-is-java winmerge \
+        datetag open ff query-xml ry jwtutil \
+        git-multi-st git-showtool list-git-repos \
+        kube-helper.sh klogcli \
+        where-is-java winmerge \
         ; do
         lins "../_dotfiles/bin/$i" ~/bin || return 1
     done

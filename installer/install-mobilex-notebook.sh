@@ -126,10 +126,10 @@ configuration_load() {
 install_packages() {
     invoke sudo apt-get install vim htop iotop iptraf-ng p7zip-full mc curl wget \
 	nmap pigz gzrt gzip bzip2 hwinfo ltrace strace lzma \
-	ncftp netcat-openbsd p7zip-rar pv \
+	ncftp netcat-openbsd p7zip-rar pv dos2unix \
 	bc zsh dnsutils git gnupg2 \
     ca-certificates jq shellcheck xmlstarlet golang \
-    aptitude asciidoctor ruby-rouge \
+    aptitude asciidoctor ruby-rouge postgresql-client \
     || return 1
 
     # Graphical tools
