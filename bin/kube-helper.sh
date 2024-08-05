@@ -16,6 +16,8 @@ PGPASSWORD="${PGPASSWORD:-}"
 # Azure (az) parameters
 AZURE_TENANT_ID="${AZURE_TENANT_ID:-16b6f33b-57e2-4e2e-a05b-071e9ce7fc3e}"
 AZURE_SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID:-5a8fa46d-0536-4d5b-9c87-99141d740fac}"
+AZURE_AKS_NAME="${AZURE_AKS_NAME:-kyma}"
+AZURE_AKS_RG="${AZURE_AKS_RG:-kyma-dev}"
 
 config-for-sp-dev() {
     KUBE_CONFIG_FILE="config-az-mx-dev.yaml"
@@ -32,6 +34,7 @@ config-for-sp-dev() {
 
     AZURE_TENANT_ID="a223fba7-7c90-4a1a-affb-5e6549d0f252"
     AZURE_SUBSCRIPTION_ID="32da1237-4da1-4065-8a2a-37122ce002b1"
+    AZURE_AKS_RG="kyma-dev"
 }
 
 config-for-sp-prod() {
@@ -49,6 +52,7 @@ config-for-sp-prod() {
 
     AZURE_TENANT_ID="16b6f33b-57e2-4e2e-a05b-071e9ce7fc3e"
     AZURE_SUBSCRIPTION_ID="5a8fa46d-0536-4d5b-9c87-99141d740fac"
+    AZURE_AKS_RG="kyma-prod"
 }
 
 config-for-sp-prod-new() {
@@ -68,6 +72,7 @@ config-for-sp-prod-new() {
 
     AZURE_TENANT_ID="16b6f33b-57e2-4e2e-a05b-071e9ce7fc3e"
     AZURE_SUBSCRIPTION_ID="5a8fa46d-0536-4d5b-9c87-99141d740fac"
+    AZURE_AKS_RG="kyma-prod"
 }
 
 config-for-mx-internal() {
@@ -453,6 +458,14 @@ kaz() {
             echo "$(printf "%q " az account set --subscription "$AZURE_SUBSCRIPTION_ID")" 1>&2
             az account set --subscription "$AZURE_SUBSCRIPTION_ID"
             ;;
+        generate-kube-config)
+            echo "$(printf "%q " az aks get-credentials --resource-group "$AZURE_AKS_RG" --name "$AZURE_AKS_NAME" \
+                --file "$KUBECONFIG")" 1>&2
+            az aks get-credentials --resource-group "$AZURE_AKS_RG" --name "$AZURE_AKS_NAME" \
+                --file "$KUBECONFIG" || return 1
+            # Run dos2unix on the kubeconfig file, just to be sure - on windows az generates CRLF line endings
+            dos2unix "$KUBECONFIG"
+            ;;
         *)
             echo "Error: unknown command: $command" 1>&2
             return 1;
@@ -477,6 +490,8 @@ cmd_print() {
     printf "export %s\n" "PGPASSWORD"
     ship-environment-variable AZURE_TENANT_ID "$AZURE_TENANT_ID"
     ship-environment-variable AZURE_SUBSCRIPTION_ID "$AZURE_SUBSCRIPTION_ID"
+    ship-environment-variable AZURE_AKS_NAME "$AZURE_AKS_NAME"
+    ship-environment-variable AZURE_AKS_RG "$AZURE_AKS_RG"
 
     ship-bash-function kube "kubctl alias with namespace"
     ship-bash-function kube-list-resources "list all kubernetes resource types"
