@@ -19,6 +19,8 @@
 	tool = vimdiff
 [difftool]
 	prompt = false
+[difftool "meld"]
+    cmd = \"C:/Program Files (x86)/Meld/Meld.exe\" \"$LOCAL\" \"$REMOTE\"
 [difftool "winmerge"]
 	name = WinMerge
     trustExitCode = true
@@ -29,6 +31,10 @@
     name = WinMerge
     trustExitCode = true
     cmd = "winmerge" -u -e -dl \"Local\" -dr \"Remote\" \"$LOCAL\" \"$BASE\" \"$REMOTE\" -o \"$MERGED\"
+[mergetool "meld"]
+	path = C:/Program Files (x86)/Meld/Meld.exe
+[mergetool]
+	keepBackup = false
 [alias]
 	st = status
 	d = difftool
