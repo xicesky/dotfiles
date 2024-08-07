@@ -115,7 +115,8 @@ main() {
     case "${POSITIONAL[0]}" in
     start)
         fg_opts
-        start-stop-daemon --start --oknodo --pidfile "${PIDFILE}" --name wsl-ssh-agent-r --make-pidfile --background --startas "$0" ${VERBOSE:+--verbose} ${QUIET:+--quiet} -- foreground "${FG_OPTS[@]}"
+        self=$(readlink -f "$0")
+        start-stop-daemon --start --oknodo --pidfile "${PIDFILE}" --name wsl-ssh-agent-r --make-pidfile --background --startas "$self" ${VERBOSE:+--verbose} ${QUIET:+--quiet} -- foreground "${FG_OPTS[@]}"
         ;;
 
     stop)

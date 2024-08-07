@@ -9,6 +9,8 @@
 # * Install npiperelay:  https://github.com/jstarks/npiperelay
 #    * Via choco: choco install -y npiperelay
 #    * Or via go: go get -u github.com/jstarks/npiperelay
+# * Install socat
+#    * Via apt: sudo apt-get install socat
 # * Symlink this script to ~/bin/my-ssh-agent.eval.sh
 #     ( cd ~/bin && ln -s ~/_dotfiles/ssh/ssh-agent-scripts/wsl2-ssh-agent-relay.eval.sh my-ssh-agent.eval.sh )
 # You can check open sockets via ss:
