@@ -206,7 +206,16 @@ install_dotfiles() {
     invoke lins "${SOURCES[@]}" ~/.config/bash || return 1
 
     if [[ -d "$XDG_DATA_HOME" && ! -d "$XDG_DATA_HOME/remmina" ]] ; then
-        invoke ln -s ~/_dotfiles/remmina/.local/share/remmina "$XDG_DATA_HOME/remmina"
+        mkdir "$XDG_DATA_HOME/remmina"
+    fi
+    # Check if remmina dir is a symlink using -h to avoid cyclic references
+    if [[ -d "$XDG_DATA_HOME/remmina" && ! -h "$XDG_DATA_HOME/remmina" ]] ; then
+        mapfile -d $'\0' SOURCES < <( ( find "$HOME/_dotfiles/remmina/.local/share/remmina" -mindepth 1 -maxdepth 1 -print0) )
+        if [[ "${#SOURCES[@]}" -lt 1 ]] ; then
+            echo "Failed to find any sources in _dotfiles/remmina/.local/share/remmina" 1>&2
+            return 1
+        fi
+        invoke lins "${SOURCES[@]}" "$XDG_DATA_HOME"/remmina/ || return 1
     fi
     if [[ ! -e ~/.ssh/config ]] ; then
         invoke ln -s ../_dotfiles/ssh/.ssh/config ~/.ssh/config

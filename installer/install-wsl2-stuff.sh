@@ -290,9 +290,12 @@ change_shell() {
 
 reboot_message() {
     echo ""
-    echo "Done. Now \"reboot\" wsl2 via:"
-    echo "    wsl --shutdown"
-    echo "    wsl"
+    echo "Done. Now you'll want to:"
+    echo "    * Configure your locale via:"
+    echo "        sudo dpkg-reconfigure locales"
+    echo "    * \"reboot\" wsl2 via:"
+    echo "        wsl --shutdown"
+    echo "        wsl"
 }
 
 ################################################################################
