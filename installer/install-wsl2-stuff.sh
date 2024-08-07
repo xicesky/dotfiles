@@ -135,6 +135,21 @@ lins() {
 }
 
 ################################################################################
+# Configuration
+
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/_dotfiles}"
+# Everything else is configured via _dotfiles/installer/install.sh
+
+configuration_load() {
+    if [[ -x "$DOTFILES_DIR/installer/install.sh" ]] ; then
+        eval "$("$DOTFILES_DIR/installer/install.sh" -q info)"
+    else
+        log 0 "Dotfiles main installer $DOTFILES_DIR/installer/install.sh not found or not executable"
+        return 1
+    fi
+}
+
+################################################################################
 # Command parts / installation steps
 
 install_prereqs() {
@@ -150,8 +165,8 @@ setup_wsl2_dirs() {
     invoke ln -fs "$WIN_HOME" ~/win-home || return 1
     invoke ln -fs win-home/.m2 ~/.m2 || return 1
     invoke ln -fs win-home/.npmrc ~/.npmrc || return 1
-    invoke ln -fs win-home/Documents Documents || return 1
-    invoke ln -fs win-home/Downloads Downloads || return 1
+    invoke ln -fs win-home/Documents ~/Documents || return 1
+    invoke ln -fs win-home/Downloads ~/Downloads || return 1
 }
 
 setup_wsl2-ssh-pageant() {
@@ -199,12 +214,17 @@ init_wsl2-ssh-pageant() {
 
 install_tools_debian() {
     invoke sudo apt-get install -y \
-        pigz gzrt gzip bzip2 lzma p7zip-full p7zip-rar \
-        bc pv netcat-openbsd curl wget nmap ncftp \
-        zsh vim mc sudo \
-        dnsutils tcpdump \
-        apt-transport-https aptitude asciidoctor ruby-rouge \
+        vim p7zip-full p7zip-rar lzma pigz gzrt gzip bzip2 \
+        mc curl wget nmap hwinfo ltrace strace htop iotop iptraf-ng tcpdump \
+        ncftp netcat-openbsd pv dos2unix \
+        bc zsh dnsutils git gnupg2 \
         ca-certificates jq shellcheck xmlstarlet golang \
+        aptitude asciidoctor ruby-rouge postgresql-client \
+        || return 1
+
+    # Graphical tools
+    invoke sudo apt-get install -y \
+        ttf-bitstream-vera remmina remmina-plugin-spice \
         || return 1
 }
 
@@ -223,38 +243,10 @@ enable_wsl2_systemd() {
     # DefaultLimitNOFILE=65535
 }
 
-update_dotfiles() {
-    # Check if agent is up at all
-    if [[ "$(ssh-add -l 2>/dev/null | wc -l)" -eq 0 ]] ; then
-        echo "No keys found in ssh-agent. Check via: ssh-add -l" 1>&2
-        return 1
+install_ssh_agent_forwarder() {
+    if [[ ! -e "$HOME/bin/my-ssh-agent.eval.sh" ]] ; then
+        invoke ln -s ../_dotfiles/ssh/ssh-agent-scripts/wsl2-ssh-agent-relay.eval.sh "$HOME/bin/my-ssh-agent.eval.sh" || return 1
     fi
-
-    # Klöne tze repositorie
-    if [[ ! -d ~/_dotfiles ]] ; then
-        invoke git clone --recurse-submodules "git@github.com:xicesky/dotfiles.git" ~/_dotfiles || return 1
-    else
-        ( cd ~/_dotfiles && invoke git pull; ) || return 1
-    fi
-}
-
-install_dotfiles() {
-    # Binaries first
-    for i in \
-        datetag ff git-multi-st git-showtool kube-helper.sh list-git-repos \
-        open query-xml ry where-is-java winmerge \
-        ; do
-        lins "../_dotfiles/bin/$i" ~/bin || return 1
-    done
-    # FIXME?
-    if [[ ! -e "bin/my-ssh-agent.eval.sh" ]] ; then
-        invoke ln -s ../_dotfiles/ssh/ssh-agent-scripts/wsl2-ssh-agent-relay.eval.sh bin/my-ssh-agent.eval.sh || return 1
-    fi
-    lins "_dotfiles"/{vim/.vim,vim/.vimrc,git/.gitconfig,tmux/.tmux.conf,zsh/.zshenv} ~ || return 1
-
-    lins "_dotfiles/zsh/.zshenv" ~ || return 1
-    mkdir -p ~/.config/zsh
-    lins _dotfiles/zsh/zdotdir/* ~/.config/zsh || return 1
 }
 
 install_homebrew() {
@@ -317,23 +309,29 @@ cmd_install() {
     invoke install_prereqs || return 1
     invoke setup_wsl2_dirs || return 1
     invoke enable_wsl2_systemd || return 1
-    invoke update_dotfiles || return 1
-    install_dotfiles || return 1
-    install_tools_debian || return 1
+    configuration_load || return 1
+    invoke "$DOTFILES_DIR/installer/install.sh" install
+    invoke install_ssh_agent_forwarder || return 1
+    invoke install_tools_debian || return 1
     invoke install_homebrew || return 1
     reboot_message # reboot required for systemd
 }
 
 cmd_install-tools() {
-    invoke update_dotfiles || return 1
-    install_dotfiles || return 1
+    configuration_load || return 1
+    invoke "$DOTFILES_DIR/installer/install.sh" install
     install_tools_debian || return 1
     install_homebrew || return 1
     install_tools_homebrew || return 1
 }
 
 cmd_install_dotfiles() {
-    install_dotfiles
+    configuration_load || return 1
+    invoke "$DOTFILES_DIR/installer/install.sh" install
+}
+
+cmd_setup_wsl2_dirs() {
+    setup_wsl2_dirs || return 1
 }
 
 cmd_help() {

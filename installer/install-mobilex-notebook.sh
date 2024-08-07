@@ -124,19 +124,25 @@ configuration_load() {
 # Command parts / installation steps
 
 install_packages() {
-    invoke sudo apt-get install vim htop iotop iptraf-ng p7zip-full mc curl wget \
-	nmap pigz gzrt gzip bzip2 hwinfo ltrace strace lzma \
-	ncftp netcat-openbsd p7zip-rar pv dos2unix \
-	bc zsh dnsutils git gnupg2 \
-    ca-certificates jq shellcheck xmlstarlet golang \
-    aptitude asciidoctor ruby-rouge postgresql-client \
-    || return 1
+    invoke sudo apt-get install -y \
+        vim p7zip-full p7zip-rar lzma pigz gzrt gzip bzip2 \
+        mc curl wget nmap hwinfo ltrace strace htop iotop iptraf-ng tcpdump \
+        ncftp netcat-openbsd pv dos2unix \
+        bc zsh dnsutils git gnupg2 \
+        ca-certificates jq shellcheck xmlstarlet golang \
+        aptitude asciidoctor ruby-rouge postgresql-client \
+        || return 1
+    
+    # Desktop
+    invoke sudo apt-get install -y \
+        xmonad xmobar trayer xsel rxvt-unicode suckless-tools gmrun \
+        libghc-xmonad-contrib-dev gnome-core \
+        || return 1
 
     # Graphical tools
-    invoke sudo apt-get install \
-    xmonad xmobar trayer xsel rxvt-unicode suckless-tools gmrun \
-    libghc-xmonad-contrib-dev gnome-core ttf-bitstream-vera \
-    || return 1
+    invoke sudo apt-get install -y \
+        ttf-bitstream-vera remmina remmina-plugin-spice \
+        || return 1
 }
 
 install_homebrew() {

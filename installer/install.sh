@@ -175,10 +175,6 @@ install_dotfiles() {
         ; do
         lins "../_dotfiles/bin/$i" ~/bin || return 1
     done
-    # FIXME?
-    # if [[ ! -e "bin/my-ssh-agent.eval.sh" ]] ; then
-    #     invoke ln -s ../_dotfiles/ssh/ssh-agent-scripts/wsl2-ssh-agent-relay.eval.sh bin/my-ssh-agent.eval.sh || return 1
-    # fi
     if [[ -f ~/.bashrc ]] ; then
         { 
             echo "Warning: ~/.bashrc already exists, not linking"
@@ -208,6 +204,13 @@ install_dotfiles() {
         return 1
     fi
     invoke lins "${SOURCES[@]}" ~/.config/bash || return 1
+
+    if [[ -d "$XDG_DATA_HOME" && ! -d "$XDG_DATA_HOME/remmina" ]] ; then
+        invoke ln -s ~/_dotfiles/remmina/.local/share/remmina "$XDG_DATA_HOME/remmina"
+    fi
+    if [[ ! -e ~/.ssh/config ]] ; then
+        invoke ln -s ../_dotfiles/ssh/.ssh/config ~/.ssh/config
+    fi
 }
 
 install_fonts() {
@@ -232,6 +235,12 @@ cmd_install() {
     config_autodetect || return 1
     invoke setup_dirs || return 1
     invoke update_dotfiles || return 1
+    install_dotfiles || return 1
+}
+
+cmd_install-only() {
+    config_autodetect || return 1
+    invoke setup_dirs || return 1
     install_dotfiles || return 1
 }
 
