@@ -279,7 +279,11 @@ install_homebrew() {
 install_tools_homebrew() {
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" || return 1
     invoke "$HOMEBREW_PREFIX"/bin/brew install \
-        yq shfmt gcc helm terraform hadolint kubectl
+        yq shfmt gcc helm terraform hadolint kubectl pipx
+}
+
+install_tools_pipx() {
+    pipx install yt-dlp
 }
 
 change_shell() {
@@ -317,15 +321,18 @@ cmd_install() {
     invoke install_ssh_agent_forwarder || return 1
     invoke install_tools_debian || return 1
     invoke install_homebrew || return 1
+    invoke install_tools_homebrew || return 1
+    invoke install_tools_pipx || return 1
     reboot_message # reboot required for systemd
 }
 
 cmd_install-tools() {
     configuration_load || return 1
     invoke "$DOTFILES_DIR/installer/install.sh" install
-    install_tools_debian || return 1
-    install_homebrew || return 1
-    install_tools_homebrew || return 1
+    invoke install_tools_debian || return 1
+    invoke install_homebrew || return 1
+    invoke install_tools_homebrew || return 1
+    invoke install_tools_pipx || return 1
 }
 
 cmd_install_dotfiles() {
