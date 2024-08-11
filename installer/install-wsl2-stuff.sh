@@ -279,7 +279,7 @@ install_homebrew() {
 install_tools_homebrew() {
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" || return 1
     invoke "$HOMEBREW_PREFIX"/bin/brew install \
-        yq shfmt gcc helm terraform hadolint kubectl pipx
+        yq shfmt gcc helm terraform hadolint kubectl ffmpeg pipx
 }
 
 install_tools_pipx() {
