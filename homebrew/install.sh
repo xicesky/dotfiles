@@ -39,6 +39,28 @@ then
   abort 'Bash must not run in POSIX mode. Please unset POSIXLY_CORRECT and try again.'
 fi
 
+usage() {
+  cat <<EOS
+Homebrew Installer
+Usage: [NONINTERACTIVE=1] [CI=1] install.sh [options]
+    -h, --help       Display this message.
+    NONINTERACTIVE   Install without prompting for user input
+    CI               Install in CI mode (e.g. do not prompt for user input)
+EOS
+  exit "${1:-0}"
+}
+
+while [[ $# -gt 0 ]]
+do
+  case "$1" in
+    -h | --help) usage ;;
+    *)
+      warn "Unrecognized option: '$1'"
+      usage 1
+      ;;
+  esac
+done
+
 # string formatters
 if [[ -t 1 ]]
 then
@@ -138,7 +160,7 @@ then
   fi
   HOMEBREW_CACHE="${HOME}/Library/Caches/Homebrew"
 
-  STAT_PRINTF=("stat" "-f")
+  STAT_PRINTF=("/usr/bin/stat" "-f")
   PERMISSION_FORMAT="%A"
   CHOWN=("/usr/sbin/chown")
   CHGRP=("/usr/bin/chgrp")
@@ -153,7 +175,7 @@ else
   HOMEBREW_REPOSITORY="${HOMEBREW_PREFIX}/Homebrew"
   HOMEBREW_CACHE="${HOME}/.cache/Homebrew"
 
-  STAT_PRINTF=("stat" "--printf")
+  STAT_PRINTF=("/usr/bin/stat" "--printf")
   PERMISSION_FORMAT="%a"
   CHOWN=("/bin/chown")
   CHGRP=("/bin/chgrp")
@@ -181,9 +203,9 @@ fi
 export HOMEBREW_{BREW,CORE}_GIT_REMOTE
 
 # TODO: bump version when new macOS is released or announced
-MACOS_NEWEST_UNSUPPORTED="14.0"
+MACOS_NEWEST_UNSUPPORTED="15.0"
 # TODO: bump version when new macOS is released
-MACOS_OLDEST_SUPPORTED="11.0"
+MACOS_OLDEST_SUPPORTED="12.0"
 
 # For Homebrew on Linux
 REQUIRED_RUBY_VERSION=2.6    # https://github.com/Homebrew/brew/pull/6556
@@ -240,7 +262,7 @@ execute() {
 
 execute_sudo() {
   local -a args=("$@")
-  if have_sudo_access
+  if [[ "${EUID:-${UID}}" != "0" ]] && have_sudo_access
   then
     if [[ -n "${SUDO_ASKPASS-}" ]]
     then
@@ -462,7 +484,7 @@ ohai 'Checking for `sudo` access (which may request your password)...'
 
 if [[ -n "${HOMEBREW_ON_MACOS-}" ]]
 then
-  have_sudo_access
+  [[ "${EUID:-${UID}}" == "0" ]] || have_sudo_access
 elif ! [[ -w "${HOMEBREW_PREFIX}" ]] &&
      ! [[ -w "/home/linuxbrew" ]] &&
      ! [[ -w "/home" ]] &&
@@ -888,13 +910,6 @@ EOABORT
   fi
 fi
 
-# Set HOMEBREW_DEVELOPER on Linux systems where usable Git/cURL is not in /usr/bin
-if [[ -n "${HOMEBREW_ON_LINUX-}" && (-n "${HOMEBREW_CURL_PATH-}" || -n "${HOMEBREW_GIT_PATH-}") ]]
-then
-  ohai "Setting HOMEBREW_DEVELOPER to use Git/cURL not in /usr/bin"
-  export HOMEBREW_DEVELOPER=1
-fi
-
 ohai "Downloading and installing Homebrew..."
 (
   cd "${HOMEBREW_REPOSITORY}" >/dev/null || return
@@ -914,8 +929,14 @@ ohai "Downloading and installing Homebrew..."
 
   execute "${USABLE_GIT}" "fetch" "--force" "origin"
   execute "${USABLE_GIT}" "fetch" "--force" "--tags" "origin"
+  execute "${USABLE_GIT}" "remote" "set-head" "origin" "--auto" >/dev/null
 
-  execute "${USABLE_GIT}" "reset" "--hard" "origin/master"
+  LATEST_GIT_TAG="$("${USABLE_GIT}" tag --list --sort="-version:refname" | head -n1)"
+  if [[ -z "${LATEST_GIT_TAG}" ]]
+  then
+    abort "Failed to query latest Homebrew/brew Git tag."
+  fi
+  execute "${USABLE_GIT}" "checkout" "--force" "-B" "stable" "${LATEST_GIT_TAG}"
 
   if [[ "${HOMEBREW_REPOSITORY}" != "${HOMEBREW_PREFIX}" ]]
   then
@@ -992,22 +1013,30 @@ EOS
 ohai "Next steps:"
 case "${SHELL}" in
   */bash*)
-    if [[ -r "${HOME}/.bash_profile" ]]
+    if [[ -n "${HOMEBREW_ON_LINUX-}" ]]
     then
-      shell_profile="${HOME}/.bash_profile"
+      shell_rcfile="${HOME}/.bashrc"
     else
-      shell_profile="${HOME}/.profile"
+      shell_rcfile="${HOME}/.bash_profile"
     fi
     ;;
   */zsh*)
-    shell_profile="${HOME}/.zprofile"
+    if [[ -n "${HOMEBREW_ON_LINUX-}" ]]
+    then
+      shell_rcfile="${ZDOTDIR:-"${HOME}"}/.zshrc"
+    else
+      shell_rcfile="${ZDOTDIR:-"${HOME}"}/.zprofile"
+    fi
+    ;;
+  */fish*)
+    shell_rcfile="${HOME}/.config/fish/config.fish"
     ;;
   *)
-    shell_profile="${HOME}/.profile"
+    shell_rcfile="${ENV:-"${HOME}/.profile"}"
     ;;
 esac
 
-if grep -qs "eval \"\$(${HOMEBREW_PREFIX}/bin/brew shellenv)\"" "${shell_profile}"
+if grep -qs "eval \"\$(${HOMEBREW_PREFIX}/bin/brew shellenv)\"" "${shell_rcfile}"
 then
   if ! [[ -x "$(command -v brew)" ]]
   then
@@ -1019,7 +1048,7 @@ EOS
 else
   cat <<EOS
 - Run these two commands in your terminal to add Homebrew to your ${tty_bold}PATH${tty_reset}:
-    (echo; echo 'eval "\$(${HOMEBREW_PREFIX}/bin/brew shellenv)"') >> ${shell_profile}
+    (echo; echo 'eval "\$(${HOMEBREW_PREFIX}/bin/brew shellenv)"') >> ${shell_rcfile}
     eval "\$(${HOMEBREW_PREFIX}/bin/brew shellenv)"
 EOS
 fi
@@ -1032,8 +1061,8 @@ then
     plural="s"
   fi
   printf -- "- Run these commands in your terminal to add the non-default Git remote%s for %s:\n" "${plural}" "${non_default_repos}"
-  printf "    echo '# Set PATH, MANPATH, etc., for Homebrew.' >> %s\n" "${shell_profile}"
-  printf "    echo '%s' >> ${shell_profile}\n" "${additional_shellenv_commands[@]}"
+  printf "    echo '# Set PATH, MANPATH, etc., for Homebrew.' >> %s\n" "${shell_rcfile}"
+  printf "    echo '%s' >> ${shell_rcfile}\n" "${additional_shellenv_commands[@]}"
   printf "    %s\n" "${additional_shellenv_commands[@]}"
 fi
 
