@@ -25,7 +25,8 @@ mattmc3/zephyr path:plugins/editor
 # replaces mattmc3/zephyr path:plugins/history
 $SKY_DOTFILES/zsh/plugins/history
 
-mattmc3/zephyr path:plugins/homebrew
+# replaces mattmc3/zephyr path:plugins/homebrew
+$SKY_DOTFILES/zsh/plugins/homebrew
 # mattmc3/zephyr path:plugins/macos conditional:is-darwin
 # mattmc3/zephyr path:plugins/prompt
 # replaces mattmc3/zephyr path:plugins/utility
