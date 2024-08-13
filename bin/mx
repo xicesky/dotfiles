@@ -1,0 +1,170 @@
+#!/bin/bash
+# shortcuts for work / ssh into mobilex notebook
+
+#MOBILEX_HOST=${MOBILEX_HOST:-192.168.128.32}
+MOBILEX_HOST=${MOBILEX_HOST:-dangl-lnx}
+MOBILEX_HOME="/home/dangl@mobileX.intra"
+
+################################################################################
+# Basic utils (shortened version): mostly verbosity, command logging
+# Note: Shortened version
+
+# Display a message if verbosity level allows
+VERBOSITY="${VERBOSITY:-1}"
+log() {
+    local level="$1"; shift
+    if [[ "$VERBOSITY" -ge "$level" ]] ; then echo "$*" 1>&2; fi
+}
+
+# Stores the last command executed by invoke() and it's exit code
+declare -ga LAST_COMMAND
+declare -g LAST_COMMAND_EXITCODE
+LAST_COMMAND=()
+LAST_COMMAND_EXITCODE=0
+
+# Log and invoke a command
+# This actually works only for simple commands, you can't use it to:
+#   - Invoke commands that use pipes or redirections
+#   - Invoke compound commands (expressions)
+#   - Set variables
+invoke() {
+    local redir="" loglevel=2
+    while [[ $# -gt 0 ]] ; do
+        case "$1" in
+            "-o")   shift; redir="$1"; shift ;;
+            "-l")   shift; loglevel="$1"; shift ;;
+            "--")   shift; break ;;
+            -*)     echo "invoke: Unknown flag: $arg" 1>&2; return 1 ;;
+            *)      break ;;
+        esac
+    done
+    LAST_COMMAND=("$@")
+    log "$loglevel" "$(printf "%q " "$@")${redir:+ >$redir}"
+    LAST_COMMAND_EXITCODE=0
+    if [[ -z "$redir" ]] ; then "$@"; else "$@" >"$redir"; fi
+    LAST_COMMAND_EXITCODE="$?"
+    return $LAST_COMMAND_EXITCODE
+}
+
+# Report the last command, if it failed
+report_command_failure() {
+    if [[ "$LAST_COMMAND_EXITCODE" -ne 0 ]] ; then
+        log 1 "Last command executed:"
+        log 1 "    $(printf "%q " "${LAST_COMMAND[@]}")"
+        log 1 "Returned exit code ${LAST_COMMAND_EXITCODE}"
+    fi
+}
+
+which() { type -P "$@"; }
+
+################################################################################
+
+win_posh() {
+    declare poshcmd="$1"; shift
+    # FIXME: This will have problems if the arguments themselves contain double quotes
+    while [[ $# -gt 0 ]] ; do poshcmd="$poshcmd \"$1\""; shift; done
+    invoke powershell.exe -Command "${poshcmd}"
+}
+
+# Launch host's vs code
+win_code() {
+    win_posh code "$@"
+}
+
+################################################################################
+# Main, argparsing and commands
+
+cmd_ssh() {
+    if [[ $# -eq 0 ]] ; then
+        invoke ssh -t "$MOBILEX_HOST" "/usr/bin/zsh -l"
+    else
+        invoke ssh -t "$MOBILEX_HOST" "$@"
+    fi
+}
+
+cmd_rdp() {
+    invoke remmina
+}
+
+cmd_notes() {
+    win_code "$(wslpath -wa ~/win-home/Desktop/dangl-lnx-Notes.code-workspace)"
+}
+
+cmd_code() {
+    local target="${1:-Notes}"
+    if [[ target != /* ]] ; then
+        # Make path absolute
+        target="$MOBILEX_HOME/$target"
+    fi
+    win_code --folder-uri "vscode-remote://ssh-remote+$MOBILEX_HOST$target"
+}
+
+cmd_idea() {
+    declare -a args=( "$@" )
+    if [[ $# -eq 1 && "$1" =~ [:alnum:] ]] ; then
+        args=( "$MOBILEX_HOME/Dev/mobilex/$1" )
+    fi
+    cmd_ssh "$MOBILEX_HOME/bin/idea" "${args[@]}"
+}
+
+cmd_initial() {
+    cmd_notes &
+    cmd_rdp &
+    cmd_idea flsa &
+}
+
+cmd_help() {
+    usage
+}
+
+usage() {
+    echo "Usage: $0 [global flags...] <command...>"
+    echo "Global flags:"
+    echo "    -v      Increase verbosity level"
+    echo "    -q      Decrease verbosity level"
+    echo "    --help  Show usage and exit"
+    echo ""
+    echo "Available commands:"
+    echo "    help    Show usage and exit"
+    echo ""
+}
+
+main() {
+    declare cmd="ssh" cmderr=0
+    while [[ $# -gt 0 ]] ; do
+        arg="$1"; shift
+        case "$arg" in
+            -v) (( VERBOSITY++ )) ;;
+            -q) (( VERBOSITY-- )) ;;
+            --help)
+                cmd=help
+                break
+                ;;
+            -*)
+                { echo "Unknown flag: $arg"; usage; } 1>&2
+                return 1
+                ;;
+            in*) cmd="initial"; break ;;
+            *)
+                cmd="$arg"
+                break
+                ;;
+        esac
+    done
+    if [[ -z "$cmd" ]] ; then
+        usage
+    elif [[ $(type -t "cmd_$cmd") == function ]] ; then
+        "cmd_$cmd" "$@"
+        cmderr="$?"
+        if [[ "$cmderr" -ne 0 && "$LAST_COMMAND_EXITCODE" -ne 0 ]] ; then
+            report_command_failure 1>&2
+            echo "" 1>&2
+        fi
+        return "$cmderr"
+    else
+        { echo "Unknown command: $cmd"; usage; } 1>&2
+        return 1
+    fi
+}
+
+main "$@"
