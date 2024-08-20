@@ -127,7 +127,7 @@ install_packages() {
     invoke sudo apt-get install -y \
         vim p7zip-full p7zip-rar lzma pigz gzrt gzip bzip2 \
         mc curl wget nmap hwinfo ltrace strace htop iotop iptraf-ng tcpdump \
-        ncftp netcat-openbsd pv dos2unix \
+        ncftp netcat-openbsd pv dos2unix tmux \
         bc zsh dnsutils git gnupg2 \
         ca-certificates jq shellcheck xmlstarlet golang \
         aptitude asciidoctor ruby-rouge postgresql-client \
