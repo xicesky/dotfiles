@@ -63,7 +63,11 @@ win_posh() {
     declare poshcmd="$1"; shift
     # FIXME: This will have problems if the arguments themselves contain double quotes
     while [[ $# -gt 0 ]] ; do poshcmd="$poshcmd \"$1\""; shift; done
-    invoke powershell.exe -Command "${poshcmd}"
+    (
+        # Avoid warning about cmd.exe by cding to a windows directory
+        cd "$(readlink -f ~/win-home)"
+        invoke powershell.exe -Command "${poshcmd}"
+    )
 }
 
 # Launch host's vs code
@@ -78,16 +82,12 @@ cmd_ssh() {
     if [[ $# -eq 0 ]] ; then
         invoke ssh -t "$MOBILEX_HOST" "/usr/bin/zsh -l"
     else
-        invoke ssh -t "$MOBILEX_HOST" "$@"
+        invoke ssh "$MOBILEX_HOST" "$@"
     fi
 }
 
 cmd_rdp() {
     invoke remmina
-}
-
-cmd_notes() {
-    win_code "$(wslpath -wa ~/win-home/Desktop/dangl-lnx-Notes.code-workspace)"
 }
 
 cmd_code() {
@@ -99,6 +99,21 @@ cmd_code() {
     win_code --folder-uri "vscode-remote://ssh-remote+$MOBILEX_HOST$target"
 }
 
+cmd_notes() {
+    win_code "$(wslpath -wa ~/win-home/Desktop/dangl-lnx-Notes.code-workspace)"
+}
+
+cmd_chrome() {
+    # We don't want to block background processes because of terminal output
+    #stty -tostop
+    # but it's simpler just to redirect to stderr
+    cmd_ssh "google-chrome" "$@" 1>&2
+}
+
+cmd_keepass() {
+    cmd_ssh "keepassxc" "$@"
+}
+
 cmd_idea() {
     declare -a args=( "$@" )
     if [[ $# -eq 1 && "$1" =~ [:alnum:] ]] ; then
@@ -107,10 +122,39 @@ cmd_idea() {
     cmd_ssh "$MOBILEX_HOME/bin/idea" "${args[@]}"
 }
 
+cmd_vm() {
+    declare cmd="start" vmname="win11" cmderr=0 argn=-1
+    while [[ $# -gt 0 ]] ; do
+        arg="$1"; shift
+        case "$arg" in
+            -*)
+                { echo "Unknown flag: $arg"; usage; } 1>&2
+                return 1
+                ;;
+            *)
+                (( argn++ ))
+                case "$argn" in
+                    0) cmd="$arg" ;;
+                    1) vmname="$arg" ;;
+                    *)
+                        { echo "Too many arguments: $arg"; usage; } 1>&2
+                        return 1
+                esac
+                ;;
+        esac
+    done
+    case "$cmd" in
+        start|stop) cmd_ssh virsh --connect=qemu:///system "$cmd" "$vmname" ;;
+        list) cmd_ssh virsh --connect=qemu:///system list --all ;;
+        *) echo "Unknown command: $cmd" 1>&2; return 1 ;;
+    esac
+}
+
 cmd_initial() {
     cmd_notes &
     cmd_rdp &
-    cmd_idea flsa &
+    invoke ssh -t "$MOBILEX_HOST" "$MOBILEX_HOME/_dotfiles/bin/mx-initial-tmux.sh"
+    #cmd_idea flsa &
 }
 
 cmd_help() {
@@ -145,6 +189,7 @@ main() {
                 return 1
                 ;;
             in*) cmd="initial"; break ;;
+            kee*) cmd="keepass"; break ;;
             *)
                 cmd="$arg"
                 break
