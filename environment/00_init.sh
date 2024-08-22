@@ -52,6 +52,23 @@ function regenerate_env() {
     . "$XDG_CACHE_HOME/environment/$SHELL_TYPE"
 }
 
+function export_variable() {
+    local -a exportargs=()
+    while [[ $# -gt 0 ]] ; do case "$1" in
+        -*) exportargs+=("$1"); shift ;;
+        *) break ;;
+    esac; done
+
+    local content
+    if [[ $# -gt 1 ]] ; then
+        content="$2"
+    else
+        content="${!1}"
+    fi
+
+    echo export "${exportargs[@]}" "$1=$(printf "%q" "$content")"
+}
+
 declare -f regenerate_env
 
 if [[ "$SHELL_TYPE" = "zsh" ]] ; then
@@ -68,7 +85,6 @@ if [[ "$SHELL_TYPE" = "zsh" ]] ; then
     function prepend_to_path() {
         echo "path=( $(printf "%q " "$@")\$path)"
     }
-
 else
     # FIXME: make sure entries are unique in bash, too
 

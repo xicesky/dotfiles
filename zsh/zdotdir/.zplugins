@@ -16,7 +16,11 @@ $SKY_DOTFILES/zsh/plugins/zfunctions
 
 # Zephyr
 # mattmc3/zephyr path:plugins/clipboard
-mattmc3/zephyr path:plugins/color
+# not using color plugin: mostly covered by environment generator
+# mattmc3/zephyr path:plugins/color
+
+# replaces mattmc3/zephyr path:plugins/color
+$SKY_DOTFILES/zsh/plugins/color
 
 # replaces mattmc3/zephyr path:plugins/directory
 $SKY_DOTFILES/zsh/plugins/directory
