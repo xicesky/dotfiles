@@ -152,9 +152,27 @@ cmd_vm() {
 
 cmd_initial() {
     cmd_notes &
-    cmd_rdp &
-    invoke ssh -t "$MOBILEX_HOST" "$MOBILEX_HOME/_dotfiles/bin/mx-initial-tmux.sh"
-    #cmd_idea flsa &
+
+    local session="mx-initial"
+    if ! tmux list-sessions | grep -q "$SESSION" ; then
+        # Start New Session with our name
+        tmux new-session -d -s "$session"
+
+        # Name first Window and start zsh
+        tmux rename-window -t "$session:1" 'Main'
+        tmux send-keys -t 'Main' 'mx rdp' C-m
+
+        # Create new pane for chrome
+        tmux new-window -t "$session:3" -n 'Chrome'
+        tmux send-keys -t 'Chrome' 'mx chrome' C-m
+
+        # Create new pane for idea
+        tmux new-window -t "$session:4" -n 'Idea'
+        tmux send-keys -t 'Idea' 'mx idea' C-m
+    fi
+
+    # Attach Session, on the Main window
+    tmux attach-session -t "$session:1"
 }
 
 cmd_help() {
