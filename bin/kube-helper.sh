@@ -144,8 +144,8 @@ load-config() {
     customer-*-prod)    config-for-sp-prod "$1" ;;
     customer-*)         config-for-sp-dev  "$1" ;;
 
-    nbb-dev)            config-for-nbb "mwm-dev" "mipserver-mwm-dev" "mipserver-mwm-dev" ;;
-    nbb-prod)           config-for-nbb "mwm-prod" "mipserver-mwm-prod" "mipserver-mwm-prod" ;;
+    nbb-dev)            config-for-nbb "mwm-dev" "mipserver-mwm-dev" "mipserver-fla" ;;
+    nbb-prod)           config-for-nbb "mwm-prod" "mipserver-mwm-prod" "mipserver-fla" ;;
 
     prd-vti)            config-for-mx-internal "vt-integration" "prd-vt-integration-dispatchx-mipserver" ;;
     abrg|arburg*)       config-for-mx-internal "ps-arburg" "ps-arburg-dispatchx-mipserver" ;;
