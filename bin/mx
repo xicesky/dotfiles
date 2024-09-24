@@ -151,7 +151,7 @@ cmd_vm() {
 }
 
 cmd_initial() {
-    cmd_notes &
+    #cmd_notes &
 
     local session="mx-initial"
     if ! tmux list-sessions | grep -q "$SESSION" ; then
@@ -160,7 +160,11 @@ cmd_initial() {
 
         # Name first Window and start zsh
         tmux rename-window -t "$session:1" 'Main'
-        tmux send-keys -t 'Main' 'mx rdp' C-m
+        tmux send-keys -t 'Main' 'mx code' C-m
+
+        # Create new pane for remmina
+        tmux new-window -t "$session:2" -n 'Remmina'
+        tmux send-keys -t 'Remmina' 'mx rdp' C-m
 
         # Create new pane for chrome
         tmux new-window -t "$session:3" -n 'Chrome'
@@ -187,7 +191,16 @@ usage() {
     echo "    --help  Show usage and exit"
     echo ""
     echo "Available commands:"
-    echo "    help    Show usage and exit"
+    echo "    help            Show usage and exit"
+    echo "    ssh             ssh into mobilex notebook with the correct shell"
+    echo "    rdp             Launch remmina for rdp"
+    echo "    code            Launch vs code with a remote ssh session. A target directory can be specified, it defaults to ~/Notes."
+    echo "    chrome          Launch chrome on the remote (via ssh x-forwarding)."
+    echo "    idea            Launch idea on the remote (via ssh x-forwarding)."
+    echo "    initial / init  Start common programs in a tmux session (vs code, remmina, chrome, idea)"
+    echo "    "
+    echo ""
+    echo "If no command is specified, the default command (\"ssh\") is used."
     echo ""
 }
 
