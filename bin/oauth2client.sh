@@ -120,21 +120,135 @@ which() {
 }
 
 ################################################################################
-# Main, argparsing and commands
+# Configuration
 
-# service-account-curl-cli
 # TODO: Fetch info from .well-known/openid-configuration
 # curl "https://idp.kyma-dev.mobilex-serviceplatform.com/auth/realms/ProductDevelopment/.well-known/openid-configuration" | jq .
-OAUTH2_CLIENT_ID="${OAUTH2_CLIENT_ID:-curl-cli}"
+
+CONFIG_MODE="${OAUTH_MODE:-oidc}" # Possible modes: oauth2, oidc, mx-configuration
+
+# For mode "mx-configuration" only
+MX_CUSTOMER="${MX_CUSTOMER:-687399110}"
+MX_BASEURL="${MX_BASEURL:-https://customer-${MX_CUSTOMER}.serviceplatform.eu/}"
+
+# For mode "oidc" only
+OIDC_BASEURL="${OIDC_BASEURL:-https://idp.serviceplatform.eu/auth/realms/customer-${MX_CUSTOMER}/}"
+
+# For mode "oauth2" only
+OAUTH2_TOKEN_ENDPOINT="${OAUTH2_ENDPOINT:-"https://idp.kyma-dev.mobilex-serviceplatform.com/auth/realms/customer-${MX_CUSTOMER}/protocol/openid-connect/token"}"
+OAUTH2_DEVICE_AUTHORIZATION_ENDPOINT="${OAUTH2_DEVICE_AUTHORIZATION_ENDPOINT:-"https://idp.kyma-dev.mobilex-serviceplatform.com/auth/realms/customer-${MX_CUSTOMER}/protocol/openid-connect/auth/device"}"
+
+# Other oauth options
+OAUTH2_CLIENT_ID="${OAUTH2_CLIENT_ID:-postman}"     # Alternatives: curl-cli, customer-backend
 OAUTH2_CLIENT_SECRET="$OAUTH2_CLIENT_SECRET"
-OAUTH2_SCOPE="${OAUTH2_SCOPE:-openid profile}"
-OAUTH2_TOKEN_ENDPOINT="${OAUTH2_ENDPOINT:-"https://idp.kyma-dev.mobilex-serviceplatform.com/auth/realms/customer-687399110/protocol/openid-connect/token"}"
-OAUTH2_DEVICE_ENDPOINT="${OAUTH2_DEVICE_ENDPOINT:-"https://idp.kyma-dev.mobilex-serviceplatform.com/auth/realms/customer-687399110/protocol/openid-connect/auth/device"}"
+OAUTH2_SCOPE="${OAUTH2_SCOPE:-openid}"              # Alternative: openid profile
 OAUTH2_AUDIENCE="${OAUTH2_AUDIENCE:-mip-server}"
 OAUTH2_ACCESS_TOKEN="$OAUTH2_ACCESS_TOKEN"
-KEYCLOAK_READ_TOKEN_ENDPOINT='https://idp.serviceplatform.eu/auth/realms/customer-687399110/broker/oidc/token'
 
+# Keycloak API
+KEYCLOAK_READ_TOKEN_ENDPOINT="https://idp.serviceplatform.eu/auth/realms/customer-${MX_CUSTOMER}/broker/oidc/token"
+
+# Output format
 OUTPUT_FORMAT="bash"
+
+# Minor config cleanups
+MX_BASEURL="${MX_BASEURL%/}"        # Remove trailing slash
+OIDC_BASEURL="${OIDC_BASEURL%/}"    # Remove trailing slash
+
+################################################################################
+# Library functions
+
+configure_via_oidc() {
+    local openid_configuration
+    # FIXME: Handle HTTP errors
+    openid_configuration="$(
+        invoke curl -s "${OIDC_BASEURL}/.well-known/openid-configuration"
+    )" || return 1
+    #echo "openid_configuration:"
+    #echo "$openid_configuration" | jq .
+    OAUTH2_TOKEN_ENDPOINT="$(echo "$openid_configuration" | jq -r .token_endpoint)"
+    OAUTH2_DEVICE_AUTHORIZATION_ENDPOINT="$(echo "$openid_configuration" | jq -r .device_authorization_endpoint)"
+    
+}
+
+configure_via_mx_configuration() {
+    local mx_configuration
+    # FIXME: Handle HTTP errors
+    mx_configuration="$(
+        invoke curl -s "${MX_BASEURL}/.well-known/mx-configuration"
+    )" || return 1
+    OIDC_BASEURL="$(echo "$mx_configuration" | jwtutil --decode | jq -r .openidConnectAuthority)" || return 1
+    OIDC_BASEURL="${OIDC_BASEURL%/}"    # Remove trailing slash
+    configure_via_oidc
+}
+
+configure() {
+    case "$CONFIG_MODE" in
+        oauth2)
+            # Nothing to do
+            return 0
+            ;;
+        oidc)
+            configure_via_oidc
+            return $?
+            ;;
+        mx-configuration)
+            configure_via_mx_configuration
+            return $?
+            ;;
+    esac
+}
+
+verify_token_signature() {
+    local token="$1"; shift
+    # TODO :/
+    true
+}
+
+is_token_expired() {
+    local current expiry token="$1"; shift
+    current="$(date "+%s")"
+    expiry="$(echo "$token" | jwtutil --decode | jq -r .exp)"
+    if [ -z "$expiry" ] ; then
+        echo "Error: Invalid token, no .exp field found." 1>&2
+        return 0
+    fi
+    #echo "current=$current"
+    #echo "expiry=$expiry"
+    [ "$current" -ge "$expiry" ]
+}
+
+################################################################################
+# Main, argparsing and commands
+
+cmd_temp() {
+    configure_via_oidc
+}
+
+cmd_check-token() {
+    local -i errors
+    if [[ -z "$OAUTH2_ACCESS_TOKEN" ]] ; then
+        log 1 "No token set (check environment variable OAUTH2_ACCESS_TOKEN)."
+        return 1
+        (( errors++ ))
+    fi
+    if ! verify_token_signature "$OAUTH2_ACCESS_TOKEN" ; then
+        log 1 "Token signature is invalid"
+        (( errors++ ))
+    fi
+    if is_token_expired "$OAUTH2_ACCESS_TOKEN" ; then
+        log 1 "Token is expired"
+        (( errors++ ))
+    fi
+    log 2 "$errors errors."
+    if [[ $errors -gt 0 ]] ; then
+        echo "Token not valid (anymore)."
+        return 1
+    else
+        echo "Token is valid."
+        return 0
+    fi
+}
 
 cmd_login-client-credentials() {
     declare response_json access_token
@@ -142,6 +256,8 @@ cmd_login-client-credentials() {
         echo "Error: OAUTH2_CLIENT_SECRET is not set" 1>&2
         return 1
     fi
+
+    configure || return $?
 
     # FIXME: Handle HTTP errors
     response_json="$(
@@ -171,17 +287,27 @@ cmd_login-device() {
     # See https://git.mobilexag.de/prd-serviceplatform/documentation/-/blob/develop/modules/operations-guide/examples/read-token-from-keycloak.sh?ref_type=heads
     # https://datatracker.ietf.org/doc/html/rfc8628#section-3.1
     # TODO: Not tested yet!
-    declare response_json device_code user_code verification_uri expires interval expire_seconds error access_token
+    local response_json device_code user_code verification_uri expires interval expire_seconds error access_token
+    local -a request_data
+
+    configure || return $?
+
+    request_data=(
+        --data "client_id=$OAUTH2_CLIENT_ID"
+        --data "scope=$OAUTH2_SCOPE"
+    )
+
+    if [ -n "$OAUTH2_CLIENT_SECRET" ] ; then
+        request_data+=( --data "client_secret=$OAUTH2_CLIENT_SECRET" )
+    fi
     
     response_json="$(
         # Note: Client authentication is enabled in keycloak, so we need to pass the client_secret
         # This is not neccessary for other clients like crossmip, where the client is public
         invoke curl -s -X POST \
-            --url "$OAUTH2_DEVICE_ENDPOINT" \
+            --url "$OAUTH2_DEVICE_AUTHORIZATION_ENDPOINT" \
             --header 'content-type: application/x-www-form-urlencoded' \
-            --data "client_id=$OAUTH2_CLIENT_ID" \
-            --data "client_secret=$OAUTH2_CLIENT_SECRET" \
-            --data "scope=$OAUTH2_SCOPE"
+            ${request_data[@]}
     )"
     echo "response_json: $response_json" 1>&2
 
