@@ -1,0 +1,33 @@
+#!/bin/bash
+#cd ~/Dev/mobilex/_tools/jailer_16.4.2
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+JAILER_INSTALL_DIR=${JAILER_INSTALL_DIR:-~/Dev/mobilex/_tools/jailer_16.4.2}
+JAILER_DATAMODEL_DIR=${JAILER_DATAMODEL_DIR:-$(readlink -f .)}
+
+invoke() {
+    echo "$(printf "%q " "$@")"
+    "$@"
+}
+
+usage() {
+    echo "Usage: jailer <extractionmodel>"
+    echo "E.g.: jailer extractionmodel/contact_extractionmodel.jm"
+    echo "By default, the current directory is used as the datamodel."
+}
+
+main() {
+    if [[ -z "$1" || "$1" == "help" || "$1" == "--help" ]] ; then
+        usage 1>&2
+        return 0
+    fi
+    if [ ! -f "$1" ] ; then
+        echo "File not found: $1" 1>&2
+        return 1
+    fi
+    extractionmodel="$(readlink -f $1)"; shift
+
+    invoke "$JAILER_INSTALL_DIR"/jailerGUI.sh "$extractionmodel" # -datamodel "$JAILER_DATAMODEL_DIR"
+}
+
+main "$@"

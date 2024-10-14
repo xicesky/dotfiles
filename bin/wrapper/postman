@@ -1,0 +1,4 @@
+#!/bin/bash
+# Postman is just broken somehow
+XAUTHORITY=$HOME/.Xauthority /snap/bin/postman "$@"
+
