@@ -127,16 +127,21 @@ which() {
 
 CONFIG_MODE="${OAUTH_MODE:-oidc}"                   # Possible modes: oauth2, oidc, mx-configuration
 DEFAULT_LOGIN_MODE="${DEFAULT_LOGIN_MODE:-device}"  # Possible modes: client-credentials, device
+MX_CUSTOMER="${MX_CUSTOMER:-687399110}"
 
 # For mode "mx-configuration" only
-MX_CUSTOMER="${MX_CUSTOMER:-687399110}"
 MX_BASEURL="${MX_BASEURL:-https://customer-${MX_CUSTOMER}.serviceplatform.eu/}"
 
 # For mode "oidc" only
-OIDC_BASEURL="${OIDC_BASEURL:-https://idp.serviceplatform.eu/auth/realms/customer-${MX_CUSTOMER}/}"
+#OIDC_BASEURL="${OIDC_BASEURL:-https://idp.serviceplatform.eu/auth/realms/customer-${MX_CUSTOMER}/}"
+# UI: https://idp.serviceplatform.eu/auth/admin/master/console/
+OIDC_BASEURL="${OIDC_BASEURL:-https://idp.kyma-dev.mobilex-serviceplatform.com/auth/realms/customer-${MX_CUSTOMER}/}"
+# UI: https://idp.kyma-dev.mobilex-serviceplatform.com/auth/admin/master/console/
 
 # For mode "oauth2" only
+#OAUTH2_TOKEN_ENDPOINT="${OAUTH2_ENDPOINT:-"https://idp.serviceplatform.eu/auth/realms/customer-${MX_CUSTOMER}/protocol/openid-connect/token"}"
 OAUTH2_TOKEN_ENDPOINT="${OAUTH2_ENDPOINT:-"https://idp.kyma-dev.mobilex-serviceplatform.com/auth/realms/customer-${MX_CUSTOMER}/protocol/openid-connect/token"}"
+#OAUTH2_DEVICE_AUTHORIZATION_ENDPOINT="${OAUTH2_DEVICE_AUTHORIZATION_ENDPOINT:-"https://idp.serviceplatform.eu/auth/realms/customer-${MX_CUSTOMER}/protocol/openid-connect/auth/device"}"
 OAUTH2_DEVICE_AUTHORIZATION_ENDPOINT="${OAUTH2_DEVICE_AUTHORIZATION_ENDPOINT:-"https://idp.kyma-dev.mobilex-serviceplatform.com/auth/realms/customer-${MX_CUSTOMER}/protocol/openid-connect/auth/device"}"
 
 # Other oauth options
@@ -147,7 +152,8 @@ OAUTH2_AUDIENCE="${OAUTH2_AUDIENCE:-mip-server}"
 OAUTH2_ACCESS_TOKEN="$OAUTH2_ACCESS_TOKEN"
 
 # Keycloak API
-KEYCLOAK_READ_TOKEN_ENDPOINT="https://idp.serviceplatform.eu/auth/realms/customer-${MX_CUSTOMER}/broker/oidc/token"
+#KEYCLOAK_READ_TOKEN_ENDPOINT="https://idp.serviceplatform.eu/auth/realms/customer-${MX_CUSTOMER}/broker/oidc/token"
+KEYCLOAK_READ_TOKEN_ENDPOINT="https://idp.kyma-dev.mobilex-serviceplatform.com/auth/realms/customer-${MX_CUSTOMER}/broker/oidc/token"
 
 # Output format
 OUTPUT_FORMAT="bash"
