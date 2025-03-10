@@ -123,25 +123,25 @@ load-config() {
     harg*-qa)           config-for-sp-prod  "customer-687399110" "" "mipserver-fla" ;;
     harg*-prod)         config-for-sp-prod  "customer-687399111" "" "mipserver-fla" ;;
 
-    bwtd*-qa)           config-for-sp-prod  "customer-687399060" "" "bwt-de-mipserver" ;;
-    bwtd*-prod)         config-for-sp-prod  "customer-687399061" "" "bwt-de-mipserver" ;;
-    bwta*-qa)           config-for-sp-prod  "customer-687399200" "" "bwt-at-mipserver" ;;
-    bwta*-prod)         config-for-sp-prod  "customer-687399201" "" "bwt-at-mipserver" ;;
+    bwtd*-qa)           config-for-sp-prod-new  "customer-687399060" "" "bwt-de-mipserver" ;;
+    bwtd*-prod)         config-for-sp-prod-new  "customer-687399061" "" "bwt-de-mipserver" ;;
+    bwta*-qa)           config-for-sp-prod-new  "customer-687399200" "" "bwt-at-mipserver" ;;
+    bwta*-prod)         config-for-sp-prod-new  "customer-687399201" "" "bwt-at-mipserver" ;;
 
-    hsm*-qa)            config-for-sp-prod  "customer-687399220" "" "hsm-mipserver" ;;
-    hsm*-prod)          config-for-sp-prod  "customer-687399221" "" "hsm-mipserver" ;;
+    hsm*-qa)            config-for-sp-prod-new  "customer-687399220" "" "hsm-mipserver" ;;
+    hsm*-prod)          config-for-sp-prod-new  "customer-687399221" "" "hsm-mipserver" ;;
 
     kalt*-qa)           config-for-sp-prod-new "customer-687399150" "" "kaltenbach-mipserver" ;;
-    kalt*-prod)         config-for-sp-prod  "customer-687399151" "" "kaltenbach-mipserver" ;;
+    kalt*-prod)         config-for-sp-prod-new  "customer-687399151" "" "kaltenbach-mipserver" ;;
 
-    gewo*-qa)           config-for-sp-prod  "customer-687399170" "" "gewofag-mipserver" ;;
-    gewo*-prod)         config-for-sp-prod  "customer-687399171" "" "gewofag-mipserver" ;;
+    gewo*-qa)           config-for-sp-prod-new  "customer-687399170" "" "gewofag-mipserver" ;;
+    gewo*-prod)         config-for-sp-prod-new  "customer-687399171" "" "gewofag-mipserver" ;;
 
-    solu*-qa)           config-for-sp-prod  "customer-687399180" "" "soluvia-mipserver" ;;
+    #solu*-qa)           config-for-sp-prod  "customer-687399180" "" "soluvia-mipserver" ;;
     #solu*-prod)         config-for-sp-prod  "customer-687399181" "" "soluvia-mipserver" ;;
 
-    customer-*-qa)      config-for-sp-prod "$1" ;;
-    customer-*-prod)    config-for-sp-prod "$1" ;;
+    customer-*-qa)      config-for-sp-prod-new "$1" ;;
+    customer-*-prod)    config-for-sp-prod-new "$1" ;;
     customer-*)         config-for-sp-dev  "$1" ;;
 
     nbb-dev)            config-for-nbb "mwm-dev" "mipserver-mwm-dev" "mipserver-fla" ;;
