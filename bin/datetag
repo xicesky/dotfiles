@@ -2,22 +2,23 @@
 
 main() {
     declare type="day"
-
+    declare -a dateargs=()
     if [[ $# -gt 0 ]] ; then
         case "$1" in
         -d|--day)       type="day"; shift ;;
         -m|--minute)    type="minute"; shift ;;
         -u|--unique)    type="unique"; shift ;;
         -g|--git|--iso) type="iso"; shift ;;
+        -r)             shift; dateargs+=( -r "$1" ); shift ;;
         *)  echo "Unknown argument: $1"; return 1 ;;
         esac
     fi
 
     case "$type" in
-    day)        date "+%Y-%m-%d" ;;
-    minute)     date "+%Y-%m-%d-%H-%M" ;;
-    unique)     echo -n "$(date "+%Y-%m-%d-%H-%M")-$(uuidgen)";  ;;
-    iso)        date --iso-8601=seconds ;;
+    day)        date "${dateargs[@]}" "+%Y-%m-%d" ;;
+    minute)     date "${dateargs[@]}" "+%Y-%m-%d-%H-%M" ;;
+    unique)     echo -n "$(date "${dateargs[@]}" "+%Y-%m-%d-%H-%M")-$(uuidgen)";  ;;
+    iso)        date "${dateargs[@]}" --iso-8601=seconds ;;
     esac
 }
 
