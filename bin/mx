@@ -144,7 +144,7 @@ cmd_vm() {
         esac
     done
     case "$cmd" in
-        start|stop) cmd_ssh virsh --connect=qemu:///system "$cmd" "$vmname" ;;
+        start|stop|shutdown|destroy|reboot) cmd_ssh virsh --connect=qemu:///system "$cmd" "$vmname" ;;
         list) cmd_ssh virsh --connect=qemu:///system list --all ;;
         *) echo "Unknown command: $cmd" 1>&2; return 1 ;;
     esac
