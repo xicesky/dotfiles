@@ -1,44 +1,13 @@
+# ATTENTION:
+# This file is intended to be the "local" configuration file for your user.
+# It SHOULD NOT BE SYMLINKED to the dotfiles repo, the following values are examples.
+# If you don't need any local configuration, you can also omit this file from your
+# home directory entirely.
 [user]
-	name = Markus Dangl
-	email = 663399+xicesky@users.noreply.github.com
-[core]
-	editor = vim
-	autocrlf = false
-	symlinks = true
-[init]
-	defaultBranch = main
-[push]
-	default = simple
-[pull]
-	ff = only
-[color]
-	ui = auto
-[diff]
-	tool = vimdiff
-[merge]
-	tool = vimdiff
-[difftool]
-	prompt = false
+    name = Markus Dangl
+    email = 663399+xicesky@users.noreply.github.com
+    #email = markus.dangl@mobilexag.de
 [difftool "meld"]
-    cmd = \"C:/Program Files (x86)/Meld/Meld.exe\" \"$LOCAL\" \"$REMOTE\"
-[difftool "winmerge"]
-	name = WinMerge
-    trustExitCode = true
-    cmd = "winmerge" -u -e $LOCAL $REMOTE
-[difftool "vimdiff"]
-	cmd = vim -f -d -c \"wincmd l\" -c 'cd \"$GIT_PREFIX\"' \"$LOCAL\" \"$REMOTE\"
-[mergetool "winmerge"]
-    name = WinMerge
-    trustExitCode = true
-    cmd = "winmerge" -u -e -dl \"Local\" -dr \"Remote\" \"$LOCAL\" \"$BASE\" \"$REMOTE\" -o \"$MERGED\"
+    #cmd = \"C:/Program Files (x86)/Meld/Meld.exe\" \"$LOCAL\" \"$REMOTE\"
 [mergetool "meld"]
-	path = C:/Program Files (x86)/Meld/Meld.exe
-[mergetool]
-	keepBackup = false
-[alias]
-	st = status
-	d = difftool
-	root = rev-parse --show-toplevel
-	restor = restore
-    mini = log --format=oneline
-	mu = multi-st -c 90
+    #path = C:/Program Files (x86)/Meld/Meld.exe

@@ -1,0 +1,43 @@
+# ATTENTION:
+# This file is intended to be the "shared" configuration file for your user.
+# It SHOULD BE SYMLINKED to the dotfiles repo, so any modifications will be shared between systems.
+[user]
+    name = Markus Dangl
+    email = 663399+xicesky@users.noreply.github.com
+[core]
+    editor = vim
+    autocrlf = false
+    symlinks = true
+[init]
+    defaultBranch = main
+[push]
+    default = simple
+[pull]
+    ff = only
+[color]
+    ui = auto
+[diff]
+    tool = vimdiff
+[merge]
+    tool = vimdiff
+[difftool]
+    prompt = false
+[difftool "winmerge"]
+    name = WinMerge
+    trustExitCode = true
+    cmd = "winmerge" -u -e $LOCAL $REMOTE
+[difftool "vimdiff"]
+    cmd = vim -f -d -c \"wincmd l\" -c 'cd \"$GIT_PREFIX\"' \"$LOCAL\" \"$REMOTE\"
+[mergetool "winmerge"]
+    name = WinMerge
+    trustExitCode = true
+    cmd = "winmerge" -u -e -dl \"Local\" -dr \"Remote\" \"$LOCAL\" \"$BASE\" \"$REMOTE\" -o \"$MERGED\"
+[mergetool]
+    keepBackup = false
+[alias]
+    st = status
+    d = difftool
+    root = rev-parse --show-toplevel
+    restor = restore
+    mini = log --format=oneline
+    mu = multi-st -c 90
