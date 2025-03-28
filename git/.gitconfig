@@ -7,6 +7,8 @@
     name = Markus Dangl
     email = 663399+xicesky@users.noreply.github.com
     #email = markus.dangl@mobilexag.de
+[difftool]
+    #guiDefault = true
 [difftool "meld"]
     #cmd = \"C:/Program Files (x86)/Meld/Meld.exe\" \"$LOCAL\" \"$REMOTE\"
 [mergetool "meld"]

@@ -24,7 +24,7 @@ main() {
     fi
     object="$1"; shift
     # Any additional args are just passed on
-    print_and_run git difftool "${args_pre[@]}" "$object~1" "$object" "$@"
+    print_and_run git diff "${args_pre[@]}" "$object~1" "$object" "$@"
 }
 
 main "$@"

@@ -18,26 +18,22 @@
     ui = auto
 [diff]
     tool = vimdiff
+    guitool = meld
 [merge]
     tool = vimdiff
 [difftool]
     prompt = false
-[difftool "winmerge"]
-    name = WinMerge
-    trustExitCode = true
-    cmd = "winmerge" -u -e $LOCAL $REMOTE
-[difftool "vimdiff"]
-    cmd = vim -f -d -c \"wincmd l\" -c 'cd \"$GIT_PREFIX\"' \"$LOCAL\" \"$REMOTE\"
-[mergetool "winmerge"]
-    name = WinMerge
-    trustExitCode = true
-    cmd = "winmerge" -u -e -dl \"Local\" -dr \"Remote\" \"$LOCAL\" \"$BASE\" \"$REMOTE\" -o \"$MERGED\"
 [mergetool]
     keepBackup = false
+[difftool "winmerge"]
+    trustExitCode = true
+[mergetool "winmerge"]
+    trustExitCode = true
 [alias]
     st = status
-    d = difftool
+    d = difftool -g -d
     root = rev-parse --show-toplevel
+    current = rev-parse --abbrev-ref HEAD
     restor = restore
     mini = log --format=oneline
     mu = multi-st -c 90
