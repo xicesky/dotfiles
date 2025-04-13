@@ -21,6 +21,7 @@
     guitool = meld
 [merge]
     tool = vimdiff
+    guitool = meld
 [difftool]
     prompt = false
 [mergetool]
