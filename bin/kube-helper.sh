@@ -370,6 +370,17 @@ kmipdebug() {
     kube port-forward "$pod" 8787:8787
 }
 
+kmipmgmtconsole() {
+    declare pod=""
+    [[ "$1" = --pod || "$1" == -p ]] && { shift; pod="$1"; shift; }
+    pod="$(_kmip_pod_name "$pod")" || { return 1; }
+    #[[ -z "$pod" && -n "$SPCUSTOMER" ]] && pod="mipserver-${SPCUSTOMER}-0"
+    echo "Please enter wildfly admin passwort to set:"
+    read -rs WILDFLY_ADMIN_PASSWORD
+    kmipexec wildfly/bin/add-user.sh -u 'mdangl' -p "$WILDFLY_ADMIN_PASSWORD" -g 'SuperUser'
+    kube port-forward "$pod" 9990:9990
+}
+
 kmiplogs() {
     declare pod=""
     declare container=""    # previously always "dispatchx-mipserver", now varies
@@ -504,6 +515,7 @@ cmd_print() {
     ship-bash-function kmipexec "execute command on mipserver pod"
     ship-bash-function kmiplogs "get logs of mipserver pod"
     ship-bash-function kmipdebug "foward port 8787"
+    ship-bash-function kmipmgmtconsole "add user, foward port 9990"
     ship-bash-function kargolist "list argocd applications"
     ship-bash-function kargoexport "export argocd application"
     ship-bash-function kaz "wrapper for azure az commands"
