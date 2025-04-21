@@ -1,0 +1,12 @@
+[general]
+import = [
+    "~/.config/alacritty/themes/gnome_terminal.toml",
+    #"~/Dev/github/alacritty/alacritty-theme/themes/monokai_charcoal.toml",
+    #"~/Dev/github/alacritty/alacritty-theme/themes/gnome_terminal.toml",
+]
+
+[window]
+startup_mode = "Maximized"
+
+[selection]
+save_to_clipboard = true
