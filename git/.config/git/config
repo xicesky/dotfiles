@@ -34,7 +34,8 @@
     st = status
     d = difftool -g -d
     root = rev-parse --show-toplevel
-    current = rev-parse --abbrev-ref HEAD
+    current-branch = rev-parse --abbrev-ref HEAD
+    cur = current-branch
     restor = restore
     mini = log --format=oneline
     mu = multi-st -c 90
