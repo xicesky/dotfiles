@@ -1,0 +1,6 @@
+wordlist*
+*.kdbx
+*.passwd
+passwd
+shadow
+
