@@ -10,3 +10,22 @@ startup_mode = "Maximized"
 
 [selection]
 save_to_clipboard = true
+
+[keyboard]
+bindings = [
+# Note: I often select with mouse to copy, then paste with keyboard.
+{ key = "Insert", mods = "Shift", action = "Paste" },
+{ key = "T", mods = "Control|Shift", action = "CreateNewTab" },
+{ key = "N", mods = "Control|Shift", action = "CreateNewWindow" },
+]
+
+# Open URLs via Ctrl+Mouse click
+[[hints.enabled]]
+binding = { key = "U", mods = "Control|Shift" }
+command = "xdg-open"
+hyperlinks = true
+mouse.enabled = true
+mouse.mods = "Control"
+post_processing = true
+persist = false
+regex = "(ipfs:|ipns:|magnet:|mailto:|gemini://|gopher://|https://|http://|news:|file:|git://|ssh:|ftp://)[^\u0000-\u001F\u007F-\u009F<>\"\\s{-}\\^⟨⟩‘]+"
