@@ -37,6 +37,26 @@ config-for-sp-dev() {
     AZURE_AKS_RG="kyma-dev"
 }
 
+config-for-sp-dev-new() {
+    # Valid for new helm charts
+
+    KUBE_CONFIG_FILE="config-az-mx-dev.yaml"
+    SPCUSTOMER="$1"
+    KUBE_NAMESPACE="$SPCUSTOMER"
+    MIPSERVER_STS="${2:-mipserver}"
+    MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver}"
+    # Old variant
+    #PGHOST="postgres-shared.postgres.database.azure.com"
+    PGHOST="postgres-flexible-mx-sp-priv.postgres.database.azure.com"
+    PGDATABASE="postgresqldatabase-${SPCUSTOMER}"
+    PGUSER="postgresqldatabase-${SPCUSTOMER}-admin"
+    #PGUSER=markus.dangl@solvares.com   # az method doesn't seem to work on dev!?
+
+    AZURE_TENANT_ID="a223fba7-7c90-4a1a-affb-5e6549d0f252"
+    AZURE_SUBSCRIPTION_ID="32da1237-4da1-4065-8a2a-37122ce002b1"
+    AZURE_AKS_RG="kyma-dev"
+}
+
 config-for-sp-prod() {
     KUBE_CONFIG_FILE="config-az-mx-prod.yaml"
     SPCUSTOMER="$1"
@@ -119,9 +139,9 @@ load-config() {
     ochs*-qa)           config-for-sp-prod  "customer-687399031" "" "mipserver-fla" ;;
     ochs*-prod)         config-for-sp-prod  "customer-687399036" "" "mipserver-fla" ;;
 
-    harg*-dev)          config-for-sp-dev   "customer-687399110" "" "mipserver-fla" ;;
-    harg*-qa)           config-for-sp-prod  "customer-687399110" "" "mipserver-fla" ;;
-    harg*-prod)         config-for-sp-prod  "customer-687399111" "" "mipserver-fla" ;;
+    harg*-dev)          config-for-sp-dev-new   "customer-687399110" "" "mipserver-fla" ;;
+    harg*-qa)           config-for-sp-prod      "customer-687399110" "" "mipserver-fla" ;;
+    harg*-prod)         config-for-sp-prod      "customer-687399111" "" "mipserver-fla" ;;
 
     bwtd*-qa)           config-for-sp-prod-new  "customer-687399060" "" "bwt-de-mipserver" ;;
     bwtd*-prod)         config-for-sp-prod-new  "customer-687399061" "" "bwt-de-mipserver" ;;
@@ -131,7 +151,7 @@ load-config() {
     hsm*-qa)            config-for-sp-prod-new  "customer-687399220" "" "hsm-mipserver" ;;
     hsm*-prod)          config-for-sp-prod-new  "customer-687399221" "" "hsm-mipserver" ;;
 
-    kalt*-qa)           config-for-sp-prod-new "customer-687399150" "" "kaltenbach-mipserver" ;;
+    kalt*-qa)           config-for-sp-prod-new  "customer-687399150" "" "kaltenbach-mipserver" ;;
     kalt*-prod)         config-for-sp-prod-new  "customer-687399151" "" "kaltenbach-mipserver" ;;
 
     gewo*-qa)           config-for-sp-prod-new  "customer-687399170" "" "gewofag-mipserver" ;;
