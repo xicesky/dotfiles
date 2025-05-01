@@ -1,46 +1,121 @@
 #!/bin/bash
+# Find and run idea
 
 declare -g IDEA_EXECUTABLE="${IDEA_EXECUTABLE:-}"
+XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+SKY_DOTFILES="${SKY_DOTFILES:-$HOME/_dotfiles}"
+PREFER_HOST_IDEA="${PREFER_HOST_IDEA:-true}"
 
-if ! type -P get-windows-env >/dev/null 2>&1 ; then
+# System-specific detection functions
+MY_OSTYPE=$(uname -s)
+
+case "$MY_OSTYPE" in
+    MINGW*) function ismsystem() { true; }; function ismingw() { true; }; function ismsys() { false; }  ;;
+    MSYS*)  function ismsystem() { true; }; function ismingw() { false; }; function ismsys() { true; } ;;
+    *)      function ismsystem() { false; }; function ismingw() { false; }; function ismsys() { false; }  ;;
+esac
+
+if [[ $OSTYPE == darwin* ]] ; then
+    function isdarwin() { true; }
+else
+    function isdarwin() { false; }
+fi
+
+if [[ -r /proc/version ]] ; then
+    case "$(cat /proc/version)" in
+        *-microsoft*-WSL2*)
+            function iswsl2() { true; }
+            ;;
+        *)
+            function iswsl2() { false; }
+            ;;
+    esac
+fi
+
+if [[ -x "$SKY_DOTFILES/bin/get-windows-env" ]] ; then
+    get-windows-env() {
+        "$SKY_DOTFILES/bin/get-windows-env" "$@"
+    }
+else
     get-windows-env() {
         return 1
     }
 fi
 
+find-idea-in-jetbrains-dir() {
+    local dir="$1"; shift
+    local current
+    if [[ -d "$dir" ]] ; then
+        current="$(find "$dir" -mindepth 1 -maxdepth 1 -iname '*IDEA*'|head -n 1)"
+        current="$current/bin/idea64.exe"
+        [[ -x "$current" ]] && { echo "$current"; return 0; }
+    fi
+    return 1
+}
+
 find-idea() {
-    declare current
     if [[ -x "$IDEA_EXECUTABLE" ]] ; then
         echo "$IDEA_EXECUTABLE"
         return 0
     fi
-    current="$(type -P idea64.exe 2>/dev/null)" && \
-    [[ -x "$current" ]] && { echo "$current"; return 0; }
-    current="$(type -P idea.bat 2>/dev/null)" && \
-    current="$(dirname "$current")/idea64.exe" && \
-    [[ -x "$current" ]] && { echo "$current"; return 0; }
+    local current dir
+    if $PREFER_HOST_IDEA && iswsl2 ; then
+        # Try to find version installed by jetbrains toolbox, e.g. C:\Users\marku\AppData\Local\Programs\IntelliJ IDEA Ultimate\bin
+        dir="$(get-windows-env -p LOCALAPPDATA)/Programs"
+        current="$(find-idea-in-jetbrains-dir "$dir")" && { echo "$current"; return 0; }
 
-    current="$(get-windows-env -p PROGRAMFILES)/JetBrains" && \
-    if [[ -d "$current" ]] ; then
-        current="$(find "$current" -mindepth 1 -maxdepth 1 -iname '*IDEA*'|head -n 1)"
-        current="$current/bin/idea64.exe"
+        # Try to find manually installed version, e.g. C:\Program Files\JetBrains\IntelliJ IDEA Ultimate\bin
+        dir="$(get-windows-env -p PROGRAMFILES)/JetBrains"
+        current="$(find-idea-in-jetbrains-dir "$dir")" && { echo "$current"; return 0; }
+    fi
+    if ismsys || ismingw ; then
+        current="$(type -P idea64.exe 2>/dev/null)" && \
+        [[ -x "$current" ]] && { echo "$current"; return 0; }
+        current="$(type -P idea.bat 2>/dev/null)" && \
+        current="$(dirname "$current")/idea64.exe" && \
         [[ -x "$current" ]] && { echo "$current"; return 0; }
     fi
 
-    return 1
+    if [[ -x "$XDG_DATA_HOME/JetBrains/Toolbox/apps/intellij-idea-ultimate/bin/idea.sh" ]] ; then
+        # Prefer version installed by jetbrains toolbox
+        echo "$XDG_DATA_HOME/JetBrains/Toolbox/apps/intellij-idea-ultimate/bin/idea.sh"
+    elif command -v idea.sh >/dev/null ; then
+        # Found idea.sh in path
+        command -v "idea.sh"
+    else
+        return 1
+    fi
 }
 
-IDEA_EXECUTABLE="$(find-idea)" || {
-    echo "Could not find idea executable." 1>&2
-    exit 1
+launch-idea() {
+    local IDEA_EXECUTABLE
+    IDEA_EXECUTABLE="$(find-idea)" || {
+        echo "Could not find idea executable." 1>&2
+        exit 1
+    }
+    # On wsl2 we need to use the windows environment via powershell
+    # or idea just doesn't launch.
+    if iswsl2 ; then
+        # FIXME: We might need to escape the arguments properly here
+        powershell.exe -Command "Start-Process" \""$(wslpath -wa "$IDEA_EXECUTABLE")"\" "$@"
+    else
+        "$IDEA_EXECUTABLE" "$@" 2>/dev/null
+    fi
 }
 
-# On wsl2 we need to use the windows environment via powershell
-# or idea just doesn't launch.
-if grep -qi microsoft /proc/version ; then
-    # FIXME: We might need to escape the arguments properly here
-    powershell.exe -Command "Start-Process" \""$(wslpath -wa "$IDEA_EXECUTABLE")"\" "$@"
-else
-    "$IDEA_EXECUTABLE" "$@"
-fi
+main() {
+    case "$1" in
+        --help|-h|--where|help|where)
+            if IDEA_EXECUTABLE="$(find-idea)" ; then
+                echo "IDEA_EXECUTABLE: $IDEA_EXECUTABLE"
+            else
+                echo "Could not find idea executable." 1>&2
+            fi
+            return 0
+            ;;
+    esac
 
+    launch-idea "$@"
+}
+
+main "$@"
