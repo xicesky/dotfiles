@@ -126,7 +126,12 @@ config-for-nbb() {
     KUBE_NAMESPACE="$1"
     MIPSERVER_STS="${2:-mipserver-mwm-dev}"
     MIPSERVER_DEFAULT_CONTAINER="${3:-mipserver-fla}"
-    PGHOST="ng-mwm-psql.postgres.database.azure.com"
+    case "$1" in
+        # TODO: Remove -dev option once the dev system is gone.
+        *-dev)      PGHOST="ng-mwm-psql.postgres.database.azure.com" ;;
+        *-qa)       PGHOST="ng-mwm-psql-dev.postgres.database.azure.com" ;;
+        *)          PGHOST="ng-mwm-psql.postgres.database.azure.com" ;;
+    esac
     PGDATABASE="${2:-mipserver-mwm-dev}" # Same as the sts name, i.e. mipserver-mwm-dev, mipserver-mwm-prod
     PGUSER="mwmpsqladm"
 }
@@ -165,6 +170,7 @@ load-config() {
     customer-*)         config-for-sp-dev  "$1" ;;
 
     nbb-dev)            config-for-nbb "mwm-dev" "mipserver-mwm-dev" "mipserver-fla" ;;
+    nbb-qa)             config-for-nbb "mwm-qa" "mipserver-mwm-qa" "mipserver-fla" ;;
     nbb-prod)           config-for-nbb "mwm-prod" "mipserver-mwm-prod" "mipserver-fla" ;;
 
     prd-vti)            config-for-mx-internal "vt-integration" "prd-vt-integration-dispatchx-mipserver" ;;
