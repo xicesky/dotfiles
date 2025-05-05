@@ -10,3 +10,6 @@ xmonad/.xmonad/xmonad.o
 .vscode
 _old_*
 
+# Remmina keeps changing files
+/remmina
+
