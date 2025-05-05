@@ -110,10 +110,6 @@ cmd_chrome() {
     cmd_ssh "google-chrome" "$@" 1>&2
 }
 
-cmd_keepass() {
-    cmd_ssh "keepassxc" "$@"
-}
-
 cmd_idea() {
     declare -a args=( "$@" )
     if [[ $# -eq 1 && "$1" =~ [:alnum:] ]] ; then
@@ -150,6 +146,15 @@ cmd_vm() {
     esac
 }
 
+cmd_sync-keepass() {
+    # Copy keepass database from remote to local
+    rsync -vzP dangl-lnx:OneDrive-dangl/DanglMarkusMobileX.kdbx ~/gdrive/Keys/
+}
+
+cmd_sync() {
+    cmd_sync-keepass
+}
+
 cmd_initial() {
     #cmd_notes &
 
@@ -173,6 +178,10 @@ cmd_initial() {
         # Create new pane for idea
         tmux new-window -t "$session:4" -n 'Idea'
         tmux send-keys -t 'Idea' 'mx idea' C-m
+
+        # Create new pane for sync-keepass
+        tmux new-window -t "$session:5" -n 'Sync'
+        tmux send-keys -t 'Sync' 'mx sync' C-m
     fi
 
     # Attach Session, on the Main window
@@ -197,6 +206,7 @@ usage() {
     echo "    code            Launch vs code with a remote ssh session. A target directory can be specified, it defaults to ~/Notes."
     echo "    chrome          Launch chrome on the remote (via ssh x-forwarding)."
     echo "    idea            Launch idea on the remote (via ssh x-forwarding)."
+    echo "    sync-keepass    Copy keepass database from remote to local."
     echo "    initial / init  Start common programs in a tmux session (vs code, remmina, chrome, idea)"
     echo "    "
     echo ""
@@ -220,7 +230,6 @@ main() {
                 return 1
                 ;;
             in*) cmd="initial"; break ;;
-            kee*) cmd="keepass"; break ;;
             *)
                 cmd="$arg"
                 break
