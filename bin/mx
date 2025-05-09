@@ -86,6 +86,11 @@ cmd_ssh() {
     fi
 }
 
+cmd_tmux() {
+    declare -a args=( "$@" )
+    cmd_ssh -t tmux "${args[@]}"
+}
+
 cmd_rdp() {
     invoke remmina
 }
@@ -215,7 +220,7 @@ usage() {
 }
 
 main() {
-    declare cmd="ssh" cmderr=0
+    declare cmd="tmux" cmderr=0
     while [[ $# -gt 0 ]] ; do
         arg="$1"; shift
         case "$arg" in
