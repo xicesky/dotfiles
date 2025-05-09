@@ -396,6 +396,27 @@ kmipdebug() {
     kube port-forward "$pod" 8787:8787
 }
 
+kmipcli() {
+    [[ "$1" = --pod || "$1" == -p ]] && { shift; pod="$1"; shift; }
+    pod="$(_kmip_pod_name "$pod")" || { return 1; }
+
+    local connect=true
+    local output=json
+
+    local -a jboss_cli_args=()
+    if $connect ; then
+        jboss_cli_args+=(-c)
+    fi
+    if [[ "$output" == json ]] ; then
+        jboss_cli_args+=(--output-json)
+    fi
+    jboss_cli_args+=( "$@" )
+
+    # TODO: load properties present on pod
+    kmipexec --pod "$pod" /opt/jboss/wildfly/bin/jboss-cli.sh "${jboss_cli_args[@]}"
+    # --properties=wildfly-configuration.properties "$@"
+}
+
 kmipmgmtconsole() {
     declare pod=""
     [[ "$1" = --pod || "$1" == -p ]] && { shift; pod="$1"; shift; }
@@ -541,6 +562,7 @@ cmd_print() {
     ship-bash-function kmipexec "execute command on mipserver pod"
     ship-bash-function kmiplogs "get logs of mipserver pod"
     ship-bash-function kmipdebug "foward port 8787"
+    ship-bash-function kmipcli "run jboss-cli.sh on mipserver pod"
     ship-bash-function kmipmgmtconsole "add user, foward port 9990"
     ship-bash-function kargolist "list argocd applications"
     ship-bash-function kargoexport "export argocd application"
