@@ -5,7 +5,20 @@
 # SELECT 'DROP TABLE IF EXISTS "' || tablename || '" CASCADE;' FROM pg_tables WHERE schemaname='sdm';
 # SELECT 'DROP SEQUENCE IF EXISTS "' || sequencename || '" CASCADE;' FROM pg_sequences WHERE schemaname='sdm';
 # and then execute the resulting SQL commands.
-# To drop the stored procedures, use: \df sdm.* to list them and then drop them one by one
+# To drop the stored procedures, use: \df sdm.* to list them and then drop them one by one:
+# DROP PROCEDURE IF EXISTS ds_config_for_all;
+# DROP PROCEDURE IF EXISTS ds_config_reverse;
+# DROP PROCEDURE IF EXISTS ds_full;
+# DROP PROCEDURE IF EXISTS ds_full_insert_only;
+# DROP PROCEDURE IF EXISTS ds_inventory;
+# DROP PROCEDURE IF EXISTS ds_inventory_reverse;
+# DROP PROCEDURE IF EXISTS ds_master_data;
+# DROP PROCEDURE IF EXISTS ds_movement_data;
+# DROP PROCEDURE IF EXISTS ds_movement_data_reverse;
+# DROP PROCEDURE IF EXISTS ds_news;
+# DROP PROCEDURE IF EXISTS ds_news_reverse;
+# DROP PROCEDURE IF EXISTS ds_plugins;
+# DROP PROCEDURE IF EXISTS ds_plugins_reverse;
 
 ################################################################################
 # Verbosity, colors, command logging
@@ -298,7 +311,9 @@ cmd_restore() {
     declare -a psql_postprocess_command=(
         psql -d "$target_database" -c "SET search_path TO sdm;
 UPDATE CW_KEY_VALUE SET KVA_KEY_VALUE = '${new_uuid}' WHERE KVA_KEY_NAME = 'CENTERWARE_IDENTIFIER';
-UPDATE CW_SYNC_CLIENT SET SCL_INACTIVE = '1';"
+UPDATE CW_SYNC_CLIENT SET SCL_INACTIVE = '1';
+DELETE FROM cw_key_value WHERE kva_key_name = 'jobScheduler.host';
+"
     )
     echo "The following command will be executed:"
     if $create_database ; then
