@@ -318,8 +318,11 @@ _json_log_filter() {
     declare -a pipeline=()
     declare -a ignored_loggers=(AvailabilityTimeMerger VisitourPollAvailabilityJob ReflectionServiceFactoryBean)
     declare s
+    local options="$1"; shift
+    local grep_pattern="$1"; shift
+    local level="$1"; shift
 
-    if [[ "$1" != *r* ]] ; then
+    if [[ "$options" != *r* ]] ; then
         pipeline+=(
             # Grep needs to find lines that are json, but not outputs from jboss-cli like `{"outcome" => "success"}`
             "grep -Pe '^\{(?!\"outcome\"\s*=>).*\}\s*$'"
@@ -327,7 +330,7 @@ _json_log_filter() {
     fi
 
     # Filter out some noise (raw grep)
-    if [[ "$1" != *nf* ]] ; then
+    if [[ "$options" != *nf* ]] ; then
         pipeline+=(
             "$(printf "%q " grep -vPe "(No not done journal tx-id found for|<(GetAbsence|GetAbsenceResponse|GetResources|GetResourcesResponse)( [^>]*)?>|PortTypeName: ReadCompleteOrderService)")"
             "$(printf "%q " sed -E \
@@ -337,20 +340,28 @@ _json_log_filter() {
         )
     fi
 
-    if [[ "$1" == *g* ]] ; then
-        pipeline+=( "$(printf "%q " grep -iPe "$2")" )
+    if [[ "$options" == *g* ]] ; then
+        pipeline+=( "$(printf "%q " grep -iPe "$grep_pattern")" )
     fi
 
-    # Json filtering and formatting - skipped if "raw"
-    if [[ "$1" != *r* ]] ; then
+    # Static json filtering - skipped if "raw"
+    if [[ "$options" != *r* ]] ; then
 
         # Filter out some noise and ignored loggers
         s="$(printf " or contains(\"%s\")" "${ignored_loggers[@]}")"
         s="${s:4}" #; echo "$s" >&2
         pipeline+=( "jq -c 'select(.loggerName | $s | not) | select(.message | contains(\"No not done journal\") | not)'" )
+    fi
 
+    # Filter by level if specified
+    if [[ -n "$level" ]] ; then
+        pipeline+=( "jq -c 'select(.level | test(\"$level\"; \"i\")?)'" )
+    fi
+
+    # Static json formatting - skipped if "raw"
+    if [[ "$options" != *r* ]] ; then
         # Format output, option "-s" to print stacktrace
-        if [[ "$1" == *s* ]] ; then
+        if [[ "$options" == *s* ]] ; then
             pipeline+=( "jq -r '[.level, .timestamp, .loggerName, .message, .stackTrace] | join(\"|\")'" )
         else
             pipeline+=( "jq -r '[.level, .timestamp, .message] | join(\"|\")'" )
@@ -436,7 +447,7 @@ kmiplogs() {
     declare container=""    # previously always "dispatchx-mipserver", now varies
     # TODO: handle --since and --tail, defaulting to --tail=1000 --since=10m
     declare -a kubectl_args=()
-    declare json_filter_arg0="" json_filter_arg1=""
+    declare json_filter_opts="" json_filter_grep="" json_filter_level=""
 
     # Parse arguments
     while [[ $# -gt 0 ]] ; do
@@ -447,9 +458,22 @@ kmiplogs() {
         --container|-c)     container="$1"; shift ;;
         -f|--follow)        kubectl_args+=("$arg") ;;
         --since*|--tail*)   kubectl_args+=("$arg" "$1"); shift ;;
-        -g|--grep)          json_filter_arg0="${json_filter_arg0}g"; json_filter_arg1="$1"; shift ;;
-        -s|--stacktrace)    json_filter_arg0="${json_filter_arg0}s" ;;
-        --raw)              json_filter_arg0="${json_filter_arg0}r" ;;
+        -g|--grep)          json_filter_opts="${json_filter_opts}g"; json_filter_grep="$1"; shift ;;
+        -s|--stacktrace)    json_filter_opts="${json_filter_opts}s" ;;
+        --raw)              json_filter_opts="${json_filter_opts}r" ;;
+        --level)
+            case "$(echo "$1" | tr '[:upper:]' '[:lower:]')" in
+            trace|debug) json_filter_level="^(trace|debug|info|warn|err)" ;;
+            info) json_filter_level="^(info|warn|err)" ;;
+            warn*) json_filter_level="^(warn|err)" ;;
+            err*) json_filter_level="^(err)" ;;
+            esac
+            shift
+        ;;
+        -*)
+            echo "Error: unknown option: $arg" 1>&2
+            return 1;
+            ;;
         esac
     done
 
@@ -457,8 +481,8 @@ kmiplogs() {
     container="$(_kmip_container_name "$container")" || { return 1; }
 
     declare actual_command
-    actual_command="$(printf "%q " kubectl -n "$KUBE_NAMESPACE" logs "$pod" -c "$container" "${kubectl_args[@]}")$(_json_log_filter "$json_filter_arg0" "$json_filter_arg1")"
-    #echo _json_log_filter "$json_filter_arg0" "$json_filter_arg1" 1>&2
+    actual_command="$(printf "%q " kubectl -n "$KUBE_NAMESPACE" logs "$pod" -c "$container" "${kubectl_args[@]}")$(_json_log_filter "$json_filter_opts" "$json_filter_grep" "$json_filter_level")"
+    #echo _json_log_filter "$json_filter_opts" "$json_filter_grep" 1>&2
     echo "> $actual_command" 1>&2
     eval "$actual_command"
 }
