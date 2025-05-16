@@ -123,6 +123,13 @@ cmd_idea() {
     cmd_ssh "$MOBILEX_HOME/bin/idea" "${args[@]}"
 }
 
+cmd_postman() {
+    #cmd_ssh "$MOBILEX_HOME/bin/postman" "$@"
+    echo "Postman does NOT WORK with ssh x-forwarding" >&2
+    echo "Please use the native version (e.g. on windows)" >&2
+    return 1
+}
+
 cmd_vm() {
     declare cmd="start" vmname="win11" cmderr=0 argn=-1
     while [[ $# -gt 0 ]] ; do
