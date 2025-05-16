@@ -145,7 +145,7 @@ load-config() {
     ochs*-prod)         config-for-sp-prod  "customer-687399036" "" "mipserver-fla" ;;
 
     harg*-dev)          config-for-sp-dev-new   "customer-687399110" "" "mipserver-fla" ;;
-    harg*-qa)           config-for-sp-prod      "customer-687399110" "" "mipserver-fla" ;;
+    harg*-qa)           config-for-sp-prod-new  "customer-687399110" "" "mipserver-fla" ;;
     harg*-prod)         config-for-sp-prod      "customer-687399111" "" "mipserver-fla" ;;
 
     bwtd*-qa)           config-for-sp-prod-new  "customer-687399060" "" "bwt-de-mipserver" ;;
@@ -161,6 +161,9 @@ load-config() {
 
     gewo*-qa)           config-for-sp-prod-new  "customer-687399170" "" "gewofag-mipserver" ;;
     gewo*-prod)         config-for-sp-prod-new  "customer-687399171" "" "gewofag-mipserver" ;;
+
+    tria*-qa)           config-for-sp-prod-new  "customer-687399140" "" "tria-mipserver" ;;
+    tria*-prod)         config-for-sp-prod-new  "customer-687399141" "" "tria-mipserver" ;;
 
     #solu*-qa)           config-for-sp-prod  "customer-687399180" "" "soluvia-mipserver" ;;
     #solu*-prod)         config-for-sp-prod  "customer-687399181" "" "soluvia-mipserver" ;;
