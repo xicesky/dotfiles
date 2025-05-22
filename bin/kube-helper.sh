@@ -98,8 +98,10 @@ config-for-sp-prod-new() {
 config-for-mx-internal() {
     KUBE_CONFIG_FILE="config-mx-internal.yaml"
     KUBE_NAMESPACE="$1"
-    MIPSERVER_STS="$2"
-    MIPSERVER_DEFAULT_CONTAINER="dispatchx-mipserver"
+    #MIPSERVER_STS="$2"
+    MIPSERVER_STS="mipserver"
+    #MIPSERVER_DEFAULT_CONTAINER="dispatchx-mipserver"
+    MIPSERVER_DEFAULT_CONTAINER="mipserver"
 }
 
 config-for-local-k3d() {
@@ -138,10 +140,10 @@ config-for-nbb() {
 
 load-config() {
     case "$1" in
-    flsa*)              config-for-sp-dev  "customer-687399035" "" "mipserver-fla" ;;
+    #flsa*)              config-for-sp-dev  "customer-687399035" "" "mipserver-fla" ;;  # inactive
 
-    ochs*-dev)          config-for-sp-dev   "customer-687399036" "" "mipserver-fla" ;;
-    ochs*-qa)           config-for-sp-prod  "customer-687399031" "" "mipserver-fla" ;;
+    #ochs*-dev)          config-for-sp-dev   "customer-687399036" "" "mipserver-fla" ;; # inactive
+    ochs*-qa)           config-for-sp-prod-new  "customer-687399031" "" "mipserver-fla" ;;
     ochs*-prod)         config-for-sp-prod  "customer-687399036" "" "mipserver-fla" ;;
 
     harg*-dev)          config-for-sp-dev-new   "customer-687399110" "" "mipserver-fla" ;;
@@ -165,8 +167,8 @@ load-config() {
     tria*-qa)           config-for-sp-prod-new  "customer-687399140" "" "tria-mipserver" ;;
     tria*-prod)         config-for-sp-prod-new  "customer-687399141" "" "tria-mipserver" ;;
 
-    #solu*-qa)           config-for-sp-prod  "customer-687399180" "" "soluvia-mipserver" ;;
-    #solu*-prod)         config-for-sp-prod  "customer-687399181" "" "soluvia-mipserver" ;;
+    #solu*-qa)           config-for-sp-prod  "customer-687399180" "" "soluvia-mipserver" ;; # inactive
+    #solu*-prod)         config-for-sp-prod  "customer-687399181" "" "soluvia-mipserver" ;; # inactive
 
     customer-*-qa)      config-for-sp-prod-new "$1" ;;
     customer-*-prod)    config-for-sp-prod-new "$1" ;;
@@ -177,7 +179,9 @@ load-config() {
     nbb-prod)           config-for-nbb "mwm-prod" "mipserver-mwm-prod" "mipserver-fla" ;;
 
     prd-vti)            config-for-mx-internal "vt-integration" "prd-vt-integration-dispatchx-mipserver" ;;
-    abrg|arburg*)       config-for-mx-internal "ps-arburg" "ps-arburg-dispatchx-mipserver" ;;
+    prd-portal)         config-for-mx-internal "prd-feature-jdk21" "mipserver";;
+    #abrg|arburg*)       config-for-mx-internal "ps-arburg" "ps-arburg-dispatchx-mipserver" ;; # inactive
+
     qub1c)              config-for-qub1c "$1" ;;
     local*)             config-for-local-k3d "$1" ;;
     *)                  return 1 ;;
