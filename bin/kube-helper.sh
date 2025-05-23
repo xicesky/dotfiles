@@ -102,6 +102,11 @@ config-for-mx-internal() {
     MIPSERVER_STS="mipserver"
     #MIPSERVER_DEFAULT_CONTAINER="dispatchx-mipserver"
     MIPSERVER_DEFAULT_CONTAINER="mipserver"
+
+    AZURE_TENANT_ID="ac9a92e4-34c9-4fd1-9e08-be7943f659cf"
+    AZURE_SUBSCRIPTION_ID="$AZURE_TENANT_ID"    # Subscription: N/A(tenant level account)
+    AZURE_AKS_NAME="" # Is not an aks cluster
+    AZURE_AKS_RG="" # Is not an aks cluster
 }
 
 config-for-local-k3d() {
