@@ -1,0 +1,9 @@
+#!/bin/bash
+
+invoke() {
+    echo "$(printf "%q " "$@")" >&2
+    "$@"
+}
+
+invoke /usr/local/bin/kubelogin "$@"
+
