@@ -103,6 +103,11 @@ config-for-mx-internal() {
     #MIPSERVER_DEFAULT_CONTAINER="dispatchx-mipserver"
     MIPSERVER_DEFAULT_CONTAINER="mipserver"
 
+    PGHOST="pgsql16-dev.prd.mobilexag.de"
+    #PGDATABASE="postgres"
+    PGDATABASE="prd_feature_jdk21_db"
+    PGUSER=mxprd
+
     AZURE_TENANT_ID="ac9a92e4-34c9-4fd1-9e08-be7943f659cf"
     AZURE_SUBSCRIPTION_ID="$AZURE_TENANT_ID"    # Subscription: N/A(tenant level account)
     AZURE_AKS_NAME="" # Is not an aks cluster
