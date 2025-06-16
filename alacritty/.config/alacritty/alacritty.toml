@@ -19,6 +19,10 @@ bindings = [
 { key = "N", mods = "Control|Shift", action = "CreateNewWindow" },
 ]
 
+[terminal.shell]
+# Always start with tmux
+program = "tmux"
+
 # Open URLs via Ctrl+Mouse click
 [[hints.enabled]]
 binding = { key = "U", mods = "Control|Shift" }
