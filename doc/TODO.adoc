@@ -1,0 +1,17 @@
+= TODO
+:experimental:
+:source-highlighter: rouge
+:source-language: shell
+:icons: font
+:toc: left
+:sectanchors:
+// tag::header[]
+Markus Dangl
+
+// end::header[]
+
+== Things to improve
+
+* Make environment system work with systemd
+    systemd offers environment directories (see e.g. https://man.archlinux.org/man/environment.d.5) which we can use to set environment variables for all services.
+    Sadly these only refresh on re-login, but they will provide their values on all services, not just login terminals with bash/zsh.

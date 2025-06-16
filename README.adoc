@@ -18,4 +18,5 @@ fetch them:
 git submodule update --init
 ```
 
-include::doc/wsl.adoc[leveloffset=1]
+include::doc/wsl.adoc[leveloffset=+1,tag=!*]
+include::doc/TODO.adoc[leveloffset=+1,tag=!*]

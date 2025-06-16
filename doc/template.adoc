@@ -5,5 +5,10 @@
 :icons: font
 :toc: left
 :sectanchors:
+// tag::header[]
 Markus Dangl
 
+General template for my asciidoc files.
+// end::header[]
+
+== Chapter

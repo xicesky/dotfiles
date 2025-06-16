@@ -6,7 +6,10 @@
 :toc: left
 :sectanchors:
 :star: *
+// tag::header[]
 Markus Dangl
+
+// end::header[]
 
 == TODO
 
