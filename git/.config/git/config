@@ -39,3 +39,4 @@
     restor = restore
     mini = log --format=oneline
     mu = multi-st -c 90
+    c-p = cherry-pick
