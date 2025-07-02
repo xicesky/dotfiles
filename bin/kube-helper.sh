@@ -339,15 +339,15 @@ _json_log_filter() {
     if [[ "$options" != *r* ]] ; then
         pipeline+=(
             # Grep needs to find lines that are json, but not outputs from jboss-cli like `{"outcome" => "success"}`
-            "grep -Pe '^\{(?!\"outcome\"\s*=>).*\}\s*$'"
+            "grep --line-buffered -Pe '^\{(?!\"outcome\"\s*=>).*\}\s*$'"
         )
     fi
 
     # Filter out some noise (raw grep)
     if [[ "$options" != *nf* ]] ; then
         pipeline+=(
-            "$(printf "%q " grep -vPe "(No not done journal tx-id found for|<(GetAbsence|GetAbsenceResponse|GetResources|GetResourcesResponse)( [^>]*)?>|PortTypeName: ReadCompleteOrderService)")"
-            "$(printf "%q " sed -E \
+            "$(printf "%q " grep --line-buffered -vPe "(No not done journal tx-id found for|<(GetAbsence|GetAbsenceResponse|GetResources|GetResourcesResponse)( [^>]*)?>|PortTypeName: ReadCompleteOrderService)")"
+            "$(printf "%q " sed --unbuffered -E \
                 -e '/"message":"REQ_IN.*<DynamicChange/s/^\{"timestamp":"([^"]*)".*,"loggerName":"([^"]*)".*,"level":"([^"]*)".*,"message":".*<DynamicChange[^>]+><VTID[^>]+>([^\n<]*)<\/VTID><ExtID[^>]+>([^\n<]*)<\/ExtID><[^>]+>([^\n<]*)<\/FunctionCode><Status[^>]+>([^\n<]*)<\/Status>.*<\/DynamicChange>.*\}$/{"timestamp": "\1","loggerName":"\2","level":"\3_DC_IN","message":"FC \6 \4 \\\"\5\\\" (Status \7)"}/' \
                 -e '/"message":"RESP_OUT.*<DynamicChangeResponse/s/^\{"timestamp":"([^"]*)".*,"loggerName":"([^"]*)".*,"level":"([^"]*)".*\}$/{"timestamp": "\1","loggerName":"\2","level":"\3_DC_RESP","message":"ok"}/'
             )"
@@ -355,7 +355,7 @@ _json_log_filter() {
     fi
 
     if [[ "$options" == *g* ]] ; then
-        pipeline+=( "$(printf "%q " grep -iPe "$grep_pattern")" )
+        pipeline+=( "$(printf "%q " grep --line-buffered -iPe "$grep_pattern")" )
     fi
 
     # Static json filtering - skipped if "raw"
@@ -364,21 +364,21 @@ _json_log_filter() {
         # Filter out some noise and ignored loggers
         s="$(printf " or contains(\"%s\")" "${ignored_loggers[@]}")"
         s="${s:4}" #; echo "$s" >&2
-        pipeline+=( "jq -c 'select(.loggerName | $s | not) | select(.message | contains(\"No not done journal\") | not)'" )
+        pipeline+=( "jq --unbuffered -c 'select(.loggerName | $s | not) | select(.message | contains(\"No not done journal\") | not)'" )
     fi
 
     # Filter by level if specified
     if [[ -n "$level" ]] ; then
-        pipeline+=( "jq -c 'select(.level | test(\"$level\"; \"i\")?)'" )
+        pipeline+=( "jq --unbuffered -c 'select(.level | test(\"$level\"; \"i\")?)'" )
     fi
 
     # Static json formatting - skipped if "raw"
     if [[ "$options" != *r* ]] ; then
         # Format output, option "-s" to print stacktrace
         if [[ "$options" == *s* ]] ; then
-            pipeline+=( "jq -r '[.level, .timestamp, .loggerName, .message, .stackTrace] | join(\"|\")'" )
+            pipeline+=( "jq --unbuffered -r '[.level, .timestamp, .loggerName, .message, .stackTrace] | join(\"|\")'" )
         else
-            pipeline+=( "jq -r '[.level, .timestamp, .message] | join(\"|\")'" )
+            pipeline+=( "jq --unbuffered -r '[.level, .timestamp, .message] | join(\"|\")'" )
         fi
     fi
     
