@@ -154,7 +154,7 @@ load-config() {
 
     #ochs*-dev)          config-for-sp-dev   "customer-687399036" "" "mipserver-fla" ;; # inactive
     ochs*-qa)           config-for-sp-prod-new  "customer-687399031" "" "mipserver-fla" ;;
-    ochs*-prod)         config-for-sp-prod  "customer-687399036" "" "mipserver-fla" ;;
+    ochs*-prod)         config-for-sp-prod-new  "customer-687399036" "" "mipserver-fla" ;;
 
     harg*-dev)          config-for-sp-dev-new   "customer-687399110" "" "mipserver-fla" ;;
     harg*-qa)           config-for-sp-prod-new  "customer-687399110" "" "mipserver-fla" ;;
