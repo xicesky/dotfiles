@@ -158,15 +158,25 @@ load-config() {
 
     harg*-dev)          config-for-sp-dev-new   "customer-687399110" "" "mipserver-fla" ;;
     harg*-qa)           config-for-sp-prod-new  "customer-687399110" "" "mipserver-fla" ;;
-    harg*-prod)         config-for-sp-prod      "customer-687399111" "" "mipserver-fla" ;;
+    harg*-prod)         config-for-sp-prod-new  "customer-687399111" "" "mipserver-fla" ;;
 
     bwtd*-qa)           config-for-sp-prod-new  "customer-687399060" "" "bwt-de-mipserver" ;;
     bwtd*-prod)         config-for-sp-prod-new  "customer-687399061" "" "bwt-de-mipserver" ;;
     bwta*-qa)           config-for-sp-prod-new  "customer-687399200" "" "bwt-at-mipserver" ;;
     bwta*-prod)         config-for-sp-prod-new  "customer-687399201" "" "bwt-at-mipserver" ;;
 
-    hsm*-qa)            config-for-sp-prod-new  "customer-687399220" "" "hsm-mipserver" ;;
-    hsm*-prod)          config-for-sp-prod-new  "customer-687399221" "" "hsm-mipserver" ;;
+    hsm-qa|hsm-de-qa)       config-for-sp-prod-new  "customer-687399220" ;;
+    hsm-prod|hsm-de-prod)   config-for-sp-prod-new  "customer-687399221" ;;
+    hsm-uk-qa)              config-for-sp-prod-new  "customer-687399222" ;;
+    hsm-uk-prod)            config-for-sp-prod-new  "customer-687399223" ;;
+    hsm-fr-qa)              config-for-sp-prod-new  "customer-687399224" ;;
+    hsm-fr-prod)            config-for-sp-prod-new  "customer-687399225" ;;
+    hsm-pl-qa)              config-for-sp-prod-new  "customer-687399226" ;;
+    hsm-pl-prod)            config-for-sp-prod-new  "customer-687399227" ;;
+    hsm-es-qa)              config-for-sp-prod-new  "customer-687399228" ;;
+    hsm-es-prod)            config-for-sp-prod-new  "customer-687399229" ;;
+    hsm-us-qa)              config-for-sp-prod-new  "customer-687399230" ;;
+    hsm-us-prod)            config-for-sp-prod-new  "customer-687399231" ;;
 
     kalt*-qa)           config-for-sp-prod-new  "customer-687399150" "" "kaltenbach-mipserver" ;;
     kalt*-prod)         config-for-sp-prod-new  "customer-687399151" "" "kaltenbach-mipserver" ;;
@@ -176,6 +186,15 @@ load-config() {
 
     tria*-qa)           config-for-sp-prod-new  "customer-687399140" "" "tria-mipserver" ;;
     tria*-prod)         config-for-sp-prod-new  "customer-687399141" "" "tria-mipserver" ;;
+
+    ware*-qa|ware-de-qa)        config-for-sp-prod-new  "customer-687399120" ;;
+    ware*-prod|ware-de-prod)    config-for-sp-prod-new  "customer-687399121" ;;
+    ware-ch-qa)                 config-for-sp-prod-new  "customer-687399122" ;;
+    ware-ch-prod)               config-for-sp-prod-new  "customer-687399123" ;;
+    ware-at-qa)                 config-for-sp-prod-new  "customer-687399124" ;;
+    ware-at-prod)               config-for-sp-prod-new  "customer-687399125" ;;
+    ware-nl-qa)                 config-for-sp-prod-new  "customer-687399126" ;;
+    ware-nl-prod)               config-for-sp-prod-new  "customer-687399127" ;;
 
     #solu*-qa)           config-for-sp-prod  "customer-687399180" "" "soluvia-mipserver" ;; # inactive
     #solu*-prod)         config-for-sp-prod  "customer-687399181" "" "soluvia-mipserver" ;; # inactive
