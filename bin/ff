@@ -170,7 +170,7 @@ main() {
     add-skip-dirs '.git' '.idea' 'mip-home' 'venv' '.venv' '.vscode' '.terraform'
     add-skip-dirs 'OneDrive*'
     if $skip_target ; then
-        add-skip-dirs 'target'
+        add-skip-dirs 'target' 'node_modules'
     fi
     add-skip-files '*.cjs'
     # Regex match for wildfly dir
