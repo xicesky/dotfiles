@@ -113,7 +113,7 @@ main() {
                 ;;
             -grep|-sgrep)
                 shift
-                gnufindargs+=( -exec grep "${grepargs[@]}" --color="$color" )
+                gnufindargs+=( \( -not -type f -or -exec grep "${grepargs[@]}" --color="$color" )
                 # optional single arg
                 if [[ "$1" = -* ]] ; then
                     gnufindargs+=( "$1" ); shift
@@ -127,6 +127,7 @@ main() {
                 else
                     gnufindargs+=( "$1" {} \; )
                 fi
+                gnufindargs+=( \) )
                 shift
                 seen_actions+=( grep )
                 ;;
