@@ -86,6 +86,12 @@ cmd_ssh() {
     fi
 }
 
+cmd_rdpfw() {
+    # RDP port is 3389, since our local machine might already server one, we use 4389 instead
+    local LOCAL_PORT="4389" REMOTE_ADDR="192.168.122.51:3389"
+    invoke ssh -t -L "$LOCAL_PORT:$REMOTE_ADDR" "$MOBILEX_HOST" bash -c '"read -n 1 -p \"Forwarding local port '"$LOCAL_PORT"' to remote '"$REMOTE_ADDR"'. Press any key to exit.\""'
+}
+
 cmd_tmux() {
     declare -a args=( "$@" )
     cmd_ssh -t tmux "${args[@]}"
@@ -194,6 +200,10 @@ cmd_initial() {
         # Create new pane for sync-keepass
         tmux new-window -t "$session:5" -n 'Sync'
         tmux send-keys -t 'Sync' 'mx sync' C-m
+
+        # Create new pane for RDP portforward
+        tmux new-window -t "$session:6" -n 'RDPfw'
+        tmux send-keys -t 'RDPfw' 'mx rdpfw' C-m
     fi
 
     # Attach Session, on the Main window
