@@ -12,6 +12,7 @@ PGPORT="${PGPORT:-5432}"
 PGDATABASE="${PGDATABASE:-}"
 PGUSER="${PGUSER:-}"
 PGPASSWORD="${PGPASSWORD:-}"
+PG_AUTH="az-access-token"   # Possible values: password, az-access-token
 
 # Azure (az) parameters
 AZURE_TENANT_ID="${AZURE_TENANT_ID:-16b6f33b-57e2-4e2e-a05b-071e9ce7fc3e}"
@@ -122,6 +123,7 @@ config-for-local-k3d() {
     PGHOST="localhost"
     PGDATABASE="mip-docker"
     PGUSER="postgres"
+    PG_AUTH="password"
 }
 
 config-for-qub1c() {
@@ -146,6 +148,7 @@ config-for-nbb() {
     esac
     PGDATABASE="${2:-mipserver-mwm-dev}" # Same as the sts name, i.e. mipserver-mwm-dev, mipserver-mwm-prod
     PGUSER="mwmpsqladm"
+    PG_AUTH="password"
 }
 
 load-config() {
@@ -153,17 +156,18 @@ load-config() {
     #flsa*)              config-for-sp-dev  "customer-687399035" "" "mipserver-fla" ;;  # inactive
 
     #ochs*-dev)          config-for-sp-dev   "customer-687399036" "" "mipserver-fla" ;; # inactive
-    ochs*-qa)           config-for-sp-prod-new  "customer-687399031" "" "mipserver-fla" ;;
-    ochs*-prod)         config-for-sp-prod-new  "customer-687399036" "" "mipserver-fla" ;;
+    ochs*-qa)           config-for-sp-prod-new  "customer-687399031" ;;
+    ochs*-prod)         config-for-sp-prod-new  "customer-687399036" ;;
 
-    harg*-dev)          config-for-sp-dev-new   "customer-687399110" "" "mipserver-fla" ;;
-    harg*-qa)           config-for-sp-prod-new  "customer-687399110" "" "mipserver-fla" ;;
-    harg*-prod)         config-for-sp-prod-new  "customer-687399111" "" "mipserver-fla" ;;
+    harg*-dev)          config-for-sp-dev-new   "customer-687399110" ;;
+    harg*-prod)         config-for-sp-prod-new  "customer-687399111" ;;
+    harg*-sap-qa)       config-for-sp-prod-new  "customer-687399112" ;;
+    harg*-qa)           config-for-sp-prod-new  "customer-687399110" ;;
 
-    bwtd*-qa)           config-for-sp-prod-new  "customer-687399060" "" "bwt-de-mipserver" ;;
-    bwtd*-prod)         config-for-sp-prod-new  "customer-687399061" "" "bwt-de-mipserver" ;;
-    bwta*-qa)           config-for-sp-prod-new  "customer-687399200" "" "bwt-at-mipserver" ;;
-    bwta*-prod)         config-for-sp-prod-new  "customer-687399201" "" "bwt-at-mipserver" ;;
+    bwtd*-qa)           config-for-sp-prod-new  "customer-687399060" ;;
+    bwtd*-prod)         config-for-sp-prod-new  "customer-687399061" ;;
+    bwta*-qa)           config-for-sp-prod-new  "customer-687399200" ;;
+    bwta*-prod)         config-for-sp-prod-new  "customer-687399201" ;;
 
     hsm-qa|hsm-de-qa)       config-for-sp-prod-new  "customer-687399220" ;;
     hsm-prod|hsm-de-prod)   config-for-sp-prod-new  "customer-687399221" ;;
@@ -178,23 +182,23 @@ load-config() {
     hsm-us-qa)              config-for-sp-prod-new  "customer-687399230" ;;
     hsm-us-prod)            config-for-sp-prod-new  "customer-687399231" ;;
 
-    kalt*-qa)           config-for-sp-prod-new  "customer-687399150" "" "kaltenbach-mipserver" ;;
-    kalt*-prod)         config-for-sp-prod-new  "customer-687399151" "" "kaltenbach-mipserver" ;;
+    kalt*-qa)           config-for-sp-prod-new  "customer-687399150" ;;
+    kalt*-prod)         config-for-sp-prod-new  "customer-687399151" ;;
 
-    gewo*-qa)           config-for-sp-prod-new  "customer-687399170" "" "gewofag-mipserver" ;;
-    gewo*-prod)         config-for-sp-prod-new  "customer-687399171" "" "gewofag-mipserver" ;;
+    gewo*-qa)           config-for-sp-prod-new  "customer-687399170" ;;
+    gewo*-prod)         config-for-sp-prod-new  "customer-687399171" ;;
 
-    tria*-qa)           config-for-sp-prod-new  "customer-687399140" "" "tria-mipserver" ;;
-    tria*-prod)         config-for-sp-prod-new  "customer-687399141" "" "tria-mipserver" ;;
+    tria*-qa)           config-for-sp-prod-new  "customer-687399140" ;;
+    tria*-prod)         config-for-sp-prod-new  "customer-687399141" ;;
 
-    ware*-qa|ware-de-qa)        config-for-sp-prod-new  "customer-687399120" ;;
-    ware*-prod|ware-de-prod)    config-for-sp-prod-new  "customer-687399121" ;;
-    ware-ch-qa)                 config-for-sp-prod-new  "customer-687399122" ;;
-    ware-ch-prod)               config-for-sp-prod-new  "customer-687399123" ;;
-    ware-at-qa)                 config-for-sp-prod-new  "customer-687399124" ;;
-    ware-at-prod)               config-for-sp-prod-new  "customer-687399125" ;;
-    ware-nl-qa)                 config-for-sp-prod-new  "customer-687399126" ;;
-    ware-nl-prod)               config-for-sp-prod-new  "customer-687399127" ;;
+    ware-de-qa)         config-for-sp-prod-new  "customer-687399120" ;;
+    ware-de-prod)       config-for-sp-prod-new  "customer-687399121" ;;
+    ware-ch-qa)         config-for-sp-prod-new  "customer-687399122" ;;
+    ware-ch-prod)       config-for-sp-prod-new  "customer-687399123" ;;
+    ware-at-qa)         config-for-sp-prod-new  "customer-687399124" ;;
+    ware-at-prod)       config-for-sp-prod-new  "customer-687399125" ;;
+    ware-nl-qa)         config-for-sp-prod-new  "customer-687399126" ;;
+    ware-nl-prod)       config-for-sp-prod-new  "customer-687399127" ;;
 
     #solu*-qa)           config-for-sp-prod  "customer-687399180" "" "soluvia-mipserver" ;; # inactive
     #solu*-prod)         config-for-sp-prod  "customer-687399181" "" "soluvia-mipserver" ;; # inactive
@@ -273,6 +277,36 @@ ship-environment-variable() {
     printf "export %s=%q\n" "$name" "$value"
 }
 
+_ship-executable-as-function() {
+    declare filename="$1"; shift
+    declare functionname="$1"; shift
+    declare invocation_interpreter=""
+    if [[ $# -gt 0 ]] ; then
+        invocation_interpreter="$1 "; shift
+    fi
+    compressed_content="$(cat "$filename" | gzip -c --best | base64)"
+    cat <<EOF
+$functionname() {
+    declare temp_dir
+    temp_dir="\$(mktemp -d --tmpdir "$functionname".XXXXXXXXXX)" \
+        || echo "Error: Failed to create temporary directory." 1>&2 \
+        || return 1
+    base64 -d <<"_EOF_" | gzip -c -d >"\$temp_dir/$filename"
+$compressed_content
+_EOF_
+    chmod +x "\$temp_dir/$filename"
+    $invocation_interpreter"\$temp_dir/$filename" "\$@"
+    echo "Return code: \$?" 1>&2
+    rm -rf "\$temp_dir" || echo "Error: Failed to remove temporary directory (exitcode \$?): \$temp_dir" 1>&2
+}
+
+EOF
+}
+
+ship-executable-as-function() {
+    _ship-executable-as-function "$@"
+}
+
 # kubectl alias with namespace
 kube() {
     echo "> $(printf "%q " kubectl -n "$KUBE_NAMESPACE" "$@")" 1>&2
@@ -284,7 +318,18 @@ kube-list-resources() {
     kubectl api-resources --verbs=list --namespaced -o name
 }
 
-kpsql() {
+_is_jwt_expired() {
+    local current expiry token="$1"; shift
+    current="$(date "+%s")"
+    expiry="$(jwtutil --decode -j .exp "$token")"
+    if [ -z "$expiry" ] ; then
+        echo "Error: Invalid token, no .exp field found." 1>&2
+        return 1
+    fi
+    [ "$current" -ge "$expiry" ]
+}
+
+_kpsql_precheck() {
     if [[ -z "$PGHOST" ]] ; then
         echo "No database host set. (PGHOST)" 1>&2
         return 1
@@ -297,16 +342,35 @@ kpsql() {
         echo "No database user set. (PGUSER)" 1>&2
         return 1
     fi
-    if [[ -z "$PGPASSWORD" ]] ; then
-        echo -n "Enter password: "
-        read -r -s PGPASSWORD
-        if [[ -z "$PGPASSWORD" ]] ; then
-            echo "No password provided." 1>&2
-            return 1
-        fi
-    fi
+    case "$(echo "$PG_AUTH" | tr '[:upper:]' '[:lower:]')" in
+        password)
+            if [[ -z "$PGPASSWORD" ]] ; then
+                echo -n "Enter password: "
+                read -r -s PGPASSWORD
+                if [[ -z "$PGPASSWORD" ]] ; then
+                    echo "No password provided." 1>&2
+                    return 1
+                fi
+            fi
+            ;;
+        az-access-token)
+            if [[ -z "$PGPASSWORD" ]] || _is_jwt_expired "$PGPASSWORD" ; then
+                PGPASSWORD="$(az account get-access-token --resource-type oss-rdbms --output tsv --query accessToken)"
+            fi
+            ;;
+    esac
+}
+
+kpsql() {
+    _kpsql_precheck || return $?
+    psql "$@"
+}
+
+kpsql_remote() {
+    _kpsql_precheck || return $?
+    # You'll need to override KUBE_NAMESPACE for certain clusters, e.g. KUBE_NAMESPACE="postgresql-client" kpsql
     # This will _NOT_ print the command because it contains the password
-    kubectl exec --namespace=postgresql-client postgresql-client -it -- \
+    kubectl exec --namespace="$KUBE_NAMESPACE" postgresql-client -it -- \
         env PGHOST="$PGHOST" PGPORT="$PGPORT" PGDATABASE="$PGDATABASE" PGUSER="$PGUSER" PGPASSWORD="$PGPASSWORD" PSQL_PAGER= \
         psql "$@"
 }
@@ -433,6 +497,16 @@ kmipexec() {
         return 1
     }
     kube exec "$pod" -it -c "$container" -- "$@";
+}
+
+kmipjavaexec() {
+    declare java_file="$1"; shift
+    if ! [[ -r "$java_file" ]] ; then
+        echo "File does not exist or is not readable: $java_file" 1>&2
+        return 1
+    fi
+    pod="$(_kmip_pod_name "$pod")" || return 1
+    kube exec "$pod" -c "$container" -- bash -c "$(_ship-executable-as-function "PortForward.java" "javacode" "java"; printf "%q " "javacode" "$@"; echo $'\n')"
 }
 
 kmipdebug() {
@@ -603,6 +677,7 @@ cmd_print() {
     ship-environment-variable PGPORT "$PGPORT"
     ship-environment-variable PGDATABASE "$PGDATABASE"
     ship-environment-variable PGUSER "$PGUSER"
+    ship-environment-variable PG_AUTH "$PG_AUTH"
     # Note: Do not ship PGPASSWORD for security reasons
     #ship-environment-variable PGPASSWORD "$PGPASSWORD"
     printf "export %s\n" "PGPASSWORD"
@@ -613,13 +688,18 @@ cmd_print() {
 
     ship-bash-function kube "kubctl alias with namespace"
     ship-bash-function kube-list-resources "list all kubernetes resource types"
-    ship-bash-function kpsql "run psql on the postgresql-client pod"
+    ship-bash-function _is_jwt_expired "internal use only"
+    ship-bash-function _kpsql_precheck "internal use only"
+    ship-bash-function kpsql "run psql locally"
+    ship-bash-function kpsql_remote "run psql on the postgresql-client pod"
     ship-bash-function _kmip_pod_name "internal use only"
     ship-bash-function _kmip_container_name "internal use only"
     ship-bash-function _json_log_filter "internal use only"
     ship-bash-function _json_to_output_format "internal use only"
     ship-bash-function kmipexec_usage "usage for kmipexec"
     ship-bash-function kmipexec "execute command on mipserver pod"
+    ship-bash-function _ship-executable-as-function "internal use only"
+    ship-bash-function kmipjavaexec "execute java code on mipserver pod"
     ship-bash-function kmiplogs "get logs of mipserver pod"
     ship-bash-function kmipdebug "foward port 8787"
     ship-bash-function kmipcli "run jboss-cli.sh on mipserver pod"
