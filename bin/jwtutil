@@ -10,6 +10,17 @@ declare jwt_field_no=2
 JWT_PRIVATE_KEY="${JWT_PRIVATE_KEY:-private_key}"
 JWT_PUBLIC_KEY="${JWT_PUBLIC_KEY:-public_key}"
 PRETTY_PRINT_JSON="${PRETTY_PRINT_JSON:-false}"
+JQ_FILTER=""
+
+_read_long_line() {
+    # Allows pasting lines >4096 characters from a terminal
+    local retval
+    saved=$(stty -g)
+    stty -icanon icrnl
+    head -n1; retval="$?"
+    stty "$saved"
+    return $retval
+}
 
 _pretty_print_json() {
     if [[ "$PRETTY_PRINT_JSON" == "true" ]]; then
@@ -19,8 +30,16 @@ _pretty_print_json() {
     fi
 }
 
+_jq_filter() {
+    if [[ -z "$1" ]] ; then
+        cat
+    else
+        jq "$1"
+    fi
+}
+
 decode_jwt() {
-    cut -d '.' -f $jwt_field_no | basenc -d --base64url -i - 2>/dev/null | _pretty_print_json
+    cut -d '.' -f $jwt_field_no | basenc -d --base64url -i - 2>/dev/null | _jq_filter "$JQ_FILTER" | _pretty_print_json
 }
 
 # undocumented, WIP, does not work correctly yet
@@ -78,6 +97,9 @@ main() {
             --pp|--pretty-print)
                 PRETTY_PRINT_JSON=true
                 ;;
+            -j|--jq-filter)
+                JQ_FILTER="$1"; shift
+                ;;
             -*)
                 { echo "Unknown flag: $arg"; usage; } 1>&2
                 return 1
@@ -91,6 +113,9 @@ main() {
     if [[ -n "$jwt" ]]; then
         # Use jwt from argument
         echo "$jwt" | $function
+    elif [[ -t 0 ]]; then
+        # Input is a terminal, use long line input
+        _read_long_line | $function
     else
         $function
     fi
