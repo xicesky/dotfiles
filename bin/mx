@@ -80,16 +80,16 @@ win_code() {
 
 cmd_ssh() {
     if [[ $# -eq 0 ]] ; then
-        invoke ssh -t "$MOBILEX_HOST" "/usr/bin/zsh -l"
+        invoke ssh -oBatchMode=yes -t "$MOBILEX_HOST" "/usr/bin/zsh -l"
     else
-        invoke ssh "$MOBILEX_HOST" "$@"
+        invoke ssh -oBatchMode=yes "$MOBILEX_HOST" "$@"
     fi
 }
 
 cmd_rdpfw() {
     # RDP port is 3389, since our local machine might already server one, we use 4389 instead
     local LOCAL_PORT="4389" REMOTE_ADDR="192.168.122.51:3389"
-    invoke ssh -t -L "$LOCAL_PORT:$REMOTE_ADDR" "$MOBILEX_HOST" bash -c '"read -n 1 -p \"Forwarding local port '"$LOCAL_PORT"' to remote '"$REMOTE_ADDR"'. Press any key to exit.\""'
+    invoke ssh -oBatchMode=yes -t -L "$LOCAL_PORT:$REMOTE_ADDR" "$MOBILEX_HOST" bash -c '"read -n 1 -p \"Forwarding local port '"$LOCAL_PORT"' to remote '"$REMOTE_ADDR"'. Press any key to exit.\""'
 }
 
 cmd_tmux() {
@@ -166,7 +166,7 @@ cmd_vm() {
 
 cmd_sync-keepass() {
     # Copy keepass database from remote to local
-    rsync -vzP dangl-lnx:OneDrive-dangl/DanglMarkusMobileX.kdbx ~/gdrive/Keys/
+    rsync -vzP -e "ssh -oBatchMode=yes" dangl-lnx:OneDrive-dangl/DanglMarkusMobileX.kdbx ~/gdrive/Keys/
 }
 
 cmd_sync() {
@@ -177,33 +177,35 @@ cmd_initial() {
     #cmd_notes &
 
     local session="mx-initial"
-    if ! tmux list-sessions | grep -q "$SESSION" ; then
+    if ! tmux list-sessions | grep -q "$session" ; then
         # Start New Session with our name
         tmux new-session -d -s "$session"
 
+        local window_nr=0
+
         # Name first Window and start zsh
-        tmux rename-window -t "$session:1" 'Main'
+        (( window_nr++ )); tmux rename-window -t "$session:$window_nr" 'Main'
         tmux send-keys -t 'Main' 'mx code' C-m
 
         # Create new pane for remmina
-        tmux new-window -t "$session:2" -n 'Remmina'
-        tmux send-keys -t 'Remmina' 'mx rdp' C-m
+        #tmux new-window -t "$session:$window_nr" -n 'Remmina'; (( window_nr++ ))
+        #tmux send-keys -t 'Remmina' 'mx rdp' C-m
 
         # Create new pane for chrome
-        tmux new-window -t "$session:3" -n 'Chrome'
-        tmux send-keys -t 'Chrome' 'mx chrome' C-m
+        (( window_nr++ )); tmux new-window -t "$session:$window_nr" -n 'Chrome'
+        tmux send-keys -t 'Chrome' 'sleep 0.5; mx chrome' C-m
 
         # Create new pane for idea
-        tmux new-window -t "$session:4" -n 'Idea'
-        tmux send-keys -t 'Idea' 'mx idea' C-m
+        (( window_nr++ )); tmux new-window -t "$session:$window_nr" -n 'Idea'
+        tmux send-keys -t 'Idea' 'sleep 1.0; mx idea' C-m
 
         # Create new pane for sync-keepass
-        tmux new-window -t "$session:5" -n 'Sync'
-        tmux send-keys -t 'Sync' 'mx sync' C-m
+        (( window_nr++ )); tmux new-window -t "$session:$window_nr" -n 'Sync'
+        tmux send-keys -t 'Sync' 'sleep 1.5; mx sync' C-m
 
         # Create new pane for RDP portforward
-        tmux new-window -t "$session:6" -n 'RDPfw'
-        tmux send-keys -t 'RDPfw' 'mx rdpfw' C-m
+        (( window_nr++ )); tmux new-window -t "$session:$window_nr" -n 'RDPfw'
+        tmux send-keys -t 'RDPfw' 'sleep 2.0; mx rdpfw' C-m
     fi
 
     # Attach Session, on the Main window
