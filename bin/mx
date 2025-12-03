@@ -5,6 +5,13 @@
 MOBILEX_HOST=${MOBILEX_HOST:-dangl-lnx}
 MOBILEX_HOME="/home/dangl@mobileX.intra"
 
+if [[ ! -v MX_SSH_OPTS ]] ; then
+    MX_SSH_OPTS="-oBatchMode=yes"
+fi
+if [[ ! "$(declare -p MX_SSH_OPTS)" =~ "declare -a" ]] ; then
+    IFS=', ' read -r -a MX_SSH_OPTS <<< "$MX_SSH_OPTS"
+fi
+
 ################################################################################
 # Basic utils (shortened version): mostly verbosity, command logging
 # Note: Shortened version
@@ -80,16 +87,16 @@ win_code() {
 
 cmd_ssh() {
     if [[ $# -eq 0 ]] ; then
-        invoke ssh -oBatchMode=yes -t "$MOBILEX_HOST" "/usr/bin/zsh -l"
+        invoke ssh "${MX_SSH_OPTS[@]}" -t "$MOBILEX_HOST" "/usr/bin/zsh -l"
     else
-        invoke ssh -oBatchMode=yes "$MOBILEX_HOST" "$@"
+        invoke ssh "${MX_SSH_OPTS[@]}" "$MOBILEX_HOST" "$@"
     fi
 }
 
 cmd_rdpfw() {
     # RDP port is 3389, since our local machine might already server one, we use 4389 instead
     local LOCAL_PORT="4389" REMOTE_ADDR="192.168.122.51:3389"
-    invoke ssh -oBatchMode=yes -t -L "$LOCAL_PORT:$REMOTE_ADDR" "$MOBILEX_HOST" bash -c '"read -n 1 -p \"Forwarding local port '"$LOCAL_PORT"' to remote '"$REMOTE_ADDR"'. Press any key to exit.\""'
+    invoke ssh "${MX_SSH_OPTS[@]}" -t -L "$LOCAL_PORT:$REMOTE_ADDR" "$MOBILEX_HOST" bash -c '"read -n 1 -p \"Forwarding local port '"$LOCAL_PORT"' to remote '"$REMOTE_ADDR"'. Press any key to exit.\""'
 }
 
 cmd_tmux() {
@@ -166,7 +173,7 @@ cmd_vm() {
 
 cmd_sync-keepass() {
     # Copy keepass database from remote to local
-    rsync -vzP -e "ssh -oBatchMode=yes" dangl-lnx:OneDrive-dangl/DanglMarkusMobileX.kdbx ~/gdrive/Keys/
+    rsync -vzP -e "ssh ${MX_SSH_OPTS[*]}" dangl-lnx:OneDrive-dangl/DanglMarkusMobileX.kdbx ~/gdrive/Keys/
 }
 
 cmd_sync() {
