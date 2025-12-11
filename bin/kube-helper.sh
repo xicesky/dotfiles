@@ -7,12 +7,12 @@ MIPSERVER_STS=""
 MIPSERVER_DEFAULT_CONTAINER=""
 
 # Database connection via psql
+PG_AUTH="az-access-token"   # Possible values: password, az-access-token
 PGHOST="${PGHOST:-}"
 PGPORT="${PGPORT:-5432}"
 PGDATABASE="${PGDATABASE:-}"
 PGUSER="${PGUSER:-}"
 PGPASSWORD="${PGPASSWORD:-}"
-PG_AUTH="az-access-token"   # Possible values: password, az-access-token
 
 # Azure (az) parameters
 AZURE_TENANT_ID="${AZURE_TENANT_ID:-16b6f33b-57e2-4e2e-a05b-071e9ce7fc3e}"
@@ -104,10 +104,11 @@ config-for-mx-internal() {
     #MIPSERVER_DEFAULT_CONTAINER="dispatchx-mipserver"
     MIPSERVER_DEFAULT_CONTAINER="mipserver"
 
+    PG_AUTH="password"
     PGHOST="pgsql16-dev.prd.mobilexag.de"
     #PGDATABASE="postgres"
     PGDATABASE="prd_feature_jdk21_db"
-    PGUSER=mxprd
+    PGUSER=prd_feature_jdk21
 
     AZURE_TENANT_ID="ac9a92e4-34c9-4fd1-9e08-be7943f659cf"
     AZURE_SUBSCRIPTION_ID="$AZURE_TENANT_ID"    # Subscription: N/A(tenant level account)
@@ -120,10 +121,10 @@ config-for-local-k3d() {
     SPCUSTOMER=""
     KUBE_NAMESPACE="default"
     MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver}"
+    PG_AUTH="password"
     PGHOST="localhost"
     PGDATABASE="mip-docker"
     PGUSER="postgres"
-    PG_AUTH="password"
 }
 
 config-for-qub1c() {
@@ -146,9 +147,9 @@ config-for-nbb() {
         *-qa)       PGHOST="ng-mwm-psql-dev.postgres.database.azure.com" ;;
         *)          PGHOST="ng-mwm-psql.postgres.database.azure.com" ;;
     esac
+    PG_AUTH="password"
     PGDATABASE="${2:-mipserver-mwm-dev}" # Same as the sts name, i.e. mipserver-mwm-dev, mipserver-mwm-prod
     PGUSER="mwmpsqladm"
-    PG_AUTH="password"
 }
 
 load-config() {
