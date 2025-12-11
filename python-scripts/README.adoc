@@ -1,0 +1,52 @@
+= Python cli scripts
+:experimental:
+:source-highlighter: rouge
+:source-language: shell
+:icons: font
+:toc: true
+:sectanchors:
+:star: *
+Markus Dangl
+
+== Requirements
+
+Install python 3 (in at least version 3.10) and pipx to be able install those packages.
+On debian or ubuntu, this can be done via the package manager:
+
+[source,console]
+----
+$ sudo apt-get install python3-full python3-pip python3-pipenv pipx
+----
+
+Then install any tools by cd'ing into their directory and running:
+
+[source,console]
+----
+pipx install --force .
+----
+
+== Development
+
+Install pipenv for development, i recommend installing it in a dedicated venv.
+Follow the instructions here: https://pipenv.pypa.io/en/latest/installation.html#recommended-isolated-virtual-environment-installation
+
+Note: The environment scripts already pick up pipenv from `$HOME/.pipenv-venv/bin`, you only need to invoke `regenerate_env`.
+
+Then cd into the tool's directory and run:
+
+[soruce,console]
+----
+$ cd script-name
+
+Install dependencies
+$ pipenv install --dev
+
+Run tests
+$ pipenv run pytest
+
+Run script from the shell
+$ pipenv run script-name
+
+You can try to install the script in editable mode, but it doesn't always work well
+$ pipenv install -e .
+----
