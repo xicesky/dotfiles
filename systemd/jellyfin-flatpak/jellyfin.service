@@ -1,0 +1,10 @@
+[Unit]
+Description=Jellyfin Server
+
+[Service]
+ExecStart=/usr/bin/flatpak run org.jellyfin.JellyfinServer
+ExecStop=/usr/bin/flatpak kill org.jellyfin.JellyfinServer
+
+
+[Install]
+WantedBy=default.target
