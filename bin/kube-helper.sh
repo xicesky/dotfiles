@@ -213,7 +213,9 @@ load-config() {
     nbb-prod)           config-for-nbb "mwm-prod" "mipserver-mwm-prod" "mipserver-fla" ;;
 
     prd-vti)            config-for-mx-internal "vt-integration" "prd-vt-integration-dispatchx-mipserver" ;;
-    prd-portal)         config-for-mx-internal "prd-feature-jdk21" "mipserver";;
+    prd-portal|prd-feature-jdk21)
+                        config-for-mx-internal "prd-feature-jdk21" "mipserver";;
+    prd-feature-m4q)    config-for-mx-internal "prd-feature-m4q" "mipserver";;
     #abrg|arburg*)       config-for-mx-internal "ps-arburg" "ps-arburg-dispatchx-mipserver" ;; # inactive
 
     qub1c)              config-for-qub1c "$1" ;;
