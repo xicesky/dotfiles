@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if !which tput >/dev/null 2>&1 ; then
+if ! which tput >/dev/null 2>&1 ; then
     function tput() {
         return 0
     }
