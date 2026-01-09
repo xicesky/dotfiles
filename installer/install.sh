@@ -165,6 +165,27 @@ update_dotfiles() {
     fi
 }
 
+install_git_config() {
+    if [[ -f ~/.gitconfig ]] ; then
+        { 
+            echo "Info: ~/.gitconfig already exists, not overwriting."
+            echo "Remove it and rerun this installer it to get the actual bash configuration"
+        } 1>&2
+    else
+        cp "$DOTFILES_DIR/git/.gitconfig" ~/.gitconfig
+    fi
+    if [[ -f ~/.config/git/config ]] ; then
+        { 
+            echo "Warning: ~/.config/git/config already exists, not linking"
+            echo "Remove it and rerun this installer it to get the actual bash configuration"
+        } 1>&2
+    fi
+    invoke mkdir -p ~/.config/git
+    if [[ ! -e ~/.config/git/config ]] ; then
+        invoke ln -s ../../_dotfiles/git/.config/git/config ~/.config/git/config
+    fi
+}
+
 install_dotfiles() {
     # Binaries first
     for i in \
@@ -205,18 +226,18 @@ install_dotfiles() {
     fi
     invoke lins "${SOURCES[@]}" ~/.config/bash || return 1
 
-    if [[ -d "$XDG_DATA_HOME" && ! -d "$XDG_DATA_HOME/remmina" ]] ; then
-        mkdir "$XDG_DATA_HOME/remmina"
-    fi
+    #if [[ -d "$XDG_DATA_HOME" && ! -d "$XDG_DATA_HOME/remmina" ]] ; then
+    #    mkdir "$XDG_DATA_HOME/remmina"
+    #fi
     # Check if remmina dir is a symlink using -h to avoid cyclic references
-    if [[ -d "$XDG_DATA_HOME/remmina" && ! -h "$XDG_DATA_HOME/remmina" ]] ; then
-        mapfile -d $'\0' SOURCES < <( ( find "$HOME/_dotfiles/remmina/.local/share/remmina" -mindepth 1 -maxdepth 1 -print0) )
-        if [[ "${#SOURCES[@]}" -lt 1 ]] ; then
-            echo "Failed to find any sources in _dotfiles/remmina/.local/share/remmina" 1>&2
-            return 1
-        fi
-        invoke lins "${SOURCES[@]}" "$XDG_DATA_HOME"/remmina/ || return 1
-    fi
+    #if [[ -d "$XDG_DATA_HOME/remmina" && ! -h "$XDG_DATA_HOME/remmina" ]] ; then
+    #    mapfile -d $'\0' SOURCES < <( ( find "$HOME/_dotfiles/remmina/.local/share/remmina" -mindepth 1 -maxdepth 1 -print0) )
+    #    if [[ "${#SOURCES[@]}" -lt 1 ]] ; then
+    #        echo "Failed to find any sources in _dotfiles/remmina/.local/share/remmina" 1>&2
+    #        return 1
+    #    fi
+    #    invoke lins "${SOURCES[@]}" "$XDG_DATA_HOME"/remmina/ || return 1
+    #fi
     if [[ ! -e ~/.ssh/config ]] ; then
         invoke ln -s ../_dotfiles/ssh/.ssh/config ~/.ssh/config
     fi
@@ -243,6 +264,7 @@ install_fonts() {
 cmd_install() {
     config_autodetect || return 1
     invoke setup_dirs || return 1
+    invoke install_git_config || return 1
     invoke update_dotfiles || return 1
     install_dotfiles || return 1
 }
@@ -250,6 +272,7 @@ cmd_install() {
 cmd_install-only() {
     config_autodetect || return 1
     invoke setup_dirs || return 1
+    invoke install_git_config || return 1
     install_dotfiles || return 1
 }
 
