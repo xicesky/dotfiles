@@ -156,7 +156,7 @@ load-config() {
     case "$1" in
     #flsa*)              config-for-sp-dev  "customer-687399035" "" "mipserver-fla" ;;  # inactive
 
-    #ochs*-dev)          config-for-sp-dev   "customer-687399036" "" "mipserver-fla" ;; # inactive
+    ochs*-dev)          config-for-sp-dev-new   "customer-687399036" ;; # temporarily reactivated for portal-graphql
     ochs*-qa)           config-for-sp-prod-new  "customer-687399031" ;;
     ochs*-prod)         config-for-sp-prod-new  "customer-687399036" ;;
 
