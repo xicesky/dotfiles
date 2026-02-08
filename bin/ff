@@ -140,7 +140,7 @@ main() {
             -gC|--grep-context|--context)
                 shift; grepargs+=( -C "$1" ); shift
                 ;;
-            -print|-fprint|-ls|-fls|-printf|-fprintf|-exec|-execdir|-ok|-okdir|-delete)
+            -print|-print0|-fprint|-ls|-fls|-printf|-fprintf|-exec|-execdir|-ok|-okdir|-delete)
                 gnufindargs+=( "$1" )
                 seen_actions+=( "$1" )
                 shift
