@@ -47,6 +47,7 @@ add-skip-files() {
 
 main() {
     # Some options are allowed before the path
+    # TODO: Gnu find also has some args that can go before
     while [[ $# -gt 0 ]] ; do
         case "$1" in
         -cmd)
@@ -55,13 +56,15 @@ main() {
             NO_ACT=true
             shift
             ;;
+        -v|--print-command|--print_command)
+            print_command=true; shift
+            ;;
         *)
             break 
             ;;
         esac
     done
     
-    # TODO: Some options are allowed before path?
     declare path="$1"; shift
 
     if ! [[ -e "$path" ]] ; then
@@ -145,12 +148,30 @@ main() {
                 seen_actions+=( "$1" )
                 shift
                 ;;
-            -*)
+            -empty|-executable|-true|-false|-nogroup|-nouser|-readable|-writable)
+                # No-arg test
                 gnufindargs+=( "$1" )
                 seen_tests+=( "$1" )
                 shift
                 ;;
+            -amin|-anewer|-atime|-cmin|-cnewer|-ctime|-fstype|-gid|-group|-ilname|-iname|-inum|-ipath|-iregex|-iwholename|-links|-lname|-mmin|-mtime|-name|-newer|-newerXY|-path|-perm|-perm|-perm|-perm|-regex|-samefile|-size|-type|-uid|-used|-user|-wholename|-xtype|-context)
+                # 1-arg test
+                gnufindargs+=( "$1" "$2" )
+                seen_tests+=( "$1" )
+                shift 2
+                ;;
+            \(|\)|\!|-not|-a|-and|-o|-or|,)
+                # These we just pass on for now
+                gnufindargs+=( "$1" )
+                shift
+                ;;
+            -*)
+                echo "Warning: unknown option: $1" 1>&2
+                gnufindargs+=( "$1" )
+                shift
+                ;;
             *)
+                echo "Warning: unknown argument: $1" 1>&2
                 gnufindargs+=( "$1" )
                 shift
                 ;;
@@ -158,13 +179,17 @@ main() {
     done
 
     if [[ "${#seen_actions[@]}" -eq 0 ]] ; then
+        if [[ "${#seen_tests}" -eq 0 ]] ; then
+            # Only look for files by default
+            gnufindargs=( -type f "${gnufindargs[@]}" )
+        fi
         # Append "print" as default action
         gnufindargs+=( -print )
     elif [[ "${#seen_actions[@]}" -eq 1 && "${#seen_tests}" -eq 0 ]] ; then
         case "${seen_actions[0]}" in
-        (xpath|grep)
-            # For "single actions" on files, prepend "-type f"
-            gnufindargs=( -type f "${gnufindargs[@]}" )
+            xpath|grep)
+                # For "single actions" on files, prepend "-type f"
+                gnufindargs=( -type f "${gnufindargs[@]}" )
         esac
     fi
 
