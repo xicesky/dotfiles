@@ -33,16 +33,15 @@ invoke() {
     $NO_ACT || "$@"
 }
 
-add-skip-dirs() {
-    for i in "$@" ; do
-        gnufindskipargs+=( \( -type d -iname "$i" -prune \) -o )
-    done
+join_by() {
+    local d=${1-} f=${2-}
+  	if shift 2; then
+    	printf %s "$f" "${@/#/$d}"
+  	fi
 }
 
-add-skip-files() {
-    for i in "$@" ; do
-        gnufindskipargs+=( \( -type f -iname "$i" -prune \) -o )
-    done
+add-skip() {
+    gnufindskipargs+=( \( "$@" -prune \) -o )
 }
 
 main() {
@@ -72,6 +71,8 @@ main() {
         return 1
     fi
 
+    local -a skip_dir_re=() skip_file_re=() skip_re=()
+
     while [[ $# -gt 0 ]] ; do
         # FIXME: Keep track of parentheses for preargs
         option="$1"
@@ -96,12 +97,17 @@ main() {
                 ;;
             -skipdir)
                 shift
-                gnufindskipargs+=( \( -type d -iname "$1" -prune \) -o )
+                skip_dir_re+=( ".*/$1" )
                 shift
                 ;;
             -skip)
                 shift
-                gnufindskipargs+=( \( -iname "$1" \) -o )
+                skip_file_re+=( ".*/$1" )
+                shift
+                ;;
+            -skip-re)
+                shift
+                skip_re+=( "$1" )
                 shift
                 ;;
             -nst|-no-skip-target|-wt|-with-target)
@@ -193,14 +199,20 @@ main() {
         esac
     fi
 
-    add-skip-dirs '.git' '.idea' 'mip-home' 'venv' '.venv' '.vscode' '.terraform'
-    add-skip-dirs 'OneDrive*'
+    [[ "${#skip_re[@]}" -eq 0 ]] || add-skip -regex "($(join_by '|' "${skip_re[@]}"))"
+
+    for i in '\.git' '\.idea' 'mip-home' 'venv' '\.venv' '\.vscode' '\.terraform' 'OneDrive*' 'wildfly-([[:digit:]]+\.)*[[:digit:]]+(\.final)?' ; do
+        skip_dir_re+=( ".*/$i" )
+    done
     if $skip_target ; then
-        add-skip-dirs 'target' 'node_modules' 'dist'
+        for i in 'target' 'node_modules' 'dist' ; do
+            skip_dir_re+=( ".*/$i" )
+        done
     fi
-    add-skip-files '*.cjs'
-    # Regex match for wildfly dir
-    gnufindskipargs+=( \( -type d -iregex '.*/wildfly-([[:digit:]]+\.)*[[:digit:]]+(\.final)?' -prune \) -o )
+    [[ "${#skip_dir_re[@]}" -eq 0 ]] || add-skip -type d -regex "($(join_by '|' "${skip_dir_re[@]}"))"
+
+    skip_file_re+=( '.*\.cjs' )
+    [[ "${#skip_file_re[@]}" -eq 0 ]] || add-skip -type f -regex "($(join_by '|' "${skip_file_re[@]}"))"
 
     # Debugging
     # echo "path            = $path"                  1>&2
