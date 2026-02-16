@@ -121,6 +121,10 @@ cmd_notes() {
     win_code "$(wslpath -wa ~/win-home/Desktop/dangl-lnx-Notes.code-workspace)"
 }
 
+cmd_firefox() {
+    cmd_ssh "firefox"
+}
+
 cmd_chrome() {
     # We don't want to block background processes because of terminal output
     #stty -tostop
