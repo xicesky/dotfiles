@@ -140,6 +140,11 @@ cmd_idea() {
     cmd_ssh "$MOBILEX_HOME/bin/idea" "${args[@]}"
 }
 
+cmd_kse() {
+    # Keystore Explorer
+    cmd_ssh "kse"
+}
+
 cmd_postman() {
     #cmd_ssh "$MOBILEX_HOME/bin/postman" "$@"
     echo "Postman does NOT WORK with ssh x-forwarding" >&2
