@@ -28,4 +28,9 @@ switch-x11() {
 }
 
 EOF
+else
+    # On "true linux systems" add the "XAUTHORITY" environment variable, some programs (firefox) don't start without it
+    if [[ -e "$HOME/.Xauthority" ]] ; then
+        export_variable XAUTHORITY "$HOME/.Xauthority"
+    fi
 fi
