@@ -20,6 +20,9 @@ AZURE_SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID:-5a8fa46d-0536-4d5b-9c87-99141d74
 AZURE_AKS_NAME="${AZURE_AKS_NAME:-kyma}"
 AZURE_AKS_RG="${AZURE_AKS_RG:-kyma-dev}"
 
+# AWS CLI parameters
+AWS_PROFILE="${AZURE_AKS_RG:-FLSEKSDeveloper-992695678584}"
+
 config-for-sp-dev() {
     KUBE_CONFIG_FILE="config-az-mx-dev.yaml"
     SPCUSTOMER="$1"
@@ -152,6 +155,19 @@ config-for-nbb() {
     PGUSER="mwmpsqladm"
 }
 
+config-for-poseidon() {
+    KUBE_CONFIG_FILE="config-aws-poseidon.yaml"
+    SPCUSTOMER="$1"
+    KUBE_NAMESPACE="$SPCUSTOMER"
+    MIPSERVER_STS="${2:-mipserver}"
+    MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver}"
+    #PGHOST="postgres-flexible-mx-sp-priv.postgres.database.azure.com"
+    #PGDATABASE="postgresqldatabase-${SPCUSTOMER}"
+    #PGUSER="postgresqldatabase-${SPCUSTOMER}-admin"
+
+    AWS_PROFILE=FLSEKSDeveloper-992695678584
+}
+
 load-config() {
     case "$1" in
     #flsa*)              config-for-sp-dev  "customer-687399035" "" "mipserver-fla" ;;  # inactive
@@ -207,6 +223,8 @@ load-config() {
     customer-*-qa)      config-for-sp-prod-new "$1" ;;
     customer-*-prod)    config-for-sp-prod-new "$1" ;;
     customer-*)         config-for-sp-dev  "$1" ;;
+
+    oge-dev)            config-for-poseidon "customer-687399362" ;;
 
     nbb-dev)            config-for-nbb "mwm-dev" "mipserver-mwm-dev" "mipserver-fla" ;;
     nbb-qa)             config-for-nbb "mwm-qa" "mipserver-mwm-qa" "mipserver-fla" ;;
