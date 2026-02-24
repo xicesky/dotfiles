@@ -58,6 +58,8 @@ fpath=(
   # rest of fpath
   $fpath
 )
+#echo "DEBUG: fpath @completion.plugin.zsh is:"
+#for i in "${fpath[@]}" ; do echo "    $i"; done
 
 #
 # Init

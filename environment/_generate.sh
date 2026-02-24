@@ -12,6 +12,7 @@ exec_all() {
     done < <(
         find "$SRC_DIR" -mindepth 1 -maxdepth 1 -iname "*.sh" -a \( \( -iname "_*" \) -o \( -print0 \) \) | sort -z
     )
+    printf " * You may also want to rebuild compinit via:\n    run-compinit -f\n" >&2
 }
 
 # FIXME: Isn't /run/lock the new standard? If yes, prefer it over /var/lock!
@@ -19,11 +20,11 @@ LOCKDIR="$(readlink -f "/var/lock")"
 if [[ ! -w "$LOCKDIR" ]] ; then
     LOCKDIR="$HOME/.var/lock"
     if [[ ! -e "$LOCKDIR" ]] ; then
-        mkdir -p "$LOCKDIR" || { echo "Could not mkdir " >&2; exit 1; }
+        mkdir -p "$LOCKDIR" || { echo "Could not mkdir $LOCKDIR" >&2; exit 1; }
     fi
 fi
 if [[ $MY_OSTYPE = MINGW* || $MY_OSTYPE = MSYS* ]] ; then
-    mkdir -p "$LOCKDIR" || { echo "Could not mkdir " >&2; exit 1; }
+    mkdir -p "$LOCKDIR" || { echo "Could not mkdir $LOCKDIR" >&2; exit 1; }
 fi
 
 LOCKFILE="$LOCKDIR/sky-dotfiles-$(basename "$0")"

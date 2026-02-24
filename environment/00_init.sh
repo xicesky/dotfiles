@@ -35,6 +35,8 @@ declare -f ismsys
 declare -f isdarwin
 declare -f iswsl2
 
+declare -ga ADDITIONAL_PATH=()
+
 # Shell type
 if [ -z "$SHELL_TYPE" ] ; then
     SHELL_TYPE="$(basename "$SHELL")"
@@ -69,6 +71,38 @@ function export_variable() {
     echo export "${exportargs[@]}" "$1=$(printf "%q" "$content")"
 }
 
+function find_executable() {
+    local default_name="$1"; shift
+    local full_path
+
+    # Find in parameter list
+    for full_path ; do
+        if [[ -x "$full_path" && ! -d "$full_path" ]] ; then
+            echo "$full_path"
+            echo " * $default_name found at $full_path" >&2
+            return 0
+        fi
+    done
+
+    # Find in ADDITIONAL_PATH
+    for full_path in "${ADDITIONAL_PATH[@]}" ; do
+        if [[ -x "$full_path/$default_name" ]] ; then
+            echo "$full_path/$default_name"
+            echo " * $default_name found at $full_path/$default_name" >&2
+            return 0
+        fi
+    done
+
+    # Find in PATH
+    full_path="$(which "$default_name")" 2>/dev/null
+    if [[ -x "$full_path" ]] ; then
+        echo "$full_path"
+        echo " * $default_name found at $full_path" >&2
+        return 0
+    fi
+    return 1
+}
+
 declare -f regenerate_env
 
 if [[ "$SHELL_TYPE" = "zsh" ]] ; then
@@ -80,10 +114,12 @@ if [[ "$SHELL_TYPE" = "zsh" ]] ; then
 
     function append_to_path() {
         echo "path+=( $(printf "%q " "$@"))"
+        ADDITIONAL_PATH+=( "$@" )
     }
 
     function prepend_to_path() {
         echo "path=( $(printf "%q " "$@")\$path)"
+        ADDITIONAL_PATH=( "$@" "${ADDITIONAL_PATH[@]}" )
     }
 else
     # FIXME: make sure entries are unique in bash, too
@@ -93,9 +129,11 @@ else
 
     function append_to_path() {
         echo "PATH=\$PATH$(printf ":%q" "$@")"
+        ADDITIONAL_PATH+=( "$@" )
     }
 
     function prepend_to_path() {
         echo "PATH=$(printf "%q:" "$@")\$PATH"
+        ADDITIONAL_PATH=( "$@" "${ADDITIONAL_PATH[@]}" )
     }
 fi

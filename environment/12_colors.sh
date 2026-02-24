@@ -1,24 +1,23 @@
 #!/bin/bash
 
-if ! which tput >/dev/null 2>&1 ; then
-    function tput() {
-        return 0
-    }
-else
-    tput_executable="$(which tput)"
+if tput_executable="$(find_executable tput)" ; then
     function tput() {
         "$tput_executable" "$@"
+    }
+else
+    function tput() {
+        return 0
     }
 fi
 
 found=false
 for dircolors_cmd in dircolors gdircolors; do
-    if which "$dircolors_cmd" >/dev/null 2>&1 ; then
+    if dircolors_executable="$(find_executable "$dircolors_cmd")" ; then
         found=true
-        dircolors_executable="$(which "$dircolors_cmd")"
         function dircolors() {
             "$dircolors_executable" "$@"
         }
+        break
     fi
 done
 if ! $found ; then
