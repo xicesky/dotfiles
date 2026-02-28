@@ -1,0 +1,27 @@
+#!/bin/bash
+
+find_quarkus_postgresql_container() {
+    # Try to find quarkus' postgresql container
+    for i in $(podman container ls -q --filter ancestor=postgres) ; do
+        if podman container inspect "$i" | jq -r '.[0].Config.Env' | grep -q quarkus ; then
+            podman container inspect "$i" | jq -r '.[0].Name'
+            return 0
+        fi
+    done
+    return 1
+}
+
+main() {
+    local CONTAINER PORT
+    if ! CONTAINER="$(find_quarkus_postgresql_container)" ; then
+        echo "No quarkus postgresql container found" 1>&2
+        return 1
+    fi
+    # Launch psql with correct connection info
+    export PGPORT="$(podman container inspect "$CONTAINER" | jq -r '.[0].NetworkSettings.Ports."5432/tcp".[0].HostPort')"
+    export LESS=-RS PAGER=less PGHOST=localhost PGDATABASE=quarkus PGUSER=quarkus PGPASSWORD=quarkus
+    # TODO: Determine correct postgresql version
+    mise exec postgres@17.9 -- psql
+}
+
+main "$@"
