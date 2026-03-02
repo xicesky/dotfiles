@@ -570,6 +570,33 @@ kmipmgmtconsole() {
     kube port-forward "$pod" 9990:9990
 }
 
+kmip_istio_logs() {
+    local pod="$(_kmip_pod_name "$pod")" || { return 1; }
+    local container="istio-proxy"
+    declare -a kubectl_args=()
+
+    # Parse arguments
+    while [[ $# -gt 0 ]] ; do
+        if [[ "$1" == '--' || "$1" != -* ]] ; then break; fi
+        arg="$1"; shift
+        case "$arg" in
+        --pod|-p)           pod="$1"; shift ;;
+        --container|-c)     container="$1"; shift ;;
+        -f|--follow)        kubectl_args+=("$arg") ;;
+        --since*|--tail*)   kubectl_args+=("$arg" "$1"); shift ;;
+        -*)
+            echo "Error: unknown option: $arg" 1>&2
+            return 1;
+            ;;
+        esac
+    done
+
+    declare actual_command
+    actual_command="$(printf "%q " kubectl -n "$KUBE_NAMESPACE" logs "$pod" -c "$container" "${kubectl_args[@]}") | jq --unbuffered -r '[.level, .time, .scope, .msg, .stackTrace] | join(\"|\")'"
+    echo "> $actual_command" 1>&2
+    eval "$actual_command"
+}
+
 kmiplogs() {
     declare pod=""
     declare container=""    # previously always "dispatchx-mipserver", now varies
@@ -721,6 +748,7 @@ cmd_print() {
     ship-bash-function kmipexec "execute command on mipserver pod"
     ship-bash-function _ship-executable-as-function "internal use only"
     ship-bash-function kmipjavaexec "execute java code on mipserver pod"
+    ship-bash-function kmip_istio_logs "get logs of istio-proxy on mipserver pod"
     ship-bash-function kmiplogs "get logs of mipserver pod"
     ship-bash-function kmipdebug "foward port 8787"
     ship-bash-function kmipcli "run jboss-cli.sh on mipserver pod"
