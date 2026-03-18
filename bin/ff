@@ -120,12 +120,14 @@ main() {
                 shift
                 seen_actions+=( xpath )
                 ;;
-            -grep|-sgrep)
+            -grep|-qgrep|-sgrep)
                 shift
-                gnufindargs+=( \( -not -type f -or -exec grep "${grepargs[@]}" --color="$color" )
+                gnufindargs+=( \( -type f -exec grep "${grepargs[@]}" --color="$color" )
                 # optional single arg
                 if [[ "$1" = -* ]] ; then
                     gnufindargs+=( "$1" ); shift
+                elif [[ "$option" == "-qgrep" ]] ; then
+                    gnufindargs+=( -qiPe )
                 else
                     # Default to case-insensitive + perl-regexp + print filename
                     gnufindargs+=( -HiPe )
@@ -136,9 +138,23 @@ main() {
                 else
                     gnufindargs+=( "$1" {} \; )
                 fi
-                gnufindargs+=( \) )
                 shift
+                gnufindargs+=( \) )
                 seen_actions+=( grep )
+                ;;
+            -notgrep)
+                shift
+                gnufindargs+=( \( -not -type f -or -exec grep )
+                # optional single arg
+                if [[ "$1" = -* ]] ; then
+                    gnufindargs+=( "$1" ); shift
+                else
+                    # Default to case-insensitive + perl-regexp + print filename
+                    gnufindargs+=( -qiPe )
+                fi
+                gnufindargs+=( "$1" {} \; -o -print \) )
+                shift
+                seen_actions+=( notgrep )
                 ;;
             -gA|--grep-after-context|--after-context)
                 shift; grepargs+=( -A "$1" ); shift
@@ -149,7 +165,21 @@ main() {
             -gC|--grep-context|--context)
                 shift; grepargs+=( -C "$1" ); shift
                 ;;
-            -print|-print0|-fprint|-ls|-fls|-printf|-fprintf|-exec|-execdir|-ok|-okdir|-delete)
+            -exec|-execdir)
+                gnufindargs+=( "$1" )
+                seen_actions+=( "$1" )
+                shift
+                # Pass along args up to and including the first ";" or "+"
+                while [[ $# -gt 0 && "$1" != ";" && "$1" != "+" ]] ; do
+                    gnufindargs+=( "$1" ); shift
+                done
+                if [[ "$1" != ";" && "$1" != "+" ]] ; then
+                    echo "Warning: Missing argument to $option: expected semicolon (';') or plus ('+')" 1>&2
+                else
+                    gnufindargs+=( "$1" ); shift
+                fi
+                ;;
+            -print|-print0|-fprint|-ls|-fls|-printf|-fprintf|-ok|-okdir|-delete)
                 gnufindargs+=( "$1" )
                 seen_actions+=( "$1" )
                 shift
@@ -160,7 +190,7 @@ main() {
                 seen_tests+=( "$1" )
                 shift
                 ;;
-            -amin|-anewer|-atime|-cmin|-cnewer|-ctime|-fstype|-gid|-group|-ilname|-iname|-inum|-ipath|-iregex|-iwholename|-links|-lname|-mmin|-mtime|-name|-newer|-newerXY|-path|-perm|-perm|-perm|-perm|-regex|-samefile|-size|-type|-uid|-used|-user|-wholename|-xtype|-context)
+            -amin|-anewer|-atime|-cmin|-cnewer|-ctime|-fstype|-gid|-group|-ilname|-iname|-inum|-ipath|-iregex|-iwholename|-links|-lname|-mmin|-mtime|-name|-newer|-newerXY|-path|-perm|-regex|-samefile|-size|-type|-uid|-used|-user|-wholename|-xtype|-context)
                 # 1-arg test
                 gnufindargs+=( "$1" "$2" )
                 seen_tests+=( "$1" )
