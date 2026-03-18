@@ -120,6 +120,40 @@ which() {
 }
 
 ################################################################################
+# Configuration presets
+
+preset_portal-hargassner-dev() {
+    local preset_name="${FUNCNAME[0]}"
+    MX_CUSTOMER=687399110
+    NAMESPACE=customer-$MX_CUSTOMER
+    #MX_BASEURL="https://${NAMESPACE}.serviceplatform.eu/"
+    MX_BASEURL="https://${NAMESPACE}-portal-services.serviceplatform.eu/"
+    OIDC_BASEURL="https://idp.kyma-dev.mobilex-serviceplatform.com/auth/realms/master"
+    OAUTH2_CLIENT_ID="${NAMESPACE}-portal-graphql-client"
+    OAUTH2_AUDIENCE="${NAMESPACE}-portal-graphql-server"
+}
+
+preset_portal-prd-feature-jdk21() {
+    local preset_name="${FUNCNAME[0]}"
+    NAMESPACE=prd-feature-jdk21
+    MX_BASEURL="https://${NAMESPACE}-portal-services.prd.mobilexag.de/"
+    OIDC_BASEURL="https://idp.prd.mobilexag.de/auth/realms/master"
+    OAUTH2_CLIENT_ID="${NAMESPACE}-portal-graphql-client"
+    OAUTH2_AUDIENCE="${NAMESPACE}-portal-graphql-server"
+}
+
+load_preset() {
+    local function_name="preset_$1"
+    if [[ $(type -t "$function_name") == function ]] ; then
+        "$function_name"
+    else
+        echo "echo \"Function $(printf "%q" "$function_name") for preset $(printf "%q" "$1") does not exist.\"; return 1"
+    fi
+}
+
+USE_PRESET=""
+
+################################################################################
 # Configuration
 
 # TODO: Fetch info from .well-known/openid-configuration
@@ -276,7 +310,7 @@ login_via_device() {
         invoke curl -s -X POST \
             --url "$OAUTH2_DEVICE_AUTHORIZATION_ENDPOINT" \
             --header 'content-type: application/x-www-form-urlencoded' \
-            ${request_data[@]}
+            "${request_data[@]}"
     )"
     #echo "response_json: $OAUTH2_RESPONSE_JSON" 1>&2
 
@@ -286,6 +320,7 @@ login_via_device() {
         echo "$OAUTH2_RESPONSE_JSON" | jq . 1>&2
         return 1
     fi
+    log 2 "$(printf "%s\n    %s\n" "Response from device authorization endpoint is:" "$OAUTH2_RESPONSE_JSON")"
 
     device_code="$(echo "$OAUTH2_RESPONSE_JSON" | jq -r .device_code)"
     user_code="$(echo "$OAUTH2_RESPONSE_JSON" | jq -r .user_code)"
@@ -299,6 +334,9 @@ login_via_device() {
         echo "    * enter $user_code and log in"
         open "$verification_uri"
     ) 1>&2
+
+    # Limit interval to a max of 10 seconds
+    [[ "$interval" -le 10 ]] || interval=10
 
     # Loop until the token is available or the timeout is reached
     expire_seconds=$((SECONDS+expires))
@@ -318,11 +356,17 @@ login_via_device() {
         if [ "$OAUTH2_ACCESS_TOKEN" != "null" ]; then
             break
         fi
-        if [ "$error" != "authorization_pending" ]; then
-	        echo "Error response from keycloak: $(printf "%q" "$error")" 1>&2
-            echo "$OAUTH2_RESPONSE_JSON" | jq . 1>&2
-	        return 1
-	    fi
+        case "$error" in
+            authorization_pending)
+                continue ;;
+            slow_down)
+                interval=$((interval + 10)); [[ "$interval" -le 60 ]] || interval=60 ;;
+            *)
+                echo "Error response from keycloak: $(printf "%q" "$error")" 1>&2
+                echo "$OAUTH2_RESPONSE_JSON" | jq . 1>&2
+                return 1
+                ;;
+        esac
     done
 }
 
@@ -362,7 +406,7 @@ cmd_temp() {
 }
 
 cmd_check-token() {
-    local -i errors
+    local -i errors=0
     if [[ -z "$OAUTH2_ACCESS_TOKEN" ]] ; then
         log 1 "No token set (check environment variable OAUTH2_ACCESS_TOKEN)."
         return 1
@@ -381,7 +425,10 @@ cmd_check-token() {
         echo "Token not valid (anymore)."
         return 1
     else
-        echo "Token is valid."
+        local expiry duration
+        expiry="$(echo "$OAUTH2_ACCESS_TOKEN" | jwtutil --decode | jq -r .exp)"
+        duration=$(( expiry - $(date "+%s") ))
+        echo "Token is valid for another $duration seconds."
         return 0
     fi
 }
@@ -428,6 +475,7 @@ main() {
             -v) (( VERBOSITY++ )) ;;
             -q) (( VERBOSITY-- )) ;;
             -f|--format|--output-format) OUTPUT_FORMAT="$1"; shift ;;
+            -p|--preset) USE_PRESET="$1"; shift ;;
             --help)
                 cmd=help
                 break
@@ -442,6 +490,9 @@ main() {
                 ;;
         esac
     done
+    if [[ -n "$USE_PRESET" ]] ; then
+        load_preset "$USE_PRESET"
+    fi
     if [[ -z "$cmd" ]] ; then
         usage
     elif [[ $(type -t "cmd_$cmd") == function ]] ; then
