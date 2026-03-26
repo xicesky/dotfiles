@@ -113,7 +113,7 @@ config-for-mx-internal() {
     PGDATABASE="prd_feature_jdk21_db"
     PGUSER=prd_feature_jdk21
 
-    AZURE_TENANT_ID="ac9a92e4-34c9-4fd1-9e08-be7943f659cf"
+    AZURE_TENANT_ID="33d461e8-fcfe-407d-bf60-8e03ba564929"
     AZURE_SUBSCRIPTION_ID="$AZURE_TENANT_ID"    # Subscription: N/A(tenant level account)
     AZURE_AKS_NAME="" # Is not an aks cluster
     AZURE_AKS_RG="" # Is not an aks cluster
