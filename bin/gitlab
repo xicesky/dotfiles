@@ -7,7 +7,7 @@
 # Version             : 0.0-main-SNAPSHOT
 
 # shellcheck disable=SC2034
-THIS_SCRIPT_NAME='gitlab-clone-group'
+THIS_SCRIPT_NAME='gitlab'
 # shellcheck disable=SC2034
 THIS_SCRIPT_VERSION='0.0-main-SNAPSHOT'
 # shellcheck disable=SC2034,SC2164
@@ -354,7 +354,8 @@ help() {
     log 0 "$THIS_SCRIPT_NAME v$THIS_SCRIPT_VERSION"
     log 0 ""
     log 0 "Usage:"
-    logf 0 "    %s [OPTIONS] <group-name>\n" "$THIS_SCRIPT_NAME"
+    logf 0 "    %s [OPTIONS] list-projects <group-name>\n" "$THIS_SCRIPT_NAME"
+    logf 0 "    %s [OPTIONS] clone-group <group-name>\n" "$THIS_SCRIPT_NAME"
     log 0 ""
     log 0 "Options:"
     logf 0 "    %-20s %s\n" "--help" "Display command help"
