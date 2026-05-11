@@ -183,6 +183,7 @@ cmd_vm() {
 cmd_sync-keepass() {
     # Copy keepass database from remote to local
     rsync -vzP -e "ssh ${MX_SSH_OPTS[*]}" dangl-lnx:OneDrive-dangl/DanglMarkusMobileX.kdbx ~/gdrive/Keys/
+    sha256sum ~/gdrive/Keys/DanglMarkusMobileX.kdbx
 }
 
 cmd_sync() {
@@ -210,6 +211,10 @@ cmd_initial() {
         # Create new pane for chrome
         (( window_nr++ )); tmux new-window -t "$session:$window_nr" -n 'Chrome'
         tmux send-keys -t 'Chrome' 'sleep 0.5; mx chrome' C-m
+
+        # Create new pane for firefox
+        (( window_nr++ )); tmux new-window -t "$session:$window_nr" -n 'Firefox'
+        tmux send-keys -t 'Firefox' 'sleep 1.0; mx firefox' C-m
 
         # Create new pane for idea
         (( window_nr++ )); tmux new-window -t "$session:$window_nr" -n 'Idea'
