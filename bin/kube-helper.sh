@@ -1,10 +1,11 @@
 #!/bin/bash
 
+CLUSTER_NAME="kyma-dev"
 KUBE_CONFIG_FILE="${KUBE_CONFIG_FILE:-config}"
 KUBE_NAMESPACE="${KUBE_NAMESPACE:-default}"
 SPCUSTOMER=""
-MIPSERVER_STS=""
-MIPSERVER_DEFAULT_CONTAINER=""
+MIPSERVER_STS="${MIPSERVER_STS:-mipserver}"
+MIPSERVER_DEFAULT_CONTAINER="${MIPSERVER_DEFAULT_CONTAINER:-mipserver}"
 
 # Database connection via psql
 PG_AUTH="az-access-token"   # Possible values: password, az-access-token
@@ -14,6 +15,9 @@ PGDATABASE="${PGDATABASE:-}"
 PGUSER="${PGUSER:-}"
 PGPASSWORD="${PGPASSWORD:-}"
 
+# See https://confluence.fastleansmart.com:8443/pages/viewpage.action?pageId=456656006&spaceKey=PLATFORM&title=Database%2BAccess%2Bvia%2BKubernetes
+DB_JUMPER_PORT=5434
+
 # Azure (az) parameters
 AZURE_TENANT_ID="${AZURE_TENANT_ID:-16b6f33b-57e2-4e2e-a05b-071e9ce7fc3e}"
 AZURE_SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID:-5a8fa46d-0536-4d5b-9c87-99141d740fac}"
@@ -21,9 +25,10 @@ AZURE_AKS_NAME="${AZURE_AKS_NAME:-kyma}"
 AZURE_AKS_RG="${AZURE_AKS_RG:-kyma-dev}"
 
 # AWS CLI parameters
-AWS_PROFILE="${AZURE_AKS_RG:-FLSEKSDeveloper-992695678584}"
+AWS_PROFILE="${AZURE_AKS_RG:-aws-poseidon-indi-team}"
 
 config-for-sp-dev() {
+    CLUSTER_NAME="kyma-dev"
     KUBE_CONFIG_FILE="config-az-mx-dev.yaml"
     SPCUSTOMER="$1"
     KUBE_NAMESPACE="$SPCUSTOMER"
@@ -44,11 +49,10 @@ config-for-sp-dev() {
 config-for-sp-dev-new() {
     # Valid for new helm charts
 
+    CLUSTER_NAME="kyma-dev"
     KUBE_CONFIG_FILE="config-az-mx-dev.yaml"
     SPCUSTOMER="$1"
     KUBE_NAMESPACE="$SPCUSTOMER"
-    MIPSERVER_STS="${2:-mipserver}"
-    MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver}"
     # Old variant
     #PGHOST="postgres-shared.postgres.database.azure.com"
     PGHOST="postgres-flexible-mx-sp-priv.postgres.database.azure.com"
@@ -62,6 +66,7 @@ config-for-sp-dev-new() {
 }
 
 config-for-sp-prod() {
+    CLUSTER_NAME="kyma-prod"
     KUBE_CONFIG_FILE="config-az-mx-prod.yaml"
     SPCUSTOMER="$1"
     KUBE_NAMESPACE="$SPCUSTOMER"
@@ -82,11 +87,10 @@ config-for-sp-prod() {
 config-for-sp-prod-new() {
     # Valid for new helm charts
 
+    CLUSTER_NAME="kyma-prod"
     KUBE_CONFIG_FILE="config-az-mx-prod.yaml"
     SPCUSTOMER="$1"
     KUBE_NAMESPACE="$SPCUSTOMER"
-    MIPSERVER_STS="${2:-mipserver}"
-    MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver}"
     # Old variant
     #PGHOST="postgres-flexible-mx-sp-mip-prod.postgres.database.azure.com"
     PGHOST="postgres-flexible-mx-sp-mip-prod-priv.postgres.database.azure.com"
@@ -100,13 +104,10 @@ config-for-sp-prod-new() {
 }
 
 config-for-mx-internal() {
+    CLUSTER_NAME="mxkube"
     KUBE_CONFIG_FILE="config-mx-internal.yaml"
     KUBE_NAMESPACE="$1"
-    #MIPSERVER_STS="$2"
-    MIPSERVER_STS="mipserver"
-    #MIPSERVER_DEFAULT_CONTAINER="dispatchx-mipserver"
-    MIPSERVER_DEFAULT_CONTAINER="mipserver"
-
+    
     PG_AUTH="password"
     PGHOST="pgsql16-dev.prd.mobilexag.de"
     #PGDATABASE="postgres"
@@ -120,10 +121,10 @@ config-for-mx-internal() {
 }
 
 config-for-local-k3d() {
+    CLUSTER_NAME="local-k3d"
     KUBE_CONFIG_FILE="config-local-k3d-default.yaml"
     SPCUSTOMER=""
     KUBE_NAMESPACE="default"
-    MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver}"
     PG_AUTH="password"
     PGHOST="localhost"
     PGDATABASE="mip-docker"
@@ -131,13 +132,14 @@ config-for-local-k3d() {
 }
 
 config-for-qub1c() {
+    CLUSTER_NAME="qub1c"
     KUBE_CONFIG_FILE="config-qub1c.yaml"
     SPCUSTOMER=""
     KUBE_NAMESPACE="default"
-    MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver}"
 }
 
 config-for-nbb() {
+    CLUSTER_NAME="azure-nbb"
     # This is used on the bastion host, the kubeconfig is already set
     KUBE_CONFIG_FILE="config"
     SPCUSTOMER=""
@@ -156,16 +158,24 @@ config-for-nbb() {
 }
 
 config-for-poseidon() {
+    CLUSTER_NAME="poseidon"
     KUBE_CONFIG_FILE="config-aws-poseidon.yaml"
     SPCUSTOMER="$1"
     KUBE_NAMESPACE="$SPCUSTOMER"
-    MIPSERVER_STS="${2:-mipserver}"
-    MIPSERVER_DEFAULT_CONTAINER="${2:-mipserver}"
     #PGHOST="postgres-flexible-mx-sp-priv.postgres.database.azure.com"
     #PGDATABASE="postgresqldatabase-${SPCUSTOMER}"
     #PGUSER="postgresqldatabase-${SPCUSTOMER}-admin"
 
-    AWS_PROFILE=FLSEKSDeveloper-992695678584
+    AWS_PROFILE=aws-poseidon-indi-team
+    DB_JUMPER_PORT="${2:-5434}"
+    # Local port for portforward
+    PGPORT=5434
+
+    # development-three.cer4ntwv8c3z.eu-central-1.rds.amazonaws.com
+    PGHOST="localhost"
+    PGDATABASE="postgresqldatabase-${SPCUSTOMER}"
+    PGUSER="${3:-postgresqldatabase-customer-687399362-admin-FRLuXt}"
+
 }
 
 load-config() {
@@ -176,7 +186,7 @@ load-config() {
     ochs*-qa)           config-for-sp-prod-new  "customer-687399031" ;;
     ochs*-prod)         config-for-sp-prod-new  "customer-687399036" ;;
 
-    harg*-dev)          config-for-sp-dev-new   "customer-687399110" ;;
+    harg*-dev)          config-for-poseidon "customer-687399110" 5434 "postgresqldatabase-customer-687399110-admin-4lRxFb" ;;
     harg*-prod)         config-for-sp-prod-new  "customer-687399111" ;;
     harg*-sap-qa)       config-for-sp-prod-new  "customer-687399112" ;;
     harg*-qa)           config-for-sp-prod-new  "customer-687399110" ;;
@@ -220,16 +230,21 @@ load-config() {
     #solu*-qa)           config-for-sp-prod  "customer-687399180" "" "soluvia-mipserver" ;; # inactive
     #solu*-prod)         config-for-sp-prod  "customer-687399181" "" "soluvia-mipserver" ;; # inactive
 
+    # TEMP, for db ports see https://confluence.fastleansmart.com:8443/pages/viewpage.action?pageId=456656006&spaceKey=PLATFORM&title=Database%2BAccess%2Bvia%2BKubernetes
+    #poseidon-harg-dev)  config-for-poseidon "customer-687399110" 5434 "postgresqldatabase-customer-687399110-admin-kPuHpa" ;;
+
     customer-*-qa)      config-for-sp-prod-new "$1" ;;
     customer-*-prod)    config-for-sp-prod-new "$1" ;;
     customer-*)         config-for-sp-dev  "$1" ;;
 
-    oge-dev)            config-for-poseidon "customer-687399362" ;;
+    oge-dev)            config-for-poseidon "customer-687399362" 5433 "postgresqldatabase-customer-687399362-admin-FRLuXt" ;;
 
     nbb-dev)            config-for-nbb "mwm-dev" "mipserver-mwm-dev" "mipserver-fla" ;;
     nbb-qa)             config-for-nbb "mwm-qa" "mipserver-mwm-qa" "mipserver-fla" ;;
     nbb-prod)           config-for-nbb "mwm-prod" "mipserver-mwm-prod" "mipserver-fla" ;;
 
+    product-dev-old)    config-for-sp-dev-new   "customer-product-dev" ;;
+    product-dev)        config-for-poseidon "customer-product-dev" 5434 "postgresqldatabase-customer-product-dev-admin-qm3bzk" ;;
     prd-vti)            config-for-mx-internal "vt-integration" "prd-vt-integration-dispatchx-mipserver" ;;
     prd-portal|prd-feature-jdk21)
                         config-for-mx-internal "prd-feature-jdk21" "mipserver";;
@@ -337,6 +352,11 @@ kube() {
 kube-list-resources() {
     echo "> $(printf "%q " kubectl api-resources --verbs=list --namespaced -o name)" 1>&2
     kubectl api-resources --verbs=list --namespaced -o name
+}
+
+kube-db-jump() {
+    echo "> $(printf "%q " kubectl -n dbjumper port-forward "deployment/dbjumper-${CLUSTER_NAME}-envoy-proxy" "${PGPORT}:${DB_JUMPER_PORT}")" 1>&2
+    kubectl -n dbjumper port-forward "deployment/dbjumper-${CLUSTER_NAME}-envoy-proxy" "${PGPORT}:${DB_JUMPER_PORT}"
 }
 
 _is_jwt_expired() {
@@ -715,6 +735,7 @@ kaz() {
 
 cmd_print() {
     # set KUBECONFIG
+    ship-environment-variable CLUSTER_NAME "$CLUSTER_NAME"
     ship-environment-variable KUBECONFIG ~/".kube/$KUBE_CONFIG_FILE"
     ship-environment-variable KUBE_NAMESPACE "$KUBE_NAMESPACE"
     ship-environment-variable K_OUTPUT_FORMAT "$K_OUTPUT_FORMAT"
@@ -726,6 +747,7 @@ cmd_print() {
     ship-environment-variable PGDATABASE "$PGDATABASE"
     ship-environment-variable PGUSER "$PGUSER"
     ship-environment-variable PG_AUTH "$PG_AUTH"
+    ship-environment-variable DB_JUMPER_PORT "$DB_JUMPER_PORT"
     # Note: Do not ship PGPASSWORD for security reasons
     #ship-environment-variable PGPASSWORD "$PGPASSWORD"
     printf "export %s\n" "PGPASSWORD"
@@ -733,9 +755,11 @@ cmd_print() {
     ship-environment-variable AZURE_SUBSCRIPTION_ID "$AZURE_SUBSCRIPTION_ID"
     ship-environment-variable AZURE_AKS_NAME "$AZURE_AKS_NAME"
     ship-environment-variable AZURE_AKS_RG "$AZURE_AKS_RG"
+    ship-environment-variable AWS_PROFILE "$AWS_PROFILE"
 
     ship-bash-function kube "kubctl alias with namespace"
     ship-bash-function kube-list-resources "list all kubernetes resource types"
+    ship-bash-function kube-db-jump "database port-forward for aws cluster"
     ship-bash-function _is_jwt_expired "internal use only"
     ship-bash-function _kpsql_precheck "internal use only"
     ship-bash-function kpsql "run psql locally"
