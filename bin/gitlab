@@ -240,7 +240,7 @@ gitlab_call() {
     *)
         error 1 "API unexpected http code $http_code ($(head -n 1 "$SCRIPT_TEMP_DIR/response-body"))" || return $?
     esac
-    jq "$@" "$SCRIPT_TEMP_DIR/response-body" | tr -d '"\r'
+    jq "$@" "$SCRIPT_TEMP_DIR/response-body" | tr -d '\r'
     return 0
 }
 
@@ -272,9 +272,9 @@ gitlab_list_projects_by_path_prefix() {
         || return $?
 }
 
-gitlab_list_project_repo_by_path_prefix() {
+gitlab_list_project_repo_by_path_prefix_paged() {
     require-temp-dir
-    gitlab_call GET "projects?per_page=10000" '.[] | [.ssh_url_to_repo, .path_with_namespace] | join("|")' \
+    gitlab_call GET "projects?per_page=100" '.[] | [.ssh_url_to_repo, .path_with_namespace] | join("|")' \
         | grep -E -e '^[^|]*\|'"$1" \
         | cut -d '|' -f 1 \
         || return $?
@@ -300,6 +300,30 @@ gitlab_namespace_projects() {
         ;;
     esac
 }
+
+##############################################################################
+# Auto "paging" (gitlab limits responses to 100 maximum)
+
+gitlab_list_project_repo_by_path_prefix() {
+    require-temp-dir
+    local next_page=1
+
+    while [[ -n $next_page ]] ; do
+        echo "Loading page: $next_page" 1>&2
+        gitlab_call GET "projects?per_page=100&page=$next_page" -c '.[]' || return $?
+        next_page="$(sed -n -E -e '/^x-next-page:/s/x-next-page: (\d*)/\1/p' "$SCRIPT_TEMP_DIR/response-header")"
+    done
+}
+
+gitlab_list_project_repo_by_path_prefix_all_pages() {
+    if [[ ! -f ".gitlab-projects" ]] ; then
+        gitlab_list_project_repo_by_path_prefix "$@" >".gitlab-projects" || return $?
+    fi
+    cat ".gitlab-projects" | jq -r 'select((.archived == false) and (.empty_repo == false)) | [.ssh_url_to_repo, .path_with_namespace] | join("|")' \
+        | grep -E -e '^[^|]*\|'"$1" \
+        | cut -d '|' -f 1
+}
+
 
 ##############################################################################
 # Check parameters
@@ -328,22 +352,27 @@ cmd_clone-group() {
     [[ $# -gt 0 ]] || error 1 "Not enough arguments" || return $?
     declare group="$1"; shift
     [[ -n "$group" ]] || error 1 "No group specified." || return $?
-    [[ -e "$group" ]] && { error 1 "Directory $group already exists." || return $? ; }
 
     declare projects
-    projects="$(gitlab_list_project_repo_by_path_prefix "$group")" || return $?
-
-    declare savecwd
-    savecwd="$(pwd)"
-    invoke mkdir -p "$group"
-    invoke cd "$group"
+    projects="$(gitlab_list_project_repo_by_path_prefix_all_pages "$group")" || return $?
 
     for repo in $projects; do
         log 1 "$SEPERATOR"
-        # FIXME: Check if dir already exists
-        invoke git clone "$repo"
+
+        declare savecwd parent_dir clone_dir
+        savecwd="$(pwd)"
+        parent_dir="$(echo "$repo" | sed -E -e 's/git@[^:]+:(.*)\/[^/]+/\1/' )"
+        clone_dir="$(echo "$repo" | sed -E -e 's/git@[^:]+:.*\/([^/]+)/\1/' )"
+        clone_dir="${clone_dir%.git}"
+        if [[ -d "$parent_dir/$clone_dir" ]] ; then
+            echo "Directory $parent_dir/$clone_dir already exists, skipping." 1>&2
+        else
+            invoke mkdir -p "$parent_dir"
+            invoke cd "$parent_dir"
+            invoke git clone "$repo" || return $?
+        fi
+        cd "$savecwd" || true
     done
-    cd "$savecwd" || true
 }
 
 ##############################################################################
