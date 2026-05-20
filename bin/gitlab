@@ -317,7 +317,7 @@ gitlab_list_project_repo_by_path_prefix() {
 
 gitlab_list_project_repo_by_path_prefix_all_pages() {
     if [[ ! -f ".gitlab-projects" ]] ; then
-        gitlab_list_project_repo_by_path_prefix "$@" >".gitlab-projects" || return $?
+        gitlab_list_project_repo_by_path_prefix "$@" >.gitlab-projects || { rc=$?; rm -f .gitlab-projects; return "$rc"; }
     fi
     cat ".gitlab-projects" | jq -r 'select((.archived == false) and (.empty_repo == false)) | [.ssh_url_to_repo, .path_with_namespace] | join("|")' \
         | grep -E -e '^[^|]*\|'"$1" \
