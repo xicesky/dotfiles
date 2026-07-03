@@ -36,7 +36,8 @@
     root = rev-parse --show-toplevel
     current-branch = rev-parse --abbrev-ref HEAD
     cur = current-branch
-    restor = restore
     mini = log --format=oneline
     mu = multi-st -c 90
     c-p = cherry-pick
+    pp = pull --prune
+    pf = push --force-with-lease
