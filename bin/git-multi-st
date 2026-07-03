@@ -66,6 +66,9 @@ parse-git-status() {
     thdr="$(echo "$temp" | grep '^##')"
     GS_SYNC="$(echo "$thdr" | grep -oP '(?<=\[)[^\]]+')" || GS_SYNC='up to date'
     GS_BRANCH="$(echo "$thdr" | grep -oP '(?<=## )[\w./-]+(?=\.\.\.)')"
+    if [[ -z "$GS_BRANCH" ]] ; then
+        GS_BRANCH="$(echo "$thdr" | grep -oP '(?<=## )[\w./-]+')"
+    fi
     GS_SYNC_COLOR=''
     case "$GS_SYNC" in
     ahead*,\ behind*)
