@@ -37,6 +37,7 @@ config-for-sp-dev() {
     # Old variant
     #PGHOST="postgres-shared.postgres.database.azure.com"
     PGHOST="postgres-flexible-mx-sp-priv.postgres.database.azure.com"
+    PGPORT=5432
     PGDATABASE="postgresqldatabase-${SPCUSTOMER}"
     PGUSER="postgresqldatabase-${SPCUSTOMER}-admin"
     #PGUSER=markus.dangl@solvares.com   # az method doesn't seem to work on dev!?
@@ -56,9 +57,11 @@ config-for-sp-dev-new() {
     # Old variant
     #PGHOST="postgres-shared.postgres.database.azure.com"
     PGHOST="postgres-flexible-mx-sp-priv.postgres.database.azure.com"
+    PGPORT=5432
     PGDATABASE="postgresqldatabase-${SPCUSTOMER}"
     PGUSER="postgresqldatabase-${SPCUSTOMER}-admin"
     #PGUSER=markus.dangl@solvares.com   # az method doesn't seem to work on dev!?
+
 
     AZURE_TENANT_ID="a223fba7-7c90-4a1a-affb-5e6549d0f252"
     AZURE_SUBSCRIPTION_ID="32da1237-4da1-4065-8a2a-37122ce002b1"
@@ -75,6 +78,7 @@ config-for-sp-prod() {
     # Old variant
     #PGHOST="postgres-flexible-mx-sp-mip-prod.postgres.database.azure.com"
     PGHOST="postgres-flexible-mx-sp-mip-prod-priv.postgres.database.azure.com"
+    PGPORT=5432
     PGDATABASE="postgresqldatabase-${SPCUSTOMER}"
     #PGUSER="postgresqldatabase-${SPCUSTOMER}-admin"
     PGUSER=markus.dangl@solvares.com
@@ -94,6 +98,7 @@ config-for-sp-prod-new() {
     # Old variant
     #PGHOST="postgres-flexible-mx-sp-mip-prod.postgres.database.azure.com"
     PGHOST="postgres-flexible-mx-sp-mip-prod-priv.postgres.database.azure.com"
+    PGPORT=5432
     PGDATABASE="postgresqldatabase-${SPCUSTOMER}"
     #PGUSER="postgresqldatabase-${SPCUSTOMER}-admin"
     PGUSER=markus.dangl@solvares.com
@@ -110,6 +115,7 @@ config-for-mx-internal() {
     
     PG_AUTH="password"
     PGHOST="pgsql16-dev.prd.mobilexag.de"
+    PGPORT=5432
     #PGDATABASE="postgres"
     PGDATABASE="prd_feature_jdk21_db"
     PGUSER=prd_feature_jdk21
@@ -127,6 +133,7 @@ config-for-local-k3d() {
     KUBE_NAMESPACE="default"
     PG_AUTH="password"
     PGHOST="localhost"
+    PGPORT=5432
     PGDATABASE="mip-docker"
     PGUSER="postgres"
 }
@@ -152,6 +159,7 @@ config-for-nbb() {
         *-qa)       PGHOST="ng-mwm-psql-dev.postgres.database.azure.com" ;;
         *)          PGHOST="ng-mwm-psql.postgres.database.azure.com" ;;
     esac
+    PGPORT=5432
     PG_AUTH="password"
     PGDATABASE="${2:-mipserver-mwm-dev}" # Same as the sts name, i.e. mipserver-mwm-dev, mipserver-mwm-prod
     PGUSER="mwmpsqladm"
