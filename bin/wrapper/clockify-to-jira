@@ -1,0 +1,19 @@
+#!/bin/bash
+
+MISE_EXECUTABLE="${MISE_EXECUTABLE:-}"
+if [[ ! -x "$MISE_EXECUTABLE" ]] ; then
+    if type -P mise >/dev/null 2>&1 ; then
+        #echo "Found mise via path"
+        MISE_EXECUTABLE="$(type -P mise)"
+    elif [[ -x /home/linuxbrew/.linuxbrew/bin/mise ]] ; then
+        #echo "Found mise via linuxbrew"
+        MISE_EXECUTABLE="$(type -P mise)"
+    else
+        echo "Could not find mise, aborting" >&2
+        exit 1
+    fi
+fi
+#echo "Found mise at: $MISE_EXECUTABLE"
+
+cd ~/Dev/mobilex/mx-youtrack-addons/clockify-to-jira || { echo "Failed to cd to ~/Dev/mobilex/mx-youtrack-addons/clockify-to-jira" >&2; exit 1; }
+"$MISE_EXECUTABLE" exec -- yarn transfer --issue-tracker jira "$@"
