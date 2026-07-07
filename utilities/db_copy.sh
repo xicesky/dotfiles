@@ -68,7 +68,7 @@ logf() {
 declare -a LAST_COMMAND
 LAST_COMMAND=()
 
-# ... and it's exit code
+# ... and its exit code
 declare -g LAST_COMMAND_EXITCODE
 LAST_COMMAND_EXITCODE=0
 
@@ -162,27 +162,36 @@ PGPORT="${PGPORT:-5432}"
 PGDATABASE="${PGDATABASE:-}"
 PGUSER="${PGUSER:-}"
 PGPASSWORD="${PGPASSWORD:-}"
+PGSCHEMA="${PGSCHEMA:-sdm}"
+
+# Export the variables that are directly used by postgresql cli utilities
+export PGHOST PGPORT PGDATABASE PGUSER PGPASSWORD
 
 ask_connection_params() {
     if [[ -z "$PGHOST" ]] ; then
         echo -n "Please enter the database host (PGHOST): "
         read -r PGHOST
+        echo ""
     fi
     if [[ -z "$PGPORT" ]] ; then
         echo -n "Please enter the database port (PGPORT): "
         read -r PGPORT
+        echo ""
     fi
     if [[ -z "$PGDATABASE" ]] ; then
         echo -n "Please enter the database name (PGDATABASE): "
         read -r PGDATABASE
+        echo ""
     fi
     if [[ -z "$PGUSER" ]] ; then
         echo -n "Please enter the database user (PGUSER): "
         read -r PGUSER
+        echo ""
     fi
     if [[ -z "$PGPASSWORD" ]] ; then
         echo -n "Please enter the database password (PGPASSWORD): "
         read -rs PGPASSWORD
+        echo ""
     fi
 }
 
@@ -191,10 +200,23 @@ print_connection_params() {
     printf "%s=%s\n" "PGPORT" "$(printf "%q" "$PGPORT")"
     printf "%s=%s\n" "PGDATABASE" "$(printf "%q" "$PGDATABASE")"
     printf "%s=%s\n" "PGUSER" "$(printf "%q" "$PGUSER")"
+    printf "%s=%s\n" "PGPASSWORD" "${PGPASSWORD//?/*}" # Just print asterisks, this gives away password length
+    printf "%s=%s\n" "PGSCHEMA" "$(printf "%q" "$PGSCHEMA")"
 }
 
 datetag() {
     date "+%Y-%m-%d-%H-%M-%S"
+}
+
+test_postgresql_connection() {
+    declare rc output
+    output="$(invoke -l 3 psql -tAc "SELECT 1;" 2>&1)"
+    rc="$?"
+    if [[ $rc -ne 0 ]] ; then
+        echo "${red}Could not connect to database: psql returned code $rc"
+        echo "$output${normal}" | sed -E -e "s/^/    /"
+        return $rc
+    fi
 }
 
 postgresql_database_exists() {
@@ -206,24 +228,32 @@ postgresql_database_exists() {
 ################################################################################
 # Main, argparsing and commands
 
+cmd_check() {
+    ask_connection_params
+    print_connection_params
+    test_postgresql_connection || return $?
+}
+
 cmd_dump() {
-    declare database="${1:-$PGDATABASE}"
+    declare target_dir database="${1:-$PGDATABASE}"
 
     ask_connection_params
     print_connection_params
-    declare target_dir="$database-$(datetag)"
+    test_postgresql_connection || return $?
+    target_dir="$database-$(datetag)"
 
     printf "Dumping database to directory %s\n" "$target_dir" 1>&2
     invoke pg_dump --format=directory -j 2 -f "$target_dir" "$database"
 }
 
 cmd_dump-zip() {
-    declare database="${1:-$PGDATABASE}"
+    declare target_dir target_zip database="${1:-$PGDATABASE}"
 
     ask_connection_params
     print_connection_params
-    declare target_dir="$database-$(datetag)"
-    declare target_zip="${target_dir}.zip"
+    test_postgresql_connection || return $?
+    target_dir="$database-$(datetag)"
+    target_zip="${target_dir}.zip"
 
     printf "Dumping database to zip file %s\n" "$target_dir" 1>&2
     invoke pg_dump --format=directory -j 2 -f "$target_dir" "$database" || return $?
@@ -232,11 +262,12 @@ cmd_dump-zip() {
 }
 
 cmd_dump_sql_tables() {
-    declare database="${1:-$PGDATABASE}"
+    declare target_dir database="${1:-$PGDATABASE}"
 
     ask_connection_params
     print_connection_params
-    declare target_dir="SQL-$database-$(datetag)"
+    test_postgresql_connection || return $?
+    target_dir="SQL-$database-$(datetag)"
 
     printf "Dumping database table content as SQL to directory %s\n" "$target_dir"
     mkdir "$target_dir"
@@ -275,12 +306,13 @@ cmd_restore() {
     # Let user verify connection parameters
     ask_connection_params
     print_connection_params
+    test_postgresql_connection || return $?
     echo ""
 
     declare create_database=false drop_schema=false create_schema=false
     echo "Restoring contents of directory $source_dir to database $target_database"
     if postgresql_database_exists "$target_database" ; then
-        echo "${red}Database $target_database already exists, it's \"sdm\" schema will be dropped.${normal}"
+        echo "${red}Database $target_database already exists, its \"$PGSCHEMA\" schema will be dropped.${normal}"
         drop_schema=true
         create_schema=true
     else
@@ -290,10 +322,10 @@ cmd_restore() {
     fi
     declare -a psql_preprocess_statements=()
     if $drop_schema ; then
-      psql_preprocess_statements+=( "DROP SCHEMA IF EXISTS \"sdm\" CASCADE;" )
+      psql_preprocess_statements+=( "DROP SCHEMA IF EXISTS \"$PGSCHEMA\" CASCADE;" )
     fi
     if $create_schema ; then
-      psql_preprocess_statements+=( "CREATE SCHEMA \"sdm\";" )
+      psql_preprocess_statements+=( "CREATE SCHEMA \"$PGSCHEMA\";" )
     fi
 
     # Get confirmation from the user
@@ -306,10 +338,10 @@ cmd_restore() {
         psql -d "$target_database" -c "$(join_by " " "${psql_preprocess_statements[@]}")"
     )
     declare -a pg_restore_command=(
-        pg_restore --no-owner --format=directory -j 2 -d "$target_database" -n sdm --exit-on-error "$source_dir" "${additional_pg_restore_args[@]}"
+        pg_restore --no-owner --no-acl --format=directory -j 2 -d "$target_database" -n "$PGSCHEMA" --exit-on-error "$source_dir"
     )
     declare -a psql_postprocess_command=(
-        psql -d "$target_database" -c "SET search_path TO sdm;
+        psql -d "$target_database" -c "SET search_path TO $PGSCHEMA;
 UPDATE CW_KEY_VALUE SET KVA_KEY_VALUE = '${new_uuid}' WHERE KVA_KEY_NAME = 'CENTERWARE_IDENTIFIER';
 UPDATE CW_SYNC_CLIENT SET SCL_INACTIVE = '1';
 DELETE FROM cw_key_value WHERE kva_key_name = 'jobScheduler.host';
