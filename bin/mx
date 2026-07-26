@@ -3,7 +3,7 @@
 
 #MOBILEX_HOST=${MOBILEX_HOST:-192.168.128.32}
 MOBILEX_HOST=${MOBILEX_HOST:-dangl-lnx}
-MOBILEX_HOME="/home/dangl@mobileX.intra"
+MOBILEX_HOME="/home/markus.dangl@solvares.net"
 
 if [[ ! -v MX_SSH_OPTS ]] ; then
     MX_SSH_OPTS="-oBatchMode=yes"
