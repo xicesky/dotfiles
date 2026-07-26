@@ -9,6 +9,7 @@ xmonad/.xmonad/xmonad.o
 *.code-workspace
 .vscode
 _old_*
+.idea
 
 # Remmina keeps changing files
 /remmina
