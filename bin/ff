@@ -179,6 +179,11 @@ main() {
                     gnufindargs+=( "$1" ); shift
                 fi
                 ;;
+            -prune)
+                gnufindargs+=( "$1" )
+                #seen_actions+=( "$1" ) # Although technically an action, we won't consider prune because it does nothing on its own.
+                shift
+                ;;
             -print|-print0|-fprint|-ls|-fls|-printf|-fprintf|-ok|-okdir|-delete)
                 gnufindargs+=( "$1" )
                 seen_actions+=( "$1" )
