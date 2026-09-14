@@ -93,9 +93,16 @@ cmd_ssh() {
     fi
 }
 
-cmd_rdpfw() {
-    # RDP port is 3389, since our local machine might already server one, we use 4389 instead
-    local LOCAL_PORT="4389" REMOTE_ADDR="192.168.122.51:3389"
+# cmd_rdpfw() {
+#     # RDP port is 3389, since our local machine might already server one, we use 4389 instead
+#     local LOCAL_PORT="4389" REMOTE_ADDR="192.168.122.51:3389"
+#     invoke ssh "${MX_SSH_OPTS[@]}" -t -L "$LOCAL_PORT:$REMOTE_ADDR" "$MOBILEX_HOST" bash -c '"read -n 1 -p \"Forwarding local port '"$LOCAL_PORT"' to remote '"$REMOTE_ADDR"'. Press any key to exit.\""'
+# }
+
+cmd_spicefw() {
+    local port="${1:-5900}"
+    # Spice port may vary, usually starts at 5900
+    local LOCAL_PORT="$port" REMOTE_ADDR="127.0.0.1:$port"
     invoke ssh "${MX_SSH_OPTS[@]}" -t -L "$LOCAL_PORT:$REMOTE_ADDR" "$MOBILEX_HOST" bash -c '"read -n 1 -p \"Forwarding local port '"$LOCAL_PORT"' to remote '"$REMOTE_ADDR"'. Press any key to exit.\""'
 }
 
@@ -225,8 +232,8 @@ cmd_initial() {
         tmux send-keys -t 'Sync' 'sleep 1.5; mx sync' C-m
 
         # Create new pane for RDP portforward
-        (( window_nr++ )); tmux new-window -t "$session:$window_nr" -n 'RDPfw'
-        tmux send-keys -t 'RDPfw' 'sleep 2.0; mx rdpfw' C-m
+        (( window_nr++ )); tmux new-window -t "$session:$window_nr" -n 'spicefw'
+        tmux send-keys -t 'spicefw' 'sleep 2.0; mx spicefw' C-m
     fi
 
     # Attach Session, on the Main window
