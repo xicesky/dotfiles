@@ -1,35 +1,79 @@
 # ATTENTION:
 # This file is intended to be the "shared" configuration file for your user.
 # It SHOULD BE SYMLINKED to the dotfiles repo, so any modifications will be shared between systems.
+
 [user]
     name = Markus Dangl
     email = 663399+xicesky@users.noreply.github.com
+
 [core]
     editor = vim
     autocrlf = false
     symlinks = true
+    pager = delta
+
 [init]
     defaultBranch = main
+
+[interactive]
+    diffFilter = delta --color-only
+
 [push]
     default = simple
+
 [pull]
     ff = only
+
 [color]
     ui = auto
+
 [diff]
     tool = vimdiff
     guitool = meld
+
 [merge]
     tool = vimdiff
     guitool = meld
+
+[delta]
+    dark = true
+    side-by-side = true
+    line-numbers = true
+    navigate = true
+
+    syntax-theme = OneHalfDark
+    tabs = 4
+
+    zero-style = "syntax"
+    minus-style = "syntax #3b2426"
+    minus-emph-style = "syntax #703b3f"
+    plus-style = "syntax #233a2b"
+    plus-emph-style = "syntax #376b49"
+
+    line-numbers-zero-style = "#606366"
+    line-numbers-minus-style = "#d46a70"
+    line-numbers-plus-style = "#68b378"
+
+    file-style = "bold #a9b7c6"
+    file-decoration-style = "#4e5254 ul"
+    hunk-header-style = "file line-number syntax"
+    hunk-header-decoration-style = "#4e5254 box"
+
+    wrap-max-lines = 2
+    true-color = always
+
 [difftool]
     prompt = false
+
 [mergetool]
     keepBackup = false
+
 [difftool "winmerge"]
     trustExitCode = true
+
 [mergetool "winmerge"]
     trustExitCode = true
+
 [alias]
     st = status
     d = difftool -g -d
