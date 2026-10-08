@@ -58,6 +58,8 @@
     file-decoration-style = "#4e5254 ul"
     hunk-header-style = "file line-number syntax"
     hunk-header-decoration-style = "#4e5254 box"
+    hunk-header-file-style = "bold #82aaff"
+    hunk-header-line-number-style = "bold #82aaff"
 
     wrap-max-lines = 2
     true-color = always
@@ -73,6 +75,9 @@
 
 [mergetool "winmerge"]
     trustExitCode = true
+
+[difftool "idea"]
+    cmd = idea diff $(cd $(dirname "$LOCAL") && pwd)/$(basename "$LOCAL") $(cd $(dirname "$REMOTE") && pwd)/$(basename "$REMOTE")
 
 [alias]
     st = status
