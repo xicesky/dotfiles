@@ -192,6 +192,15 @@ trap 'remove-temp-dir' EXIT
 ##############################################################################
 # Gitlab api
 
+# Basic urlencode in bash, only uses od and awk
+urlencode() {
+    echo -n "$1" | od -t d1 | awk '{
+        for (i = 2; i <= NF; i++) {
+            printf( ($i>=48 && $i<=57) || ($i>=65 && $i<=90) || ($i>=97 && $i<=122) || $i==45 || $i==46 || $i==95 || $i==126 ? "%c" : "%%%02x" , $i )
+        }
+    }'
+}
+
 creq() {
     #require-temp-dir   # This is a precondition, but checking it here is too slow
 	declare method="$1"; shift
@@ -223,17 +232,20 @@ gitlab_call() {
     declare curl_retval="$?"
 
     if [[ "$curl_retval" -ne 0 ]] ; then
-        error 1 "Failed to connect to $target ($curl_retval)" || return $?
+        error 1 "Failed to connect to $target: $http_code" || return $?
     fi
     declare msg
     case "$http_code" in
-    4??)
+    4??|5??)
         msg="$(jq .message "$SCRIPT_TEMP_DIR/response-body")"
+        if [[ "$msg" == "null" || "$msg" == "" ]] ; then
+            {
+                echo "$http_code"
+                cat "$SCRIPT_TEMP_DIR/response-body"
+                echo ""
+            } >&2
+        fi
         error 1 "API returned error $http_code ($msg)" || return $?
-        ;;
-    5??)
-        msg="$(jq .message "$SCRIPT_TEMP_DIR/response-body")"
-        error 1 "API server error $http_code ($msg)" || return $?
         ;;
     200)
         ;;
@@ -299,6 +311,12 @@ gitlab_namespace_projects() {
         error 1 "Unknown namespace kind: $kind" || return $?
         ;;
     esac
+}
+
+gitlab_create_pipeline() {
+    local project_id="$1"; shift
+    gitlab_call POST "projects/$(urlencode "$project_id")/pipeline" '.web_url' \
+        || return $?
 }
 
 ##############################################################################
@@ -375,6 +393,11 @@ cmd_clone-group() {
     done
 }
 
+cmd_create-pipeline() {
+    require-temp-dir
+    gitlab_create_pipeline "$@"
+}
+
 ##############################################################################
 # Main
 
@@ -434,17 +457,12 @@ main() {
             help
             return 1
             ;;
-        list-projects|clone-group)
+        *)
             if [[ argcount -eq 0 ]] ; then
                 cmd="$arg"
             else
                 mainargs+=( "$arg" )
             fi
-            (( argcount++ ))
-            ;;
-        *)
-            # Main arguments
-            mainargs+=( "$arg" )
             (( argcount++ ))
             ;;
         esac
