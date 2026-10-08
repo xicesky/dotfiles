@@ -1,8 +1,7 @@
 #!/bin/bash
-#cd ~/Dev/mobilex/_tools/jailer_16.4.2
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-JAILER_INSTALL_DIR=${JAILER_INSTALL_DIR:-~/Dev/mobilex/_tools/jailer_16.4.2}
+JAILER_INSTALL_DIR=${JAILER_INSTALL_DIR:-~/Dev/mobilex/_tools/jailer}
 JAILER_DATAMODEL_DIR=${JAILER_DATAMODEL_DIR:-$(readlink -f .)}
 
 invoke() {
@@ -27,7 +26,7 @@ main() {
     fi
     extractionmodel="$(readlink -f $1)"; shift
 
-    invoke "$JAILER_INSTALL_DIR"/jailerGUI.sh "$extractionmodel" # -datamodel "$JAILER_DATAMODEL_DIR"
+    invoke "$JAILER_INSTALL_DIR"/jailerGUI.sh "$extractionmodel" "$@" -datamodel "$JAILER_DATAMODEL_DIR"
 }
 
 main "$@"
