@@ -24,3 +24,5 @@ cat <<"EOF"
 #[ -z "$LESS" ] || export LESS='-g -i -M -R -S -w -z-4'
 [ -z "$READNULLCMD" ] || READNULLCMD=$PAGER
 EOF
+echo "export LESS='-RSiMw -z-4'"
+
