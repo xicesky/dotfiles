@@ -1,4 +1,5 @@
 #!/bin/bash
+shopt -s extglob
 
 CLUSTER_NAME="kyma-dev"
 KUBE_CONFIG_FILE="${KUBE_CONFIG_FILE:-config}"
@@ -26,6 +27,13 @@ AZURE_AKS_RG="${AZURE_AKS_RG:-kyma-dev}"
 
 # AWS CLI parameters
 AWS_PROFILE="${AZURE_AKS_RG:-aws-poseidon-indi-team}"
+
+# ArgoCD CLI parameters
+ARGOCD_CERT_DIR="${ARGOCD_CERT_DIR:-$HOME/Keys/user-certificate}"
+ARGOCD_CLIENT_CERT="${ARGOCD_CLIENT_CERT:-$ARGOCD_CERT_DIR/markus-dangl-mobilex-cert.cert-with-chain.pem}"
+ARGOCD_CLIENT_CERT_KEY="${ARGOCD_CLIENT_CERT_KEY:-$ARGOCD_CERT_DIR/markus-dangl-mobilex-cert.key}"
+ARGOCD_PROJECT="${ARGOCD_PROJECT:-customers-sc}"
+ARGOCD_APP="${ARGOCD_APP:-}"
 
 config-for-sp-dev() {
     CLUSTER_NAME="kyma-dev"
@@ -170,10 +178,6 @@ config-for-poseidon() {
     KUBE_CONFIG_FILE="config-aws-poseidon.yaml"
     SPCUSTOMER="$1"
     KUBE_NAMESPACE="$SPCUSTOMER"
-    #PGHOST="postgres-flexible-mx-sp-priv.postgres.database.azure.com"
-    #PGDATABASE="postgresqldatabase-${SPCUSTOMER}"
-    #PGUSER="postgresqldatabase-${SPCUSTOMER}-admin"
-
     AWS_PROFILE=aws-poseidon-indi-team
     DB_JUMPER_PORT="${2:-5434}"
     # Local port for portforward
@@ -182,58 +186,118 @@ config-for-poseidon() {
     # development-three.cer4ntwv8c3z.eu-central-1.rds.amazonaws.com
     PGHOST="localhost"
     PGDATABASE="postgresqldatabase-${SPCUSTOMER}"
-    PGUSER="${3:-postgresqldatabase-customer-687399362-admin-FRLuXt}"
+    PGUSER="${3:-invalid-database-user}"
+}
 
+config-for-zeus() {
+    CLUSTER_NAME="zeus"
+    KUBE_CONFIG_FILE="config-aws-zeus.yaml"
+    SPCUSTOMER="$1"
+    KUBE_NAMESPACE="$SPCUSTOMER"
+    AWS_PROFILE=aws-zeus-mxfsm
+    DB_JUMPER_PORT="${2:-5434}"
+    # Local port for portforward
+    PGPORT=5434
+
+    # development-three.cer4ntwv8c3z.eu-central-1.rds.amazonaws.com
+    PGHOST="localhost"
+    PGDATABASE="postgresqldatabase-${SPCUSTOMER}"
+    PGUSER="${3:-invalid-database-user}"
 }
 
 load-config() {
     case "$1" in
-    #flsa*)              config-for-sp-dev  "customer-687399035" "" "mipserver-fla" ;;  # inactive
-
     ochs*-dev)          config-for-sp-dev-new   "customer-687399036" ;; # temporarily reactivated for portal-graphql
-    ochs*-qa)           config-for-sp-prod-new  "customer-687399031" ;;
-    ochs*-prod)         config-for-sp-prod-new  "customer-687399036" ;;
+    ochs*-qa-old)           config-for-sp-prod-new  "customer-687399031" ;;     # TODO: DELETE THIS AFTER AWS MIGRATION
+    ochs*-qa)           config-for-zeus "customer-687399031" ;;
+    ochs*-prod-old)         config-for-sp-prod-new  "customer-687399036" ;;     # TODO: DELETE THIS AFTER AWS MIGRATION
+    ochs*-prod)         config-for-zeus "customer-687399036" ;;
 
+    harg*-sap-prod-old)     config-for-sp-prod-new  "customer-687399113" ;;     # TODO: DELETE THIS AFTER AWS MIGRATION
+    harg*-sap-prod)     config-for-zeus "customer-687399113" ;;
+    harg*-sap-qa-old)       config-for-sp-prod-new  "customer-687399112" ;;     # TODO: DELETE THIS AFTER AWS MIGRATION
+    harg*-sap-qa)       config-for-zeus "customer-687399112" ;;
+    harg*-qa-old)           config-for-sp-prod-new  "customer-687399110" ;;     # TODO: DELETE THIS AFTER AWS MIGRATION
+    harg*-qa)           config-for-zeus "customer-687399110" ;;
     harg*-dev)          config-for-poseidon "customer-687399110" 5434 "postgresqldatabase-customer-687399110-admin-4lRxFb" ;;
-    harg*-prod)         config-for-sp-prod-new  "customer-687399111" ;;
-    harg*-sap-qa)       config-for-sp-prod-new  "customer-687399112" ;;
-    harg*-qa)           config-for-sp-prod-new  "customer-687399110" ;;
+    harg*-prod-old)         config-for-sp-prod-new  "customer-687399111" ;;     # TODO: DELETE THIS AFTER AWS MIGRATION
+    harg*-prod)         config-for-zeus "customer-687399111" ;;
 
-    bwtd*-qa)           config-for-sp-prod-new  "customer-687399060" ;;
-    bwtd*-prod)         config-for-sp-prod-new  "customer-687399061" ;;
+    bwtd*-qa-old)           config-for-sp-prod-new  "customer-687399060" ;;     # TODO: DELETE THIS AFTER AWS MIGRATION
+    bwtd*-qa)           config-for-zeus "customer-687399060" ;;
+    bwtd*-prod-old)         config-for-sp-prod-new  "customer-687399061" ;;     # TODO: DELETE THIS AFTER AWS MIGRATION
+    bwtd*-prod)         config-for-zeus "customer-687399061" ;;
+
     bwta*-qa)           config-for-sp-prod-new  "customer-687399200" ;;
     bwta*-prod)         config-for-sp-prod-new  "customer-687399201" ;;
 
-    hsm-qa|hsm-de-qa)       config-for-sp-prod-new  "customer-687399220" ;;
-    hsm-prod|hsm-de-prod)   config-for-sp-prod-new  "customer-687399221" ;;
-    hsm-uk-qa)              config-for-sp-prod-new  "customer-687399222" ;;
-    hsm-uk-prod)            config-for-sp-prod-new  "customer-687399223" ;;
-    hsm-fr-qa)              config-for-sp-prod-new  "customer-687399224" ;;
-    hsm-fr-prod)            config-for-sp-prod-new  "customer-687399225" ;;
-    hsm-pl-qa)              config-for-sp-prod-new  "customer-687399226" ;;
-    hsm-pl-prod)            config-for-sp-prod-new  "customer-687399227" ;;
-    hsm-es-qa)              config-for-sp-prod-new  "customer-687399228" ;;
-    hsm-es-prod)            config-for-sp-prod-new  "customer-687399229" ;;
-    hsm-us-qa)              config-for-sp-prod-new  "customer-687399230" ;;
-    hsm-us-prod)            config-for-sp-prod-new  "customer-687399231" ;;
+    hsm-prod-old|hsm-de-prod-old)   config-for-sp-prod-new  "customer-687399221" ;;     # TODO: DELETE THIS AFTER AWS MIGRATION
+    hsm-uk-prod-old)            config-for-sp-prod-new  "customer-687399223" ;;     # TODO: DELETE THIS AFTER AWS MIGRATION
+    hsm-fr-prod-old)            config-for-sp-prod-new  "customer-687399225" ;;     # TODO: DELETE THIS AFTER AWS MIGRATION
+    hsm-pl-prod-old)            config-for-sp-prod-new  "customer-687399227" ;;     # TODO: DELETE THIS AFTER AWS MIGRATION
+    hsm-es-prod-old)            config-for-sp-prod-new  "customer-687399229" ;;     # TODO: DELETE THIS AFTER AWS MIGRATION
+    hsm-us-prod-old)            config-for-sp-prod-new  "customer-687399231" ;;     # TODO: DELETE THIS AFTER AWS MIGRATION
 
-    kalt*-qa)           config-for-sp-prod-new  "customer-687399150" ;;
-    kalt*-prod)         config-for-sp-prod-new  "customer-687399151" ;;
+    hsm-prod|hsm-de-prod)   config-for-zeus "customer-687399221" ;;
+    hsm-uk-prod)            config-for-zeus "customer-687399223" ;;
+    hsm-fr-prod)            config-for-zeus "customer-687399225" ;;
+    hsm-pl-prod)            config-for-zeus "customer-687399227" ;;
+    hsm-es-prod)            config-for-zeus "customer-687399229" ;;
+    hsm-us-prod)            config-for-zeus "customer-687399231" ;;
 
-    gewo*-qa)           config-for-sp-prod-new  "customer-687399170" ;;
-    gewo*-prod)         config-for-sp-prod-new  "customer-687399171" ;;
+    hsm-qa-old|hsm-de-qa-old)       config-for-sp-prod-new  "customer-687399220" ;;     # TODO: DELETE THIS AFTER AWS MIGRATION
+    hsm-uk-qa-old)              config-for-sp-prod-new  "customer-687399222" ;;         # TODO: DELETE THIS AFTER AWS MIGRATION
+    hsm-fr-qa-old)              config-for-sp-prod-new  "customer-687399224" ;;         # TODO: DELETE THIS AFTER AWS MIGRATION
+    hsm-pl-qa-old)              config-for-sp-prod-new  "customer-687399226" ;;         # TODO: DELETE THIS AFTER AWS MIGRATION
+    hsm-es-qa-old)              config-for-sp-prod-new  "customer-687399228" ;;         # TODO: DELETE THIS AFTER AWS MIGRATION
+    hsm-us-qa-old)              config-for-sp-prod-new  "customer-687399230" ;;         # TODO: DELETE THIS AFTER AWS MIGRATION
 
-    tria*-qa)           config-for-sp-prod-new  "customer-687399140" ;;
-    tria*-prod)         config-for-sp-prod-new  "customer-687399141" ;;
+    hsm-qa|hsm-de-qa)       config-for-zeus "customer-687399220" ;;
+    hsm-uk-qa)              config-for-zeus "customer-687399222" ;;
+    hsm-fr-qa)              config-for-zeus "customer-687399224" ;;
+    hsm-pl-qa)              config-for-zeus "customer-687399226" ;;
+    hsm-es-qa)              config-for-zeus "customer-687399228" ;;
+    hsm-us-qa)              config-for-zeus "customer-687399230" ;;
 
-    ware-de-qa)         config-for-sp-prod-new  "customer-687399120" ;;
-    ware-de-prod)       config-for-sp-prod-new  "customer-687399121" ;;
-    ware-ch-qa)         config-for-sp-prod-new  "customer-687399122" ;;
-    ware-ch-prod)       config-for-sp-prod-new  "customer-687399123" ;;
-    ware-at-qa)         config-for-sp-prod-new  "customer-687399124" ;;
-    ware-at-prod)       config-for-sp-prod-new  "customer-687399125" ;;
-    ware-nl-qa)         config-for-sp-prod-new  "customer-687399126" ;;
-    ware-nl-prod)       config-for-sp-prod-new  "customer-687399127" ;;
+    kalt*-qa-old)           config-for-sp-prod-new  "customer-687399150" ;;     # TODO: DELETE THIS AFTER AWS MIGRATION
+    kalt*-prod-old)         config-for-sp-prod-new  "customer-687399151" ;;     # TODO: DELETE THIS AFTER AWS MIGRATION
+
+    kalt*-qa)           config-for-zeus "customer-687399150" ;;
+    kalt*-prod)         config-for-zeus "customer-687399151" ;;
+
+    froe*-qa-old|frö*-qa-old)       config-for-sp-prod-new "customer-687399240" ;;    # TODO: DELETE THIS AFTER AWS MIGRATION
+    froe*-qa|frö*-qa)       config-for-zeus "customer-687399240" ;;
+
+    froe*-prod-old|frö*-prod-old)   config-for-sp-prod-new "customer-687399241" ;;    # TODO: DELETE THIS AFTER AWS MIGRATION
+    froe*-prod|frö*-prod)   config-for-zeus "customer-687399241" ;;
+
+    gewo*-qa-old)           config-for-sp-prod-new  "customer-687399170" ;;     # TODO: DELETE THIS AFTER AWS MIGRATION
+    gewo*-prod-old)         config-for-sp-prod-new  "customer-687399171" ;;     # TODO: DELETE THIS AFTER AWS MIGRATION
+    gewo*-qa)           config-for-zeus  "customer-687399170" ;;
+    gewo*-prod)         config-for-zeus  "customer-687399171" ;;
+
+    tria*-qa-old)           config-for-sp-prod-new  "customer-687399140" ;;     # TODO: DELETE THIS AFTER AWS MIGRATION
+    tria*-qa)           config-for-zeus "customer-687399140" ;;
+    tria*-prod-old)         config-for-sp-prod-new  "customer-687399141" ;;     # TODO: DELETE THIS AFTER AWS MIGRATION
+    tria*-prod)         config-for-zeus  "customer-687399141" ;;
+
+    warema-de-qa-old)         config-for-sp-prod-new  "customer-687399120" ;;   # TODO: DELETE THIS AFTER AWS MIGRATION
+    warema-de-prod-old)       config-for-sp-prod-new  "customer-687399121" ;;   # TODO: DELETE THIS AFTER AWS MIGRATION
+    warema-ch-qa-old)         config-for-sp-prod-new  "customer-687399122" ;;   # TODO: DELETE THIS AFTER AWS MIGRATION
+    warema-ch-prod-old)       config-for-sp-prod-new  "customer-687399123" ;;   # TODO: DELETE THIS AFTER AWS MIGRATION
+    warema-at-qa-old)         config-for-sp-prod-new  "customer-687399124" ;;   # TODO: DELETE THIS AFTER AWS MIGRATION
+    warema-at-prod-old)       config-for-sp-prod-new  "customer-687399125" ;;   # TODO: DELETE THIS AFTER AWS MIGRATION
+    warema-nl-qa-old)         config-for-sp-prod-new  "customer-687399126" ;;   # TODO: DELETE THIS AFTER AWS MIGRATION
+    warema-nl-prod-old)       config-for-sp-prod-new  "customer-687399127" ;;   # TODO: DELETE THIS AFTER AWS MIGRATION
+
+    warema-de-qa)         config-for-zeus "customer-687399120" ;;
+    warema-de-prod)       config-for-zeus "customer-687399121" ;;
+    warema-ch-qa)         config-for-zeus "customer-687399122" ;;
+    warema-ch-prod)       config-for-zeus "customer-687399123" ;;
+    warema-at-qa)         config-for-zeus "customer-687399124" ;;
+    warema-at-prod)       config-for-zeus "customer-687399125" ;;
+    warema-nl-qa)         config-for-zeus "customer-687399126" ;;
+    warema-nl-prod)       config-for-zeus "customer-687399127" ;;
 
     #solu*-qa)           config-for-sp-prod  "customer-687399180" "" "soluvia-mipserver" ;; # inactive
     #solu*-prod)         config-for-sp-prod  "customer-687399181" "" "soluvia-mipserver" ;; # inactive
@@ -246,18 +310,33 @@ load-config() {
     customer-*)         config-for-sp-dev  "$1" ;;
 
     oge-dev)            config-for-poseidon "customer-687399362" 5433 "postgresqldatabase-customer-687399362-admin-FRLuXt" ;;
+    oge-qa)             config-for-zeus "customer-687399360" ;;
+    oge-pseudo-dev)     config-for-zeus "customer-687399362" ;; # Dev should be on the dev cluster, no...?
 
     nbb-dev)            config-for-nbb "mwm-dev" "mipserver-mwm-dev" "mipserver-fla" ;;
     nbb-qa)             config-for-nbb "mwm-qa" "mipserver-mwm-qa" "mipserver-fla" ;;
     nbb-prod)           config-for-nbb "mwm-prod" "mipserver-mwm-prod" "mipserver-fla" ;;
 
-    product-dev-old)    config-for-sp-dev-new   "customer-product-dev" ;;
     product-dev)        config-for-poseidon "customer-product-dev" 5434 "postgresqldatabase-customer-product-dev-admin-qm3bzk" ;;
     prd-vti)            config-for-mx-internal "vt-integration" "prd-vt-integration-dispatchx-mipserver" ;;
     prd-portal|prd-feature-jdk21)
                         config-for-mx-internal "prd-feature-jdk21" "mipserver";;
-    prd-feature-m4q)    config-for-mx-internal "prd-feature-m4q" "mipserver";;
-    #abrg|arburg*)       config-for-mx-internal "ps-arburg" "ps-arburg-dispatchx-mipserver" ;; # inactive
+    prd-feature-m4q|feature-m4q)
+                        config-for-mx-internal "prd-feature-m4q" "mipserver";;
+    prd-fornax-qa|fornax-qa)
+                        config-for-mx-internal "prd-fornax-qa" "mipserver";;
+    #abrg|arburg*)       config-for-mx-internal "ps-arburg" "ps-arburg-dispatchx-mipserver" ;; # inactive^
+
+    *([[:digit:]]))
+        # Should be at least 3 digits
+        local -i len=${#1}
+        [[ $len -ge 3 ]] || { echo "Customer number needs at least 3 digits, found \"$1\"." >&2; return 1; }
+        # Given digits override the customer-number (prefix 687399000) with LSB first
+        SPCUSTOMER="687399000"
+        (( len = ${#SPCUSTOMER}-len ))
+        SPCUSTOMER="customer-${SPCUSTOMER:0:$len}$1"
+        config-for-zeus "$SPCUSTOMER"
+        ;;
 
     qub1c)              config-for-qub1c "$1" ;;
     local*)             config-for-local-k3d "$1" ;;
@@ -741,7 +820,33 @@ kaz() {
     esac
 }
 
+_argocd_config_has_entry() {
+    if [[ ! -f "$XDG_CONFIG_HOME/argocd/config" ]] ; then
+        return 1
+    fi
+    yq -p yaml -o json "$XDG_CONFIG_HOME/argocd/config" | jq "$@"
+}
+
+kargologin() {
+    return 1
+    # FIXME
+    # Kyma-Prod
+    if ! _argocd_config_has_entry '.contexts[] | .server == "argocd.support.serviceplatform.eu"' ; then
+        argocd login argocd.support.serviceplatform.eu --grpc-web --sso --skip-test-tls --name azure-prod --sso-launch-browser=false
+    fi
+    
+    # Poseidon
+    argocd login argocd.poseidon.fls-dev.cloud --grpc-web --sso --name poseidon --sso-launch-browser=false
+    # Zeus
+    argocd login argocd.zeus.fls-dev.cloud --grpc-web --sso --sso-launch-browser=false --name zeus
+}
+
+
 cmd_print() {
+    # Update composite vars
+    ARGOCD_OPTS="--client-crt $(printf "%q" "$ARGOCD_CLIENT_CERT") --client-crt-key $(printf "%q" "$ARGOCD_CLIENT_CERT_KEY")"
+    ARGOCD_APP="${ARGOCD_PROJECT}/${SPCUSTOMER}"
+
     # set KUBECONFIG
     ship-environment-variable CLUSTER_NAME "$CLUSTER_NAME"
     ship-environment-variable KUBECONFIG ~/".kube/$KUBE_CONFIG_FILE"
@@ -764,6 +869,8 @@ cmd_print() {
     ship-environment-variable AZURE_AKS_NAME "$AZURE_AKS_NAME"
     ship-environment-variable AZURE_AKS_RG "$AZURE_AKS_RG"
     ship-environment-variable AWS_PROFILE "$AWS_PROFILE"
+    ship-environment-variable ARGOCD_OPTS "$ARGOCD_OPTS"
+    ship-environment-variable ARGOCD_APP "$ARGOCD_APP"
 
     ship-bash-function kube "kubctl alias with namespace"
     ship-bash-function kube-list-resources "list all kubernetes resource types"
@@ -788,6 +895,14 @@ cmd_print() {
     ship-bash-function kargolist "list argocd applications"
     ship-bash-function kargoexport "export argocd application"
     ship-bash-function kaz "wrapper for azure az commands"
+
+    # Automatically switch ArgoCD context
+    echo "argocd context $(printf "%q" "$CLUSTER_NAME")"
+
+    # Print some useful information
+    echo "printf \"%-18s: %s\n\" KUBECONFIG \"\$KUBECONFIG\""
+    echo "printf \"%-18s: %s\n\" CLUSTER_NAME \"\$CLUSTER_NAME\""
+    echo "printf \"%-18s: %s\n\" SPCUSTOMER \"\$SPCUSTOMER\""
 }
 
 help() {
