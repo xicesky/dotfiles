@@ -129,7 +129,7 @@ cmd_notes() {
 }
 
 cmd_firefox() {
-    cmd_ssh "firefox"
+    cmd_ssh "env" "MOZ_WEBRENDER=0" "firefox" "-no-remote"
 }
 
 cmd_chrome() {
