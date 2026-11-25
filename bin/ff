@@ -184,10 +184,16 @@ main() {
                 #seen_actions+=( "$1" ) # Although technically an action, we won't consider prune because it does nothing on its own.
                 shift
                 ;;
-            -print|-print0|-fprint|-ls|-fls|-printf|-fprintf|-ok|-okdir|-delete)
+            -print|-print0|-fprint|-ls|-fls|-ok|-okdir|-delete)
                 gnufindargs+=( "$1" )
                 seen_actions+=( "$1" )
                 shift
+                ;;
+            -printf|-fprintf)
+                # 1-arg action
+                gnufindargs+=( "$1" "$2" )
+                seen_actions+=( "$1" )
+                shift 2
                 ;;
             -empty|-executable|-true|-false|-nogroup|-nouser|-readable|-writable)
                 # No-arg test
