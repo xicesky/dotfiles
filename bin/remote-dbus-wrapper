@@ -1,0 +1,19 @@
+#!/bin/bash
+
+KEYRING_PASSWORD="${KEYRING_PASSWORD:-}"
+
+if [[ -z "$KEYRING_PASSWORD" ]] ; then
+    #echo "Please enter keyring password: " >&2
+    read -r -s -p "Please enter keyring password: " KEYRING_PASSWORD
+    nchars=$(echo -n "$KEYRING_PASSWORD" | wc -c)
+    echo "(Password has $nchars characters.)" >&2
+    echo "" >&2
+fi
+
+echo "Launching dbus..." >&2
+export $(dbus-launch)
+echo "Launching gnome-keyring-daemon..." >&2
+echo -n $KEYRING_PASSWORD | gnome-keyring-daemon --unlock --components=secrets
+echo "Launching final app $*"
+"$@"
+
