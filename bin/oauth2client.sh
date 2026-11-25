@@ -122,13 +122,24 @@ which() {
 ################################################################################
 # Configuration presets
 
+preset_backend-product-dev() {
+    # Example URL: https://customer-product-dev-backend.poseidon.mobilex-serviceplatform.com/mobileX-Web/AddressService?wsdl
+    local preset_name="${FUNCNAME[0]}"
+    MX_CUSTOMER=product-dev
+    NAMESPACE=customer-$MX_CUSTOMER
+    MX_BASEURL="https://${NAMESPACE}-backend.poseidon.mobilex-serviceplatform.com/"
+    OIDC_BASEURL="https://idp.fls-dev.cloud/auth/realms/customer-product-dev"
+    OAUTH2_CLIENT_ID="customer-backend"
+    #OAUTH2_AUDIENCE="mip-server"   # No audience
+}
+
 preset_portal-hargassner-dev() {
     local preset_name="${FUNCNAME[0]}"
     MX_CUSTOMER=687399110
     NAMESPACE=customer-$MX_CUSTOMER
     #MX_BASEURL="https://${NAMESPACE}.serviceplatform.eu/"
     MX_BASEURL="https://${NAMESPACE}-portal-services.serviceplatform.eu/"
-    OIDC_BASEURL="https://idp.kyma-dev.mobilex-serviceplatform.com/auth/realms/master"
+    OIDC_BASEURL="https://idp.fls-dev.cloud/auth/realms/master"
     OAUTH2_CLIENT_ID="${NAMESPACE}-portal-graphql-client"
     OAUTH2_AUDIENCE="${NAMESPACE}-portal-graphql-server"
 }
@@ -274,6 +285,11 @@ login_via_client_credentials() {
 
     configure || return $?
 
+    local -a curlargs=()
+    if [[ -n "$OAUTH2_AUDIENCE" ]] ; then
+        curlargs+=( --data "audience=$OAUTH2_AUDIENCE" )
+    fi
+
     # FIXME: Handle HTTP errors
     OAUTH2_RESPONSE_JSON="$(
         invoke curl -s -X POST \
@@ -282,7 +298,7 @@ login_via_client_credentials() {
             --data 'grant_type=client_credentials' \
             --data "client_id=$OAUTH2_CLIENT_ID" \
             --data "client_secret=$OAUTH2_CLIENT_SECRET" \
-            --data "audience=$OAUTH2_AUDIENCE"
+            "${curlargs[@]}"
     )"
     OAUTH2_ACCESS_TOKEN="$(echo "$OAUTH2_RESPONSE_JSON" | jq -r '.access_token')"
 }
@@ -291,17 +307,17 @@ login_via_device() {
     # See https://git.mobilexag.de/prd-serviceplatform/documentation/-/blob/develop/modules/operations-guide/examples/read-token-from-keycloak.sh?ref_type=heads
     # https://datatracker.ietf.org/doc/html/rfc8628#section-3.1
     local device_code user_code verification_uri expires interval expire_seconds error access_token
-    local -a request_data
 
     configure || return $?
 
-    request_data=(
+    local -a curlargs=()
+    curlargs+=(
         --data "client_id=$OAUTH2_CLIENT_ID"
         --data "scope=$OAUTH2_SCOPE"
     )
 
-    if [ -n "$OAUTH2_CLIENT_SECRET" ] ; then
-        request_data+=( --data "client_secret=$OAUTH2_CLIENT_SECRET" )
+    if [[ -n "$OAUTH2_CLIENT_SECRET" ]] ; then
+        curlargs+=( --data "client_secret=$OAUTH2_CLIENT_SECRET" )
     fi
     
     OAUTH2_RESPONSE_JSON="$(
@@ -310,7 +326,7 @@ login_via_device() {
         invoke curl -s -X POST \
             --url "$OAUTH2_DEVICE_AUTHORIZATION_ENDPOINT" \
             --header 'content-type: application/x-www-form-urlencoded' \
-            "${request_data[@]}"
+            "${curlargs[@]}"
     )"
     #echo "response_json: $OAUTH2_RESPONSE_JSON" 1>&2
 
